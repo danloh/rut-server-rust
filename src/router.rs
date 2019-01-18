@@ -2,18 +2,13 @@
 #![allow(unused_variables)]
 #![cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 
-use bytes::Bytes;
-use futures::sync::mpsc;
-use futures::Stream;
-
 use actix_web::{
-    error, fs, middleware, pred, server, App, Error, 
-    HttpRequest, HttpResponse, Path, Result,
+    fs, middleware, pred, App, 
+    HttpRequest, HttpResponse, Result,
     http::{header, Method, StatusCode},
 };
-use std::{io};
 
-/// simple index handler
+// simple index handler
 fn index(req: &HttpRequest) -> Result<HttpResponse> {
     println!("{:?}", req);
 
@@ -23,7 +18,7 @@ fn index(req: &HttpRequest) -> Result<HttpResponse> {
         .body(include_str!("../static/index.html")))
 }
 
-/// 404 handler
+// 404 handler
 fn not_found(req: &HttpRequest) -> Result<fs::NamedFile> {
     Ok(fs::NamedFile::open("static/404.html")?.set_status_code(StatusCode::NOT_FOUND))
 }

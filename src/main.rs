@@ -4,7 +4,6 @@
 
 extern crate actix;
 extern crate actix_web;
-extern crate bytes;
 extern crate env_logger;
 extern crate futures;
 
@@ -21,10 +20,10 @@ fn main() {
     let sys = actix::System::new("rut-server-rust");
 
     server::new( move || router::app_state())
-        .bind("127.0.0.1:8081").expect("Can not bind to 127.0.0.1:8080")
+        .bind("127.0.0.1:8083").expect("Can not bind to 127.0.0.1:8083")
         .shutdown_timeout(0)    // <- Set shutdown timeout to 0 seconds (default 60s)
         .start();
-    println!("Starting http server: 127.0.0.1:8081");
+    println!("Starting http server: 127.0.0.1:8083");
     
     let _ = sys.run();
 }
