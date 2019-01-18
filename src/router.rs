@@ -3,32 +3,24 @@
 #![cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 
 use actix_web::{
-    fs, middleware, pred, App, 
+    App, fs, middleware, pred, actix::Addr,
     HttpRequest, HttpResponse, Result,
-    http::{header, Method, StatusCode},
+    http::{self, header, Method, StatusCode},
 };
+use db::dba::{ Dba, init };
+use api::{index::hello};
 
-// simple index handler
-fn index(req: &HttpRequest) -> Result<HttpResponse> {
-    println!("{:?}", req);
-
-    // response
-    Ok(HttpResponse::build(StatusCode::OK)
-        .content_type("text/html; charset=utf-8")
-        .body(include_str!("../static/index.html")))
+pub struct AppState {
+    pub db: Addr<Dba>,
 }
 
-// 404 handler
-fn not_found(req: &HttpRequest) -> Result<fs::NamedFile> {
-    Ok(fs::NamedFile::open("static/404.html")?.set_status_code(StatusCode::NOT_FOUND))
-}
-
-pub fn app_state() -> App {
-    App::new()
+pub fn app_with_state() -> App<AppState> {
+    App::with_state(AppState{ db: init().clone()})
     // enable logger
     .middleware(middleware::Logger::default())        
     // register simple route, handle all methods
     .resource("/", |r| r.f(index))
+    .resource("/{name}", |r| r.method(http::Method::GET).with(hello))
     // static files
     .handler("/static", fs::StaticFiles::new("static").unwrap())
     // redirect
@@ -47,4 +39,20 @@ pub fn app_state() -> App {
         r.route().filter(pred::Not(pred::Get()))
          .f(|req| HttpResponse::MethodNotAllowed());
     })
+}
+
+// some simple handler, index, 404...
+// index handler
+fn index(req: &HttpRequest<AppState>) -> Result<HttpResponse> {
+    println!("{:?}", req);
+
+    // response
+    Ok(HttpResponse::build(StatusCode::OK)
+        .content_type("text/html; charset=utf-8")
+        .body(include_str!("../static/index.html")))
+}
+
+// 404 handler
+fn not_found(req: &HttpRequest<AppState>) -> Result<fs::NamedFile> {
+    Ok(fs::NamedFile::open("static/404.html")?.set_status_code(StatusCode::NOT_FOUND))
 }
