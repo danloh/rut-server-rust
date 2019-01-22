@@ -14,7 +14,9 @@ extern crate serde_derive;
 extern crate diesel;
 extern crate uuid;
 extern crate dotenv;
+extern crate chrono;
 extern crate num_cpus;
+extern crate bcrypt;
 
 use actix_web::{ server, actix::System };
 use std::{ env };

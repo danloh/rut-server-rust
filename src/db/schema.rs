@@ -1,7 +1,9 @@
-
 table! {
     users (id) {
-        id -> Text,
-        name -> Text,
+        id -> Varchar,
+        uname -> Text,
+        password -> Text,
+        join_at -> Timestamp,
+        avatar -> Text,
     }
 }
