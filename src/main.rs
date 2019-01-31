@@ -24,6 +24,8 @@ use std::{ env };
 mod router;
 mod db;
 mod api;
+mod model;
+mod handler;
 
 fn main() {
     env::set_var("RUST_LOG", "rut-server-rust=debug");

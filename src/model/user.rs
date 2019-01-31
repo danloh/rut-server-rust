@@ -3,7 +3,7 @@
 use db::schema::users;
 use actix_web::{ Error, actix::Message };
 use chrono::{Utc, NaiveDateTime};
-use db::model::msg::Msgs;
+use model::msg::Msgs;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Identifiable, Queryable)]
 pub struct User {

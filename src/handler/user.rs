@@ -1,8 +1,8 @@
 // handle user message
 
 use db::dba::Dba;
-use db::model::user::{ User, NewUser, CreateUser };
-use db::model::msg::Msgs;
+use model::user::{ User, NewUser, CreateUser };
+use model::msg::Msgs;
 use actix_web::{actix::Handler, error, Error};
 use diesel::{ self, QueryDsl, ExpressionMethods, RunQueryDsl, prelude::PgConnection };
 use bcrypt::{DEFAULT_COST, hash, verify};

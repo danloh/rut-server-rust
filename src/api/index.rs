@@ -6,7 +6,7 @@ use actix_web::{
 };
 use futures::Future;
 use router::AppState;
-use db::model::user::CreateUser;
+use model::user::CreateUser;
 
 pub fn hello((user, state): (Json<CreateUser>, State<AppState>)) -> FutureResponse<HttpResponse> {
     // send async `CreateUser` message to a `Dba` actor
