@@ -8,9 +8,9 @@ extern crate env_logger;
 extern crate futures;
 extern crate serde;
 extern crate serde_json;
-#[macro_use]
+#[macro_use] 
 extern crate serde_derive;
-#[macro_use]
+#[macro_use] 
 extern crate diesel;
 extern crate uuid;
 extern crate dotenv;
@@ -26,6 +26,7 @@ mod db;
 mod api;
 mod model;
 mod handler;
+mod util;
 
 fn main() {
     env::set_var("RUST_LOG", "rut-server-rust=debug");

@@ -9,7 +9,8 @@ use actix_web::{
     middleware::{self, cors::Cors},
 };
 use db::dba::{ Dba, init };
-use api::{index::hello};
+use api::index::{ hello };
+use api::rut::{ new_rut };
 
 pub struct AppState {
     pub db: Addr<Dba>,
@@ -25,6 +26,7 @@ pub fn app_with_state() -> App<AppState> {
         .max_age(3600)
         // register routes
         .resource("/api/home", |r| {})
+        .resource("/api/ruts", |r| {r.method(Method::POST).with(new_rut)})
         .register()
     )
     // static files

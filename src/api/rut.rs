@@ -8,14 +8,14 @@ use futures::Future;
 use router::AppState;
 use model::rut::CreateRut;
 
-pub fn new_rut((new_rut, state): (Json<CreateRut>, State<AppState>))
+pub fn new_rut((rut, state): (Json<CreateRut>, State<AppState>))
  -> FutureResponse<HttpResponse> {
     state.db.send(CreateRut {
-        title: new_rut.title,
-        url: new_rut.url,
-        content: new_rut.content,
-        user_id: new_rut.user_id,
-        user_intro: new_rut.user_intro,
+        title: rut.title.clone(),
+        url: rut.url.clone(),
+        content: rut.content.clone(),
+        user_id: rut.user_id.clone(),
+        user_intro: rut.user_intro.clone(),
     })
     .from_err().and_then(|res| match res {
         Ok(rut) => Ok(HttpResponse::Ok().json(rut)),

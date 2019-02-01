@@ -5,7 +5,6 @@ use model::rut::{ Rut, NewRut, CreateRut };
 use model::msg::Msgs;
 use actix_web::{actix::Handler, error, Error};
 use diesel::{ self, QueryDsl, ExpressionMethods, RunQueryDsl, prelude::PgConnection };
-use bcrypt::{DEFAULT_COST, hash, verify};
 use chrono::Utc;
 use uuid;
 

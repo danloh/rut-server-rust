@@ -4,3 +4,4 @@
 
 pub mod user;
 pub mod msg;
+pub mod rut;

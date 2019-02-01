@@ -5,8 +5,8 @@ use actix_web::{ Error, actix::Message };
 use chrono::{Utc, NaiveDateTime};
 use model::msg::Msgs;
 
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Queryable,QueryableByName)]
-#[table_name = "ruts"]
+#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Queryable)]
+// #[table_name="ruts"]
 pub struct Rut {
     pub id: String,
     pub title: String,
@@ -35,7 +35,7 @@ pub struct NewRut<'a> {
     pub star_count: i32,
 }
 
-#[derive(Deserialize,Serialize,Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CreateRut {
     pub title: String,
     pub url: String,

@@ -5,7 +5,7 @@ use actix_web::{ Error, actix::Message };
 use chrono::{Utc, NaiveDateTime};
 use model::msg::Msgs;
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Identifiable, Queryable)]
+#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
 #[table_name="users"]
 pub struct User {
     pub id: String,

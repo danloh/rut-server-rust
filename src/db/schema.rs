@@ -1,4 +1,19 @@
 table! {
+    ruts (id) {
+        id -> Varchar,
+        title -> Text,
+        url -> Nullable<Text>,
+        content -> Nullable<Text>,
+        create_at -> Timestamp,
+        user_id -> Varchar,
+        user_intro -> Nullable<Text>,
+        item_count -> Int4,
+        comment_count -> Int4,
+        star_count -> Int4,
+    }
+}
+
+table! {
     users (id) {
         id -> Varchar,
         uname -> Text,
@@ -8,17 +23,7 @@ table! {
     }
 }
 
-table! {
-    ruts (id) {
-        id -> Varchar,
-        title -> Text,
-        url -> Text,
-        content -> Text,
-        join_at -> Timestamp,
-        user_id -> Text,
-        user_intro -> Text,
-        item_count -> i32,
-        comment_count -> i32,
-        star_count -> i32,
-    }
-}
+allow_tables_to_appear_in_same_query!(
+    ruts,
+    users,
+);
