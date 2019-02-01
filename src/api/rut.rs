@@ -10,6 +10,7 @@ use model::rut::CreateRut;
 
 pub fn new_rut((rut, state): (Json<CreateRut>, State<AppState>))
  -> FutureResponse<HttpResponse> {
+    println!("new_rut, recv!");
     state.db.send(CreateRut {
         title: rut.title.clone(),
         url: rut.url.clone(),
