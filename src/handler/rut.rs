@@ -20,6 +20,7 @@ impl Handler<CreateRut> for Dba {
         let new_rut = NewRut {
             id: &uuid,
             title: &new_rut.title,
+            url: &new_rut.url,
             content: &new_rut.content,
             user_id: &new_rut.user_id,
             user_intro: &new_rut.user_intro,

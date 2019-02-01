@@ -12,6 +12,7 @@ table! {
     ruts (id) {
         id -> Varchar,
         title -> Text,
+        url -> Text,
         content -> Text,
         join_at -> Timestamp,
         user_id -> Text,

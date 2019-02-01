@@ -10,6 +10,7 @@ use model::msg::Msgs;
 pub struct Rut {
     pub id: String,
     pub title: String,
+    pub url: String,
     pub content: String,
     pub create_at: NaiveDateTime,
     pub user_id: String,
@@ -24,6 +25,7 @@ pub struct Rut {
 pub struct NewRut<'a> {
     pub id: &'a str,
     pub title: &'a str,
+    pub url: &'a str,
     pub content: &'a str,
     pub create_at: NaiveDateTime,
     pub user_id: &'a str,
@@ -36,6 +38,7 @@ pub struct NewRut<'a> {
 #[derive(Deserialize,Serialize,Debug)]
 pub struct CreateRut {
     pub title: String,
+    pub url: String,
     pub content: String,
     pub user_id: String,
     pub user_intro: String,

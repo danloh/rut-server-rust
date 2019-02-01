@@ -12,6 +12,7 @@ pub fn new_rut((new_rut, state): (Json<CreateRut>, State<AppState>))
  -> FutureResponse<HttpResponse> {
     state.db.send(CreateRut {
         title: new_rut.title,
+        url: new_rut.url,
         content: new_rut.content,
         user_id: new_rut.user_id,
         user_intro: new_rut.user_intro,
