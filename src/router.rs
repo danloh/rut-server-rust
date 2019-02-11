@@ -19,14 +19,18 @@ pub struct AppState {
 pub fn app_with_state() -> App<AppState> {
     App::with_state(AppState{ db: init().clone()})
     // enable logger
-    .middleware(middleware::Logger::default())        
-    // register simple route, handle all methods
-    .resource("/", |r| r.f(index))
+    .middleware(middleware::Logger::default())
+    .prefix("/api")
+    // config resource, router, REST-style 
     .configure( |app| Cors::for_app(app)
         .max_age(3600)
+        .resource("/ruts/index", |r| {r.get().with(hello)})  // to be del
         // register routes
-        .resource("/api/home", |r| {})
-        .resource("/api/ruts", |r| {r.method(Method::POST).with(new_rut)})
+        .resource("/home", |r| {})
+        .resource("/ruts", |r| {
+            // r.get().f();
+            r.post().with(new_rut);
+        })
         .register()
     )
     // static files
@@ -35,15 +39,4 @@ pub fn app_with_state() -> App<AppState> {
     .resource("/", |r| { /* todo: redirect */ })
     // default
     .default_resource(|r| { /* todo: default, for 404, etc. */ })
-}
-
-
-// index handler, just for try
-fn index(req: &HttpRequest<AppState>) -> Result<HttpResponse> {
-    println!("{:?}", req);
-
-    // response
-    Ok(HttpResponse::build(StatusCode::OK)
-        .content_type("text/html; charset=utf-8")
-        .body(include_str!("../static/index.html")))
 }
