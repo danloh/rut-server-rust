@@ -1,6 +1,9 @@
-// db handler mod
+// msg handler mod
 
-// db actor handler, handle the msg from view handler(api mod)
+// msg handler, 
+// handle the msg from view handler(api mod)
+// comm with db
+// send back he result
 
 pub mod user;
 pub mod rut;

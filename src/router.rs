@@ -10,7 +10,7 @@ use actix_web::{
 };
 use db::dba::{ Dba, init };
 use api::index::{ hello };
-use api::rut::{ new_rut };
+use api::rut::{ new_rut, get_rut, get_rut_list };
 
 pub struct AppState {
     pub db: Addr<Dba>,
@@ -24,12 +24,17 @@ pub fn app_with_state() -> App<AppState> {
     // config resource, router, REST-style 
     .configure( |app| Cors::for_app(app)
         .max_age(3600)
-        .resource("/ruts/index", |r| {r.get().with(hello)})  // to be del
-        // register routes
+        .resource("/ruts/index", |r| {r.get().with(hello)}) 
         .resource("/home", |r| {})
         .resource("/ruts", |r| {
             // r.get().f();
             r.post().with(new_rut);
+        })
+        .resource("/ruts/{rid}", |r| {
+            r.get().with(get_rut);
+        })
+        .resource("/ruts/{type:[0|1|2]}/{tid}", |r| { // Type: 0- user, 1- item, 2- index
+            r.get().with(get_rut_list);
         })
         .register()
     )
