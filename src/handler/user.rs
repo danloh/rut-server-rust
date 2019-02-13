@@ -1,13 +1,14 @@
 // handle user message
 
 use db::dba::Dba;
-use model::user::{ User, NewUser, CreateUser };
-use model::msg::Msgs;
 use actix_web::{actix::Handler, error, Error};
 use diesel::{ self, QueryDsl, ExpressionMethods, RunQueryDsl, prelude::PgConnection };
 use bcrypt::{DEFAULT_COST, hash, verify};
 use chrono::Utc;
 use uuid;
+
+use model::user::{ User, NewUser, CreateUser };
+use model::msg::Msgs;
 
 impl Handler<CreateUser> for Dba {
     type Result = Result<Msgs, Error>;

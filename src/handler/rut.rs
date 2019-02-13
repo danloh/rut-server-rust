@@ -1,19 +1,22 @@
 // rut msg handler
 
 use db::dba::Dba;
-use model::rut::{ Rut, NewRut, CreateRut, RutID, RutListType };
-use model::msg::{ Msgs, RutMsgs, RutListMsgs };
 use actix_web::{actix::Handler, error, Error};
-use diesel::{ self, QueryDsl, ExpressionMethods, RunQueryDsl, prelude::PgConnection };
+use diesel::{ self, QueryDsl, ExpressionMethods, RunQueryDsl };
 use chrono::Utc;
 use uuid;
+
+use model::rut::{ Rut, NewRut, CreateRut, RutID, RutListType };
+use model::msg::{ Msgs, RutMsgs, RutListMsgs };
 
 // handle msg from api::new_rut
 impl Handler<CreateRut> for Dba {
     type Result = Result<RutMsgs, Error>;
 
     fn handle(&mut self, new_rut: CreateRut, _: &mut Self::Context) -> Self::Result {
+        // import table, column
         use db::schema::ruts::dsl::*;
+        // retrieve a connecion from pool
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
         
         let uuid = format!("{}", uuid::Uuid::new_v4());

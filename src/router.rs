@@ -3,9 +3,7 @@
 #![cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 
 use actix_web::{
-    App, fs, pred, actix::Addr,
-    HttpRequest, HttpResponse, Result,
-    http::{self, header, Method, StatusCode},
+    App, actix::Addr, fs,
     middleware::{self, cors::Cors},
 };
 use db::dba::{ Dba, init };
