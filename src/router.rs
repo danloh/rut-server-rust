@@ -9,7 +9,6 @@ use actix_web::{
     middleware::{self, cors::Cors},
 };
 use db::dba::{ Dba, init };
-use api::index::{ hello };
 use api::rut::{ new_rut, get_rut, get_rut_list };
 
 pub struct AppState {
@@ -24,7 +23,6 @@ pub fn app_with_state() -> App<AppState> {
     // config resource, router, REST-style 
     .configure( |app| Cors::for_app(app)
         .max_age(3600)
-        .resource("/ruts/index", |r| {r.get().with(hello)}) 
         .resource("/home", |r| {})
         .resource("/ruts", |r| {
             // r.get().f();

@@ -29,22 +29,15 @@ impl Handler<CreateRut> for Dba {
             comment_count: 0,
             star_count: 0,
         };
-        diesel::insert_into(ruts).values(&new_rut).execute(conn)
-                                .map_err(error::ErrorInternalServerError)?;
-        let rut_query = ruts.filter(&id.eq(&uuid)).load::<Rut>(conn)
-                        .map_err(error::ErrorInternalServerError)?.pop();
-        let mut new_r = Rut::new(); 
-        match rut_query {
-            Some(rut) => {
-                new_r = rut.clone();
-            },
-            None => { println!("No Result"); },
-        }
-    
+        let rut_new = diesel::insert_into(ruts)
+            .values(&new_rut)
+            .get_result::<Rut>(conn)
+            .map_err(error::ErrorInternalServerError)?;
+
         Ok( RutMsgs { 
             status: 200, 
             message: "Success".to_string(),
-            rut: new_r,
+            rut: rut_new.clone(),
         })
     }
 }
@@ -57,8 +50,9 @@ impl Handler<RutID> for Dba {
         use db::schema::ruts::dsl::*;
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
 
-        let rut_query = ruts.filter(&id.eq(&rid.rut_id)).load::<Rut>(conn)
-                        .map_err(error::ErrorInternalServerError)?.pop();
+        let rut_query = ruts.filter(&id.eq(&rid.rut_id))
+            .load::<Rut>(conn)
+            .map_err(error::ErrorInternalServerError)?.pop();
         let mut rut = Rut::new(); 
         match rut_query {
             Some(r_q) => {
@@ -88,10 +82,10 @@ impl Handler<RutListType> for Dba {
         
         // build id_list per query type
         match list_type {
-            RutListType::Index(_) => { 
-                id_list.push(String::from("2bs"));
-                id_list.push(String::from("1af"));                     // todo
-                id_list.push(String::from("2bsgh"));
+            RutListType::Index(_) => {
+                id_list = ruts.select(id).order(id.desc()).limit(20)
+                    .load::<String>(conn)
+                    .map_err(error::ErrorInternalServerError)?;
             },
             RutListType::UserID(u) => { println!("userid is {}", u); }, // todo
             RutListType::ItemID(i) => { println!("itemid is {}", i); }, // todo

@@ -14,7 +14,9 @@ pub struct Rut {
     pub url: String,
     pub content: String,
     pub create_at: NaiveDateTime,
-    pub user_id: String,
+    // pub renew_at: NaiveDateTime, // todo
+    // pub orig_author: String,
+    pub user_id: String,      // as postor
     pub user_intro: String,
     pub item_count: i32,
     pub comment_count: i32,
