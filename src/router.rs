@@ -7,6 +7,7 @@ use actix_web::{
     middleware::{self, cors::Cors},
 };
 use db::dba::{ Dba, init };
+use api::auth::{ signup, signin };
 use api::rut::{ new_rut, get_rut, get_rut_list };
 
 pub struct AppState {
@@ -17,11 +18,17 @@ pub fn app_with_state() -> App<AppState> {
     App::with_state(AppState{ db: init().clone()})
     // enable logger
     .middleware(middleware::Logger::default())
-    .prefix("/api")
-    // config resource, router, REST-style 
-    .configure( |app| Cors::for_app(app)
-        .max_age(3600)
+    // enable cors 
+    .middleware(Cors::default())
+    // config resource, router, REST-style, under '/api/'
+    .scope("/api", |api| { api
         .resource("/home", |r| {})
+        .resource("/signup", |r| { 
+            r.post().with(signup); 
+        })
+        .resource("/signin", |r| { 
+            r.post().with(signin); 
+        })
         .resource("/ruts", |r| {
             // r.get().f();
             r.post().with(new_rut);
@@ -32,10 +39,10 @@ pub fn app_with_state() -> App<AppState> {
         .resource("/ruts/{type:[0|1|2]}/{tid}", |r| { // Type: 0- user, 1- item, 2- index
             r.get().with(get_rut_list);
         })
-        .register()
-    )
-    // static files
-    .handler("/static", fs::StaticFiles::new("static").unwrap())
+    })
+    // or: /* .prefix("/api").configure( |app| { Cors::for_app(app).max_age(3600) }) */
+    // handle static files
+    .handler("/static", fs::StaticFiles::new("./static/").unwrap().index_file("index.html"))
     // redirect
     .resource("/", |r| { /* todo: redirect */ })
     // default

@@ -2,7 +2,7 @@
 
 use actix_web::{ 
     HttpResponse, HttpRequest, FutureResponse, AsyncResponder,
-    Error, Json, State, Result 
+    Error, Json, State
 };
 use futures::Future;
 use router::AppState;
@@ -31,10 +31,9 @@ pub fn get_rut(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
         RutID{rut_id}
     )
     .from_err().and_then(|res| match res {
-            Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
-            Err(_) => Ok(HttpResponse::InternalServerError().into()),
-        }
-    )
+        Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
+        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+    })
     .responder()
 }
 

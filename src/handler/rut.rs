@@ -9,7 +9,7 @@ use uuid;
 use model::rut::{ Rut, NewRut, CreateRut, RutID, RutListType };
 use model::msg::{ Msgs, RutMsgs, RutListMsgs };
 
-// handle msg from api::new_rut
+// handle msg from api::rut.new_rut
 impl Handler<CreateRut> for Dba {
     type Result = Result<RutMsgs, Error>;
 
@@ -45,7 +45,7 @@ impl Handler<CreateRut> for Dba {
     }
 }
 
-// handle msg from api::get_rut
+// handle msg from api::rut.get_rut
 impl Handler<RutID> for Dba {
     type Result = Result<RutMsgs, Error>;
 
@@ -72,7 +72,7 @@ impl Handler<RutID> for Dba {
     }
 }
 
-// handle msg from api::get_rut_list
+// handle msg from api::rut.get_rut_list
 impl Handler<RutListType> for Dba {
     type Result = Result<RutListMsgs, Error>;
 

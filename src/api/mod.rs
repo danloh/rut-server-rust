@@ -11,4 +11,5 @@
 // actor: db, s-r-h;  
 
 pub mod index;
+pub mod auth;
 pub mod rut;

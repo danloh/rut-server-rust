@@ -1,12 +1,22 @@
 // Result msg struct in response
 
 use model::rut::Rut;
+use model::user::User;
 
 // general response msg struct
 #[derive(Deserialize,Serialize,Debug)]
 pub struct Msgs {
     pub status: i32,
     pub message: String,
+}
+
+// msg for login
+#[derive(Deserialize,Serialize,Debug)]
+pub struct LoginMsgs {
+    pub status: i32,
+    pub message: String,
+    pub token: String,
+    pub login_user: User,
 }
 
 // result struct in response a rut 
