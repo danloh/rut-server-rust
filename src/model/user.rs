@@ -37,6 +37,16 @@ impl Message for SignUser {
     type Result = Result<Msgs, Error>;
 }
 
+// message to check username
+#[derive(Deserialize, Serialize, Debug)]
+pub struct CheckUser {
+    pub uname: String,
+}
+
+impl Message for CheckUser {
+    type Result = Result<Msgs, Error>;
+}
+
 // message to login user
 #[derive(Deserialize, Serialize, Debug)]
 pub struct LogUser {

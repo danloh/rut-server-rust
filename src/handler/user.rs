@@ -7,7 +7,7 @@ use bcrypt::{DEFAULT_COST, hash, verify};
 use chrono::Utc;
 use uuid;
 
-use model::user::{ User, NewUser, SignUser, LogUser };
+use model::user::{ User, NewUser, SignUser, LogUser, CheckUser };
 use model::msg::{ Msgs, LoginMsgs };
 
 // handle msg from api::auth.signup
@@ -24,7 +24,7 @@ impl Handler<SignUser> for Dba {
         match check_user {
             Some(user) => {
                 Ok( Msgs {
-                    status: 400,
+                    status: 409,
                     message: "Duplicated".to_string(),
                 })
             },
@@ -62,6 +62,30 @@ impl Handler<SignUser> for Dba {
     }
 }
 
+impl Handler<CheckUser> for Dba {
+    type Result = Result<Msgs, Error>;
+
+    fn handle(&mut self, msg: CheckUser, _: &mut Self::Context) -> Self::Result {
+        use db::schema::users::dsl::*;
+        let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
+
+        let check_user = users.filter(&uname.eq(&msg.uname))
+            .load::<User>(conn)
+            .map_err(error::ErrorInternalServerError)?.pop();
+
+        if let Some(u) = check_user {
+            return Ok(Msgs { 
+                        status: 409,
+                        message : "Occupied".to_string(),
+                    });
+        }
+        Ok(Msgs { 
+            status: 200,
+            message : "Bingo".to_string(),
+        })
+    }
+}
+
 // handle msg from api::auth.signin
 impl Handler<LogUser> for Dba {
     type Result = Result<LoginMsgs, Error>;
@@ -81,7 +105,8 @@ impl Handler<LogUser> for Dba {
                             status: 200,
                             message: "Success".to_string(),
                             token: "".to_string(),
-                            login_user: login_user,
+                            exp: 5,  // unit: day
+                            user: login_user,
                         })
                     },
                     Err(_) => {
@@ -89,7 +114,8 @@ impl Handler<LogUser> for Dba {
                             status: 500,
                             message: "Somehing Wrong".to_string(),
                             token: "".to_string(),
-                            login_user: lg_user,
+                            exp: 0,
+                            user: lg_user,
                         })
                     },
                 }
@@ -99,7 +125,8 @@ impl Handler<LogUser> for Dba {
                     status: 400,
                     message: "wrong password".to_string(),
                     token: "".to_string(),
-                    login_user: lg_user,
+                    exp: 0,
+                    user: lg_user,
                 })
             }
         }

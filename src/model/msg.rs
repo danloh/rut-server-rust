@@ -16,7 +16,8 @@ pub struct LoginMsgs {
     pub status: i32,
     pub message: String,
     pub token: String,
-    pub login_user: User,
+    pub exp: i32,
+    pub user: User,
 }
 
 // result struct in response a rut 

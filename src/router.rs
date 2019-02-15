@@ -7,7 +7,7 @@ use actix_web::{
     middleware::{self, cors::Cors},
 };
 use db::dba::{ Dba, init };
-use api::auth::{ signup, signin };
+use api::auth::{ signup, signin, check_user };
 use api::rut::{ new_rut, get_rut, get_rut_list };
 
 pub struct AppState {
@@ -25,6 +25,9 @@ pub fn app_with_state() -> App<AppState> {
         .resource("/home", |r| {})
         .resource("/signup", |r| { 
             r.post().with(signup); 
+        })
+        .resource("/checkuser/{uname}", |r| { 
+            r.get().with(check_user); 
         })
         .resource("/signin", |r| { 
             r.post().with(signin); 
