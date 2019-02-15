@@ -1,7 +1,7 @@
 // Result msg struct in response
 
 use model::rut::Rut;
-use model::user::User;
+use model::user::{User, CheckUser};
 
 // general response msg struct
 #[derive(Deserialize,Serialize,Debug)]
@@ -17,7 +17,7 @@ pub struct LoginMsgs {
     pub message: String,
     pub token: String,
     pub exp: i32,
-    pub user: User,
+    pub user: CheckUser,
 }
 
 // result struct in response a rut 

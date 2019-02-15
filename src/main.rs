@@ -1,5 +1,5 @@
 #![allow(warnings)]
-#![allow(unused_variables)]
+// #![allow(unused_variables)]
 #![cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 
 extern crate actix;
@@ -17,6 +17,7 @@ extern crate dotenv;
 extern crate chrono;
 extern crate num_cpus;
 extern crate bcrypt;
+extern crate jsonwebtoken as jwt;
 
 use actix_web::{ server, actix::System };
 use std::{ env };

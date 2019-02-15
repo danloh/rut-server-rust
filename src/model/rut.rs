@@ -6,8 +6,8 @@ use chrono::{Utc, NaiveDateTime};
 use model::msg::{ Msgs, RutMsgs, RutListMsgs };
 
 // use to build select query
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Queryable)]
-// #[table_name="ruts"]
+#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
+#[table_name="ruts"]
 pub struct Rut {
     pub id: String,
     pub title: String,

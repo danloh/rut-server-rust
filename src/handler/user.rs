@@ -1,13 +1,18 @@
 // handle user message
 
 use db::dba::Dba;
-use actix_web::{actix::Handler, error, Error};
+use actix_web::{ 
+    actix::Handler, error, Error,
+    FromRequest, HttpRequest, middleware::identity::RequestIdentity 
+};
 use diesel::{ self, QueryDsl, ExpressionMethods, RunQueryDsl, prelude::PgConnection };
 use bcrypt::{DEFAULT_COST, hash, verify};
+use jwt::{decode, encode, Header, Validation, Algorithm};
 use chrono::Utc;
 use uuid;
+use dotenv;
 
-use model::user::{ User, NewUser, SignUser, LogUser, CheckUser };
+use model::user::{ User, NewUser, SignUser, LogUser, CheckUser, Claims };
 use model::msg::{ Msgs, LoginMsgs };
 
 // handle msg from api::auth.signup
@@ -31,12 +36,13 @@ impl Handler<SignUser> for Dba {
             None => {
                 if &msg.password == &msg.confirm_password {
                     use db::schema::users::dsl::*;
-                    let hash_password = match hash(&msg.password, DEFAULT_COST) {
-                        Ok(h) => h,
-                        Err(_) => panic!()
-                    };
+                    // hash password
+                    let hash_password = hash(&msg.password, DEFAULT_COST)
+                            .map_err(error::ErrorInternalServerError)?;
+                    // generae uuid as user.id
                     let uuid = format!("{}", uuid::Uuid::new_v4());
                     let avatar_url = "http://www.gravatar.com/avatar/1".to_string();
+                    // prepare insertable data struct as insert_into.value
                     let new_user = NewUser {
                         id: &uuid,
                         uname: &msg.uname,
@@ -86,7 +92,7 @@ impl Handler<CheckUser> for Dba {
     }
 }
 
-// handle msg from api::auth.signin
+// handle msg from api::auth.signin, auth psw
 impl Handler<LogUser> for Dba {
     type Result = Result<LoginMsgs, Error>;
 
@@ -96,17 +102,24 @@ impl Handler<LogUser> for Dba {
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
         let mut login_user = users.filter(&uname.eq(&log_user.uname)).load::<User>(conn)
                                   .map_err(error::ErrorInternalServerError)?.pop();
-        let lg_user = User::new();
+        let lg_user = User::new("","");
         match login_user {
             Some(mut login_user) => {
                 match verify(&log_user.password, &login_user.password) {
                     Ok(valid) => {
+                        // generate token
+                        let claims = Claims::new(&login_user.id);
+                        let secret_key: String = dotenv::var("SECRET_KEY")
+                                                .expect("AHaRdGuESsSeCREkY");
+                        let token = encode(&Header::default(), &claims, secret_key.as_ref())
+                                    .map_err(error::ErrorInternalServerError)?;
+
                         Ok(LoginMsgs {
                             status: 200,
                             message: "Success".to_string(),
-                            token: "".to_string(),
+                            token: token,
                             exp: 5,  // unit: day
-                            user: login_user,
+                            user: login_user.into(),
                         })
                     },
                     Err(_) => {
@@ -130,5 +143,27 @@ impl Handler<LogUser> for Dba {
                 })
             }
         }
+    }
+}
+
+// auth token ??
+pub fn decode_token(token: &str) -> Result<CheckUser, Error> {
+    let secret_key: String = dotenv::var("SECRET_KEY")
+                    .expect("AHaRdGuESsSeCREkY");
+    decode::<Claims>(token, secret_key.as_ref(), &Validation::default())
+        .map(|data| Ok(data.claims.into()))
+        .map_err(error::ErrorUnauthorized)?
+}
+// ??
+impl<S> FromRequest<S> for CheckUser {
+    type Config = ();
+    type Result = Result<CheckUser, Error>;
+    fn from_request(req: &HttpRequest<S>, _: &Self::Config) -> Self::Result {
+        println!("From: {:?}", req); 
+        if let Some(identity) = req.identity() {
+            let user: CheckUser = decode_token(&identity)?;
+            return Ok(user);
+        }
+        Ok(User::new("",""))
     }
 }

@@ -1,5 +1,4 @@
 #![allow(warnings)]
-#![allow(unused_variables)]
 #![cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 
 use actix_web::{
@@ -7,7 +6,7 @@ use actix_web::{
     middleware::{self, cors::Cors},
 };
 use db::dba::{ Dba, init };
-use api::auth::{ signup, signin, check_user };
+use api::auth::{ signup, signin, check_user, auth_token };
 use api::rut::{ new_rut, get_rut, get_rut_list };
 
 pub struct AppState {
@@ -30,7 +29,8 @@ pub fn app_with_state() -> App<AppState> {
             r.get().with(check_user); 
         })
         .resource("/signin", |r| { 
-            r.post().with(signin); 
+            r.post().with(signin);
+            r.get().with(auth_token); 
         })
         .resource("/ruts", |r| {
             // r.get().f();

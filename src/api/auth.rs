@@ -6,11 +6,11 @@ use actix_web::{
 };
 use futures::Future;
 use router::AppState;
-use model::user::{ SignUser, LogUser, CheckUser };
+use model::user::{ User, SignUser, LogUser, CheckUser };
 
 pub fn signup((sign_user, state): (Json<SignUser>, State<AppState>))
  -> FutureResponse<HttpResponse> {
-    //println!("{:?}", sign_user); 
+    println!("{:?}", sign_user); 
     state.db.send(SignUser{
         uname: sign_user.uname.clone(),
         password: sign_user.password.clone(),
@@ -25,7 +25,7 @@ pub fn signup((sign_user, state): (Json<SignUser>, State<AppState>))
 
 pub fn check_user(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
     let uname = String::from(req.match_info().get("uname").unwrap());
-    req.state().db.send(CheckUser{uname})
+    req.state().db.send(User::new("", &uname))
     .from_err().and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
         Err(_) => Ok(HttpResponse::InternalServerError().into())
@@ -45,4 +45,9 @@ pub fn signin((log_user, state, req): (Json<LogUser>, State<AppState>, HttpReque
         Err(_) => Ok(HttpResponse::InternalServerError().into())
     })
     .responder()
+}
+
+// ??
+pub fn auth_token(user: CheckUser) -> HttpResponse {
+    HttpResponse::Ok().json(user)
 }
