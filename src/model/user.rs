@@ -13,6 +13,8 @@ pub struct User {
     pub password: String,
     pub join_at: NaiveDateTime,
     pub avatar: String,
+    pub email: String,
+    pub intro: String,
 }
 
 // User's constructor
@@ -23,6 +25,8 @@ impl User {
             uname: uname.to_owned(),
             join_at: Utc::now().naive_utc(),
             avatar: "".to_owned(),
+            email: "".to_owned(),
+            intro: "".to_owned(),
         }
     }
 }
@@ -35,6 +39,8 @@ pub struct NewUser<'a> {
     pub password: &'a str,
     pub join_at: NaiveDateTime,
     pub avatar: &'a str,
+    pub email: &'a str,
+    pub intro: &'a str,
 }
 
 // message to check username, or return as user info
@@ -45,6 +51,8 @@ pub struct CheckUser {
     pub uname: String,
     pub join_at: NaiveDateTime,
     pub avatar: String,
+    pub email: String,
+    pub intro: String,
 }
 
 impl Message for CheckUser {
@@ -58,6 +66,8 @@ impl From<User> for CheckUser {
             uname: user.uname,
             join_at: user.join_at,
             avatar: user.avatar,
+            email: user.email,
+            intro: user.intro,
         }
     }
 }
@@ -67,8 +77,10 @@ impl From<Claims> for CheckUser {
         CheckUser {
             id: claims.uid,
             uname: "".to_owned(),
-            join_at: Utc::now().naive_utc(),
+            join_at: Utc::now().naive_utc(), // ??
             avatar: "".to_owned(),
+            email: "".to_owned(),
+            intro: "".to_owned(),
         }
     }
 }

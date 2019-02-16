@@ -16,7 +16,7 @@ pub fn new_rut((rut, state): (Json<CreateRut>, State<AppState>))
         url: rut.url.clone(),
         content: rut.content.clone(),
         user_id: rut.user_id.clone(),
-        user_intro: rut.user_intro.clone(), 
+        credential: rut.credential.clone(), 
     })
     .from_err().and_then(|res| match res {
         Ok(rut) => Ok(HttpResponse::Ok().json(rut)),

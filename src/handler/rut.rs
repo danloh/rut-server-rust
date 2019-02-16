@@ -26,8 +26,10 @@ impl Handler<CreateRut> for Dba {
             url: &new_rut.url,
             content: &new_rut.content,
             user_id: &new_rut.user_id,
-            user_intro: &new_rut.user_intro,
+            author_id: &new_rut.user_id,  // ??
+            credential: &new_rut.credential,
             create_at: Utc::now().naive_utc(),
+            renew_at: Utc::now().naive_utc(),
             item_count: 0,
             comment_count: 0,
             star_count: 0,

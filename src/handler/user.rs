@@ -49,6 +49,8 @@ impl Handler<SignUser> for Dba {
                         password: &hash_password,
                         join_at: Utc::now().naive_utc(),
                         avatar: &avatar_url,
+                        email: "",
+                        intro: "",
                     };
                     diesel::insert_into(users)
                         .values(&new_user).execute(conn)

@@ -14,10 +14,10 @@ pub struct Rut {
     pub url: String,
     pub content: String,
     pub create_at: NaiveDateTime,
-    // pub renew_at: NaiveDateTime, // todo
-    // pub orig_author: String,
-    pub user_id: String,      // as postor
-    pub user_intro: String,
+    pub renew_at: NaiveDateTime,
+    pub author_id: String,
+    pub user_id: String,      // as who post
+    pub credential: String,
     pub item_count: i32,
     pub comment_count: i32,
     pub star_count: i32,
@@ -32,8 +32,10 @@ pub struct NewRut<'a> {
     pub url: &'a str,
     pub content: &'a str,
     pub create_at: NaiveDateTime,
+    pub renew_at: NaiveDateTime,
+    pub author_id: &'a str,
     pub user_id: &'a str,
-    pub user_intro: &'a str,
+    pub credential: &'a str,
     pub item_count: i32,
     pub comment_count: i32,
     pub star_count: i32,
@@ -46,7 +48,7 @@ pub struct CreateRut {
     pub url: String,
     pub content: String,
     pub user_id: String,
-    pub user_intro: String,
+    pub credential: String,
 }
 
 impl Message for CreateRut {
@@ -84,8 +86,10 @@ impl Rut {
             url: "".to_owned(),
             content: "".to_owned(),
             create_at: Utc::now().naive_utc(),
+            renew_at: Utc::now().naive_utc(),
             user_id: "".to_owned(),
-            user_intro: "".to_owned(),
+            author_id: "".to_owned(),
+            credential: "".to_owned(),
             item_count: 0,
             comment_count: 0,
             star_count: 0,
