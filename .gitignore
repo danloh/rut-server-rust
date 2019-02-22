@@ -1,0 +1,10 @@
+.DS_Store
+
+/target
+**/*.rs.bk
+.env
+
+migrations
+Cargo.lock
+
+static/index.html

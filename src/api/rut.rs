@@ -7,15 +7,17 @@ use actix_web::{
 use futures::Future;
 use router::AppState;
 use model::rut::{ CreateRut, RutID, RutListType };
+use model::user::{ CheckUser };
 
-pub fn new_rut((rut, state): (Json<CreateRut>, State<AppState>))
+pub fn new_rut((rut, state, user): (Json<CreateRut>, State<AppState>, CheckUser))
  -> FutureResponse<HttpResponse> {
     // println!("{:?}", rut);
+    // check authed via user:FromRequest
     state.db.send( CreateRut {
         title: rut.title.clone(),
         url: rut.url.clone(),
         content: rut.content.clone(),
-        user_id: rut.user_id.clone(),
+        user_id: user.id.clone(),     // extracted from request as user
         credential: rut.credential.clone(), 
     })
     .from_err().and_then(|res| match res {

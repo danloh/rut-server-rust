@@ -2,11 +2,12 @@
 
 use actix_web::{ 
     HttpResponse, HttpRequest, FutureResponse, AsyncResponder,
-    Error, Json, State
+    FromRequest, Error, error, Json, State
 };
 use futures::Future;
+use jwt::{decode, Validation};
 use router::AppState;
-use model::user::{ User, SignUser, LogUser, CheckUser };
+use model::user::{ User, SignUser, LogUser, CheckUser, Claims };
 
 pub fn signup((sign_user, state): (Json<SignUser>, State<AppState>))
  -> FutureResponse<HttpResponse> {
@@ -47,7 +48,30 @@ pub fn signin((log_user, state, req): (Json<LogUser>, State<AppState>, HttpReque
     .responder()
 }
 
-// ??
+// auth token
+pub fn decode_token(token: &str) -> Result<CheckUser, Error> {
+    let secret_key: String = dotenv::var("SECRET_KEY")
+                    .expect("AHaRdGuESsSeCREkY");
+    decode::<Claims>(token, secret_key.as_ref(), &Validation::default())
+        .map(|data| Ok(data.claims.into()))
+        .map_err(error::ErrorUnauthorized)?
+}
+
+impl<S> FromRequest<S> for CheckUser {
+    type Config = ();
+    type Result = Result<CheckUser, Error>;
+    fn from_request(req: &HttpRequest<S>, _: &Self::Config) -> Self::Result {
+        println!("From: {:?}", req); 
+        if let Some(auth_token) = req.headers().get("authorization") {
+            if let Ok(i) = auth_token.to_str() {
+               let user: CheckUser = decode_token(i)?;
+               return Ok(user);
+            }
+        }
+        Err(error::ErrorUnauthorized(401))
+    }
+}
+
 pub fn auth_token(user: CheckUser) -> HttpResponse {
     HttpResponse::Ok().json(user)
 }

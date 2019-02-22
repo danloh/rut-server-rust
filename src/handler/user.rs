@@ -2,12 +2,11 @@
 
 use db::dba::Dba;
 use actix_web::{ 
-    actix::Handler, error, Error,
-    FromRequest, HttpRequest, middleware::identity::RequestIdentity 
+    actix::Handler, error, Error
 };
 use diesel::{ self, QueryDsl, ExpressionMethods, RunQueryDsl, prelude::PgConnection };
 use bcrypt::{DEFAULT_COST, hash, verify};
-use jwt::{decode, encode, Header, Validation, Algorithm};
+use jwt::{decode, encode, Header, Validation};
 use chrono::Utc;
 use uuid;
 use dotenv;
@@ -145,27 +144,5 @@ impl Handler<LogUser> for Dba {
                 })
             }
         }
-    }
-}
-
-// auth token ??
-pub fn decode_token(token: &str) -> Result<CheckUser, Error> {
-    let secret_key: String = dotenv::var("SECRET_KEY")
-                    .expect("AHaRdGuESsSeCREkY");
-    decode::<Claims>(token, secret_key.as_ref(), &Validation::default())
-        .map(|data| Ok(data.claims.into()))
-        .map_err(error::ErrorUnauthorized)?
-}
-// ??
-impl<S> FromRequest<S> for CheckUser {
-    type Config = ();
-    type Result = Result<CheckUser, Error>;
-    fn from_request(req: &HttpRequest<S>, _: &Self::Config) -> Self::Result {
-        println!("From: {:?}", req); 
-        if let Some(identity) = req.identity() {
-            let user: CheckUser = decode_token(&identity)?;
-            return Ok(user);
-        }
-        Ok(User::new("",""))
     }
 }
