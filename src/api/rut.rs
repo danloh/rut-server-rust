@@ -18,6 +18,7 @@ pub fn new_rut((rut, state, user): (Json<CreateRut>, State<AppState>, CheckUser)
         url: rut.url.clone(),
         content: rut.content.clone(),
         user_id: user.id.clone(),     // extracted from request as user
+        author_id: rut.author_id.clone(),
         credential: rut.credential.clone(), 
     })
     .from_err().and_then(|res| match res {

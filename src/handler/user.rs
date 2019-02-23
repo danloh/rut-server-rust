@@ -1,12 +1,10 @@
 // handle user message
 
 use db::dba::Dba;
-use actix_web::{ 
-    actix::Handler, error, Error
-};
+use actix_web::{ actix::Handler, error, Error };
 use diesel::{ self, QueryDsl, ExpressionMethods, RunQueryDsl, prelude::PgConnection };
 use bcrypt::{DEFAULT_COST, hash, verify};
-use jwt::{decode, encode, Header, Validation};
+use jwt::{ encode, Header };
 use chrono::Utc;
 use uuid;
 use dotenv;

@@ -1,7 +1,7 @@
 // rut msg handler
 
 use db::dba::Dba;
-use actix_web::{actix::Handler, error, Error};
+use actix_web::{ actix::Handler, error, Error };
 use diesel::{ self, QueryDsl, ExpressionMethods, RunQueryDsl };
 use chrono::Utc;
 use uuid;
@@ -26,7 +26,7 @@ impl Handler<CreateRut> for Dba {
             url: &new_rut.url,
             content: &new_rut.content,
             user_id: &new_rut.user_id,
-            author_id: &new_rut.user_id,  // ??
+            author_id: &new_rut.author_id,
             credential: &new_rut.credential,
             create_at: Utc::now().naive_utc(),
             renew_at: Utc::now().naive_utc(),

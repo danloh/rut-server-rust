@@ -1,6 +1,7 @@
 // Result msg struct in response
 
 use model::rut::Rut;
+use model::item::Item;
 use model::user::{User, CheckUser};
 
 // general response msg struct
@@ -35,4 +36,12 @@ pub struct RutListMsgs {
     pub message: String,
     pub ruts: Vec<Rut>,
     pub count: usize,
+}
+
+// result struct in response an item 
+#[derive(Deserialize,Serialize,Debug)]
+pub struct ItemMsgs {
+    pub status: i32,
+    pub message: String,
+    pub item: Item,
 }

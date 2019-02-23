@@ -17,6 +17,7 @@ pub struct Rut {
     pub renew_at: NaiveDateTime,
     pub author_id: String,
     pub user_id: String,      // as who post
+    // pub user_name: String, // to do
     pub credential: String,
     pub item_count: i32,
     pub comment_count: i32,
@@ -24,7 +25,7 @@ pub struct Rut {
 }
 
 // use to build insert query
-#[derive(Serialize,Deserialize,Insertable,Debug,Clone)]
+#[derive(Debug,Clone,Serialize,Deserialize,Insertable)]
 #[table_name="ruts"]
 pub struct NewRut<'a> {
     pub id: &'a str,
@@ -48,6 +49,7 @@ pub struct CreateRut {
     pub url: String,
     pub content: String,
     pub user_id: String,
+    pub author_id: String,
     pub credential: String,
 }
 
