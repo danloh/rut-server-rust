@@ -8,7 +8,7 @@ use actix_web::{
 use db::dba::{ Dba, init };
 use api::auth::{ signup, signin, check_user, auth_token };
 use api::rut::{ new_rut, get_rut, get_rut_list };
-use api::item::{ submit_item, get_item };
+use api::item::{ submit_item, get_item, get_item_list, collect_item };
 
 pub struct AppState {
     pub db: Addr<Dba>,
@@ -42,11 +42,17 @@ pub fn app_with_state() -> App<AppState> {
         .resource("/ruts/{type:[0|1|2]}/{tid}", |r| { // Type: 0- user, 1- item, 2- index
             r.get().with(get_rut_list);
         })
+        .resource("/ruts/{rid}/collect", |r| {
+            r.post().with(collect_item);
+        })
         .resource("/items", |r| {
             r.post().with(submit_item);
         })
         .resource("/items/{itemid}", |r| {
             r.get().with(get_item);
+        })
+        .resource("/items/{per}/{itemid}", |r| {
+            r.get().with(get_item_list);
         })
     })
     // or: /* .prefix("/api").configure( |app| { Cors::for_app(app).max_age(3600) }) */

@@ -3,7 +3,7 @@
 use db::schema::{items, collects};
 use actix_web::{ Error, actix::Message };
 use chrono::{Utc, NaiveDateTime};
-use model::msg::{ Msgs, ItemMsgs };
+use model::msg::{ Msgs, ItemMsgs, ItemListMsgs, CollectMsgs };
 
 // use to build select query
 #[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
@@ -74,6 +74,19 @@ impl Message for ItemID {
     type Result = Result<ItemMsgs, Error>;
 }
 
+// as msg in query item list by id, uiid, title, ..
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub enum ItemIDs {
+    ID(String),
+    Uiid(String),
+    Title(String),
+    Url(String),
+}
+
+impl Message for ItemIDs {
+    type Result = Result<ItemListMsgs, Error>;
+}
+
 // Item's constructor
 impl Item {
     pub fn new() -> Self {
@@ -104,6 +117,35 @@ pub struct Collect {
     pub item_id: String,
     pub item_order: i32,
     pub content: String,
+    // pub spoiler: bool,  // to do
     pub creator_id: String,
     pub collect_at: NaiveDateTime,
+}
+
+#[derive(Debug,Clone,Serialize,Deserialize,Insertable)]
+#[table_name="collects"]
+pub struct NewCollect<'a> {
+    pub id: &'a str,
+    pub rut_id: &'a str,
+    pub item_id: &'a str,
+    pub item_order: i32,
+    pub content: &'a str,
+    // pub spoiler: bool,  // to do
+    pub creator_id: &'a str,
+    pub collect_at: NaiveDateTime,
+}
+
+// as msg in rut collect new item
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct CollectItem {
+    pub rut_id: String,
+    pub item_id: String,
+    pub item_order: i32,
+    pub content: String,
+    // pub spoiler: bool,  // to do
+    pub creator_id: String,
+}
+
+impl Message for CollectItem {
+    type Result = Result<CollectMsgs, Error>;
 }
