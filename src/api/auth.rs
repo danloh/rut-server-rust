@@ -61,7 +61,7 @@ impl<S> FromRequest<S> for CheckUser {
     type Config = ();
     type Result = Result<CheckUser, Error>;
     fn from_request(req: &HttpRequest<S>, _: &Self::Config) -> Self::Result {
-        println!("From: {:?}", req); 
+        println!("From Auth_Token: {:?}", req); 
         if let Some(auth_token) = req.headers().get("authorization") {
             if let Ok(i) = auth_token.to_str() {
                let user: CheckUser = decode_token(i)?;

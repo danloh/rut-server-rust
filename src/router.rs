@@ -7,7 +7,7 @@ use actix_web::{
 };
 use db::dba::{ Dba, init };
 use api::auth::{ signup, signin, check_user, auth_token };
-use api::rut::{ new_rut, get_rut, get_rut_list };
+use api::rut::{ new_rut, get_rut, get_rut_list, update_rut };
 use api::item::{ submit_item, get_item, get_item_list, collect_item };
 
 pub struct AppState {
@@ -38,6 +38,7 @@ pub fn app_with_state() -> App<AppState> {
         })
         .resource("/ruts/{rid}", |r| {
             r.get().with(get_rut);
+            r.post().with(update_rut);
         })
         .resource("/ruts/{type:[0|1|2]}/{tid}", |r| { // Type: 0- user, 1- item, 2- index
             r.get().with(get_rut_list);

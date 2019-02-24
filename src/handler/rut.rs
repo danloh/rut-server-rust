@@ -6,7 +6,7 @@ use diesel::{ self, QueryDsl, ExpressionMethods, RunQueryDsl };
 use chrono::Utc;
 use uuid;
 
-use model::rut::{ Rut, NewRut, CreateRut, RutID, RutListType };
+use model::rut::{ Rut, NewRut, CreateRut, RutID, RutListType, UpdateRut };
 use model::msg::{ Msgs, RutMsgs, RutListMsgs };
 
 // handle msg from api::rut.new_rut
@@ -114,6 +114,35 @@ impl Handler<RutListType> for Dba {
             message: "Success".to_string(),
             ruts: rut_list.clone(),
             count: rut_list.len(),
+        })
+    }
+}
+
+// handle msg from api::rut.update_rut
+impl Handler<UpdateRut> for Dba {
+    type Result = Result<RutMsgs, Error>;
+
+    fn handle(&mut self, rut: UpdateRut, _: &mut Self::Context) -> Self::Result {
+        use db::schema::ruts::dsl::*;
+        let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
+        
+        let rut_update = diesel::update(ruts)
+            .filter(&id.eq(&rut.id))
+            .set( &UpdateRut {
+                id: rut.id.clone(),
+                title: rut.title.clone(),
+                url: rut.url.clone(),
+                content: rut.content.clone(),
+                author_id: rut.author_id.clone(),
+                credential: rut.credential.clone(), 
+            })
+            .get_result::<Rut>(conn)
+            .map_err(error::ErrorInternalServerError)?;
+
+        Ok( RutMsgs { 
+            status: 200, 
+            message: "Success".to_string(),
+            rut: rut_update.clone(),
         })
     }
 }

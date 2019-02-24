@@ -6,7 +6,7 @@ use actix_web::{
 };
 use futures::Future;
 use router::AppState;
-use model::rut::{ CreateRut, RutID, RutListType };
+use model::rut::{ CreateRut, RutID, RutListType, UpdateRut };
 use model::user::{ CheckUser };
 
 pub fn new_rut((rut, state, user): (Json<CreateRut>, State<AppState>, CheckUser))
@@ -53,6 +53,23 @@ pub fn get_rut_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> 
 
     req.state().db.send(q_type).from_err().and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
+        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+    })
+    .responder()
+}
+
+pub fn update_rut((rut, state, user): (Json<UpdateRut>, State<AppState>, CheckUser))
+ -> FutureResponse<HttpResponse> {
+     state.db.send( UpdateRut {
+        id: rut.id.clone(),
+        title: rut.title.clone(),
+        url: rut.url.clone(),
+        content: rut.content.clone(),
+        author_id: rut.author_id.clone(),
+        credential: rut.credential.clone(), 
+    })
+    .from_err().and_then(|res| match res {
+        Ok(rut) => Ok(HttpResponse::Ok().json(rut)),
         Err(_) => Ok(HttpResponse::InternalServerError().into()),
     })
     .responder()

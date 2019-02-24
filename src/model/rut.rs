@@ -57,6 +57,22 @@ impl Message for CreateRut {
     type Result = Result<RutMsgs, Error>;
 }
 
+// as msg in update rut
+#[derive(Deserialize,Serialize,Debug,Clone,AsChangeset)]
+#[table_name="ruts"]
+pub struct UpdateRut {
+    pub id: String,
+    pub title: String,
+    pub url: String,
+    pub content: String,
+    pub author_id: String,
+    pub credential: String,
+}
+
+impl Message for UpdateRut {
+    type Result = Result<RutMsgs, Error>;
+}
+
 // as msg in select by id
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct RutID {
