@@ -7,7 +7,7 @@ use chrono::Utc;
 use uuid;
 
 use model::item::{
-    Item, NewItem, SubmitItem, ItemID, ItemIDs,
+    Item, NewItem, SubmitItem, UpdateItem, ItemID, ItemIDs,
     Collect, NewCollect, CollectItem 
 };
 use model::msg::{ Msgs, ItemMsgs, ItemListMsgs, CollectMsgs };
@@ -103,6 +103,40 @@ impl Handler<ItemIDs> for Dba {
     }
 }
 
+// handle msg from api::item.update_item
+impl Handler<UpdateItem> for Dba {
+    type Result = Result<ItemMsgs, Error>;
+
+    fn handle(&mut self, item: UpdateItem, _: &mut Self::Context) -> Self::Result {
+        use db::schema::items::dsl::*;
+        let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
+
+        let item_update = diesel::update(items)
+            .filter(&id.eq(&item.id))
+            .set( &UpdateItem{
+                id: item.id.clone(),
+                title: item.title.clone(),
+                uiid: item.uiid.clone(),
+                pub_at: item.pub_at.clone(),
+                authors: item.authors.clone(),
+                publisher: item.publisher.clone(),
+                category: item.category.clone(),
+                url: item.url.clone(),
+                cover: item.cover.clone(),
+                edition: item.edition.clone(), 
+                detail: item.detail.clone(),
+            })
+            .get_result::<Item>(conn)
+            .map_err(error::ErrorInternalServerError)?;
+
+        Ok( ItemMsgs { 
+            status: 200, 
+            message: "Updated".to_string(),
+            item: item_update.clone(),
+        })
+    }
+}
+
 // handle msg from api::item.collect_item
 impl Handler<CollectItem> for Dba {
     type Result = Result<CollectMsgs, Error>;
@@ -134,7 +168,7 @@ impl Handler<CollectItem> for Dba {
     
         Ok( CollectMsgs { 
             status: 200, 
-            message: "Success".to_string(),
+            message: "Collected".to_string(),
             rut_id: rutID.clone(),
             items: vec!(collect_new),
         })

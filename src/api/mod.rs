@@ -8,7 +8,7 @@
 // model: build msg and traited-table struct;  
 // view handler: handle request - send msg - response;  
 // msg handler: handle msg, comm with db, send back result;  
-// actor: db, s-r-h;  
+// actor: db, s-r-h;
 
 pub mod index;
 pub mod auth;

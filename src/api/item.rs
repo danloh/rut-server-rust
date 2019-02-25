@@ -6,7 +6,7 @@ use actix_web::{
 };
 use futures::Future;
 use router::AppState;
-use model::item::{ SubmitItem, ItemID, ItemIDs, CollectItem };
+use model::item::{ SubmitItem, UpdateItem, ItemID, ItemIDs, CollectItem };
 use model::user::{ CheckUser };
 
 pub fn submit_item((item, state, user): (Json<SubmitItem>, State<AppState>, CheckUser))
@@ -14,13 +14,13 @@ pub fn submit_item((item, state, user): (Json<SubmitItem>, State<AppState>, Chec
     state.db.send( SubmitItem {
         title: item.title.clone(),
         uiid: item.uiid.clone(),
-        pub_at: item.pub_at.clone(),  
+        pub_at: item.pub_at.clone(), 
         authors: item.authors.clone(),
         publisher: item.publisher.clone(),
-        category: item.category.clone(), 
+        category: item.category.clone(),
         url: item.url.clone(),
-        cover: item.cover.clone(),     
-        edition: item.edition.clone(), 
+        cover: item.cover.clone(), 
+        edition: item.edition.clone(),
         detail: item.detail.clone(),
     })
     .from_err().and_then(|res| match res {
@@ -61,6 +61,28 @@ pub fn get_item_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse>
     .responder()
 }
 
+pub fn update_item((item, state, user): (Json<UpdateItem>, State<AppState>, CheckUser))
+ -> FutureResponse<HttpResponse> {
+    state.db.send( UpdateItem {
+        id: item.id.clone(),
+        title: item.title.clone(),
+        uiid: item.uiid.clone(),
+        pub_at: item.pub_at.clone(),
+        authors: item.authors.clone(),
+        publisher: item.publisher.clone(),
+        category: item.category.clone(),
+        url: item.url.clone(),
+        cover: item.cover.clone(),  
+        edition: item.edition.clone(),
+        detail: item.detail.clone(),
+    })
+    .from_err().and_then(|res| match res {
+        Ok(item) => Ok(HttpResponse::Ok().json(item)),
+        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+    })
+    .responder()
+}
+
 pub fn collect_item((item, state, user): (Json<CollectItem>, State<AppState>, CheckUser))
  -> FutureResponse<HttpResponse> {
     state.db.send( CollectItem {
@@ -75,5 +97,4 @@ pub fn collect_item((item, state, user): (Json<CollectItem>, State<AppState>, Ch
         Err(_) => Ok(HttpResponse::InternalServerError().into()),
     })
     .responder()
- }
-
+}

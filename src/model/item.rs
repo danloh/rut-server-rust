@@ -45,7 +45,7 @@ pub struct NewItem<'a> {
     pub done_count: i32,  // num of who done
 }
 
-// as msg in create new
+// as msg in submit new item
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct SubmitItem {
     pub title: String,
@@ -61,6 +61,27 @@ pub struct SubmitItem {
 }
 
 impl Message for SubmitItem {
+    type Result = Result<ItemMsgs, Error>;
+}
+
+// as msg in update item
+#[derive(Deserialize,Serialize,Debug,Clone,AsChangeset)]
+#[table_name="items"]
+pub struct UpdateItem {
+    pub id: String,
+    pub title: String,
+    pub uiid: String,
+    pub pub_at: String, 
+    pub authors: String,
+    pub publisher: String,
+    pub category: String,
+    pub url: String,
+    pub cover: String,
+    pub edition: String,
+    pub detail: String,
+}
+
+impl Message for UpdateItem {
     type Result = Result<ItemMsgs, Error>;
 }
 

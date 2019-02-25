@@ -41,7 +41,7 @@ impl Handler<CreateRut> for Dba {
 
         Ok( RutMsgs { 
             status: 200, 
-            message: "Success".to_string(),
+            message: "Created".to_string(),
             rut: rut_new.clone(),
         })
     }
@@ -141,7 +141,7 @@ impl Handler<UpdateRut> for Dba {
 
         Ok( RutMsgs { 
             status: 200, 
-            message: "Success".to_string(),
+            message: "Updated".to_string(),
             rut: rut_update.clone(),
         })
     }
