@@ -6,7 +6,10 @@ use diesel::{ self, QueryDsl, ExpressionMethods, RunQueryDsl };
 use chrono::Utc;
 use uuid;
 
-use model::rut::{ Rut, NewRut, CreateRut, RutID, RutListType, UpdateRut };
+use model::rut::{
+    Rut, NewRut, CreateRut, RutID, RutListType, UpdateRut, 
+    StarRut, RutStar, StarOrRut
+};
 use model::msg::{ Msgs, RutMsgs, RutListMsgs };
 
 // handle msg from api::rut.new_rut
@@ -144,5 +147,49 @@ impl Handler<UpdateRut> for Dba {
             message: "Updated".to_string(),
             rut: rut_update.clone(),
         })
+    }
+}
+
+// handle msg from api::rut.star_unstar_rut
+impl Handler<StarOrRut> for Dba {
+    type Result = Result<Msgs, Error>;
+
+    fn handle(&mut self, action: StarOrRut, _: &mut Self::Context) -> Self::Result {
+        // use db::schema::ruts::dsl::*;
+        use db::schema::starruts::dsl::*;
+        let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
+        
+        match action.action {
+            1  => {
+                let uuid = format!("{}", uuid::Uuid::new_v4());
+                let new_star = RutStar {
+                    id: &uuid,
+                    user_id: &action.user_id,
+                    rut_id: &action.rut_id,
+                };
+                diesel::insert_into(starruts).values(&new_star)
+                        .execute(conn).map_err(error::ErrorInternalServerError)?;
+
+                Ok( Msgs { 
+                    status: 200, 
+                    message: "Satr".to_string(),
+                })
+            },
+            0 => {
+                diesel::delete(starruts.filter(id.eq(action.rut_id)))
+                        .execute(conn).map_err(error::ErrorInternalServerError)?;
+
+                Ok( Msgs { 
+                    status: 200, 
+                    message: "unSatr".to_string(),
+                })
+            },
+            _ =>  {
+                Ok( Msgs { 
+                    status: 400, 
+                    message: "Bad Request".to_string(),
+                })
+            },
+        }
     }
 }

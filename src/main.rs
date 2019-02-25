@@ -2,10 +2,9 @@
 // #![allow(unused_variables)]
 #![cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 
+extern crate futures;
 extern crate actix;
 extern crate actix_web;
-extern crate env_logger;
-extern crate futures;
 extern crate serde;
 extern crate serde_json;
 #[macro_use] 
@@ -13,11 +12,14 @@ extern crate serde_derive;
 #[macro_use] 
 extern crate diesel;
 extern crate uuid;
-extern crate dotenv;
 extern crate chrono;
 extern crate num_cpus;
 extern crate bcrypt;
 extern crate jsonwebtoken as jwt;
+extern crate dotenv;
+#[macro_use]
+extern crate log;
+extern crate env_logger;
 
 use actix_web::{ server, actix::System };
 use std::{ env };

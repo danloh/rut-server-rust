@@ -1,6 +1,6 @@
 // rut model
 
-use db::schema::ruts;
+use db::schema::{ ruts, starruts };
 use actix_web::{ Error, actix::Message };
 use chrono::{Utc, NaiveDateTime};
 use model::msg::{ Msgs, RutMsgs, RutListMsgs };
@@ -113,4 +113,33 @@ impl Rut {
             star_count: 0,
         }
     }
+}
+
+#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
+#[table_name="starruts"]
+pub struct StarRut {
+    pub id: String,
+    pub user_id: String,
+    pub rut_id: String,
+}
+
+// use to build insert query
+#[derive(Debug,Clone,Serialize,Deserialize,Insertable)]
+#[table_name="starruts"]
+pub struct RutStar<'a> {
+    pub id: &'a str,
+    pub user_id: &'a str,
+    pub rut_id: &'a str,
+}
+
+// as msg in star or unstar rut
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct StarOrRut {
+    pub rut_id: String,
+    pub user_id: String,
+    pub action: u8,  // 0- unstar, 1- star
+}
+
+impl Message for StarOrRut {
+    type Result = Result<Msgs, Error>;
 }

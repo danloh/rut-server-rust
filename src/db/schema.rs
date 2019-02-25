@@ -56,6 +56,22 @@ table! {
 }
 
 table! {
+    starruts (id) {
+        id -> Varchar,
+        user_id -> Varchar,
+        rut_id -> Varchar,
+    }
+}
+
+table! {
+    startags (id) {
+        id -> Varchar,
+        user_id -> Varchar,
+        tag_id -> Varchar,
+    }
+}
+
+table! {
     tagetcs (id) {
         id -> Varchar,
         tag_id -> Varchar,
@@ -110,6 +126,8 @@ allow_tables_to_appear_in_same_query!(
     etcs,
     items,
     ruts,
+    starruts,
+    startags,
     tagetcs,
     tagitems,
     tagruts,
