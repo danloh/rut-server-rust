@@ -59,20 +59,13 @@ impl Handler<RutID> for Dba {
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
 
         let rut_query = ruts.filter(&id.eq(&rid.rut_id))
-            .load::<Rut>(conn)
-            .map_err(error::ErrorInternalServerError)?.pop();
-        let mut rut = Rut::new(); 
-        match rut_query {
-            Some(r_q) => {
-                rut = r_q.clone();
-            },
-            None => { println!("No Result"); },
-        }
+            .get_result::<Rut>(conn)
+            .map_err(error::ErrorInternalServerError)?;
     
         Ok( RutMsgs { 
             status: 200, 
             message: "Success".to_string(),
-            rut: rut,
+            rut: rut_query.clone(),
         })
     }
 }
@@ -108,7 +101,7 @@ impl Handler<RutListType> for Dba {
                     rut = r_q.clone();
                     rut_list.push(rut);
                 },
-                None => { println!("Nothing"); },
+                None => (),
             }
         }
 

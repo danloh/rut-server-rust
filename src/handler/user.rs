@@ -9,7 +9,9 @@ use chrono::Utc;
 use uuid;
 use dotenv;
 
-use model::user::{ User, NewUser, SignUser, LogUser, CheckUser, Claims };
+use model::user::{ 
+    User, UserID, NewUser, SignUser, LogUser, CheckUser, UpdateUser, Claims 
+};
 use model::msg::{ Msgs, LoginMsgs };
 
 // handle msg from api::auth.signup
@@ -78,7 +80,7 @@ impl Handler<CheckUser> for Dba {
             .load::<User>(conn)
             .map_err(error::ErrorInternalServerError)?.pop();
 
-        if let Some(u) = check_user {
+        if let Some(_) = check_user {
             return Ok(Msgs { 
                         status: 409,
                         message : "Occupied".to_string(),
@@ -99,48 +101,98 @@ impl Handler<LogUser> for Dba {
         use db::schema::users::dsl::*;
 
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
-        let mut login_user = users.filter(&uname.eq(&log_user.uname)).load::<User>(conn)
-                                  .map_err(error::ErrorInternalServerError)?.pop();
+        let mut query_user = users.filter(&uname.eq(&log_user.uname)).load::<User>(conn)
+                        .map_err(error::ErrorInternalServerError)?.pop();
         let lg_user = User::new("","");
-        match login_user {
-            Some(mut login_user) => {
-                match verify(&log_user.password, &login_user.password) {
-                    Ok(valid) => {
-                        // generate token
-                        let claims = Claims::new(&login_user.id);
-                        let secret_key: String = dotenv::var("SECRET_KEY")
-                                                .expect("AHaRdGuESsSeCREkY");
-                        let token = encode(&Header::default(), &claims, secret_key.as_ref())
-                                    .map_err(error::ErrorInternalServerError)?;
 
-                        Ok(LoginMsgs {
-                            status: 200,
-                            message: "Success".to_string(),
-                            token: token,
-                            exp: 5,  // unit: day
-                            user: login_user.into(),
-                        })
-                    },
-                    Err(_) => {
-                        Ok(LoginMsgs { 
-                            status: 500,
-                            message: "Somehing Wrong".to_string(),
-                            token: "".to_string(),
-                            exp: 0,
-                            user: lg_user,
-                        })
-                    },
-                }
-            },
-            None => {
-                Ok(LoginMsgs { 
-                    status: 400,
-                    message: "wrong password".to_string(),
-                    token: "".to_string(),
-                    exp: 0,
-                    user: lg_user,
-                })
+        if let Some(login_user) = query_user {
+            match verify(&log_user.password, &login_user.password) {
+                Ok(valid) if valid => {
+                    // generate token
+                    let claims = Claims::new(&login_user.id);
+                    let secret_key: String = dotenv::var("SECRET_KEY")
+                                            .expect("AHaRdGuESsSeCREkY");
+                    let token = encode(&Header::default(), &claims, secret_key.as_ref())
+                                .map_err(error::ErrorInternalServerError)?;
+
+                    Ok(LoginMsgs {
+                        status: 200,
+                        message: "Success".to_string(),
+                        token: token,
+                        exp: 5,  // unit: day
+                        user: login_user.into(),
+                    })
+                },
+                _ => {
+                    Ok(LoginMsgs { 
+                        status: 401,
+                        message: "Somehing Wrong".to_string(),
+                        token: "".to_string(),
+                        exp: 0,
+                        user: lg_user,
+                    })
+                },
             }
+        } else {
+            Ok(LoginMsgs { 
+                status: 400,
+                message: "wrong password".to_string(),
+                token: "".to_string(),
+                exp: 0,
+                user: lg_user,
+            })
         }
+    }
+}
+
+// handle msg from api::auth.get_user
+impl Handler<UserID> for Dba {
+    type Result = Result<LoginMsgs, Error>;
+
+    fn handle(&mut self, uid: UserID, _: &mut Self::Context) -> Self::Result {
+        use db::schema::users::dsl::*;
+        let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
+
+        let query_user = users.filter(&id.eq(&uid.userid))
+            .get_result::<User>(conn)
+            .map_err(error::ErrorInternalServerError)?;
+
+        Ok(LoginMsgs {
+            status: 200,
+            message: "Success".to_string(),
+            token: "None".to_string(),  // just for placehold
+            exp: 0,
+            user: query_user.into(),
+        })
+    }
+}
+
+// handle msg from api::auth.update_user
+impl Handler<UpdateUser> for Dba {
+    type Result = Result<LoginMsgs, Error>;
+
+    fn handle(&mut self, user: UpdateUser, _: &mut Self::Context) -> Self::Result {
+        use db::schema::users::dsl::*;
+        let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
+
+        let update_user = diesel::update(users)
+            .filter(&id.eq(&user.id))
+            .set( UpdateUser{
+                id: user.id.clone(),
+                uname: user.uname.clone(),  // unique??
+                avatar: user.avatar.clone(),
+                email: user.email.clone(),
+                intro: user.intro.clone(),
+            })
+            .get_result::<User>(conn)
+            .map_err(error::ErrorInternalServerError)?;
+
+        Ok(LoginMsgs {
+            status: 200,
+            message: "Updated".to_string(),
+            token: "".to_string(),
+            exp: 0,
+            user: update_user.into(),
+        })
     }
 }

@@ -7,11 +7,10 @@ use actix_web::{
 use futures::Future;
 use jwt::{decode, Validation};
 use router::AppState;
-use model::user::{ User, SignUser, LogUser, CheckUser, Claims };
+use model::user::{ User, UserID, SignUser, LogUser, CheckUser, UpdateUser, Claims };
 
 pub fn signup((sign_user, state): (Json<SignUser>, State<AppState>))
  -> FutureResponse<HttpResponse> {
-    println!("{:?}", sign_user); 
     state.db.send(SignUser{
         uname: sign_user.uname.clone(),
         password: sign_user.password.clone(),
@@ -34,10 +33,9 @@ pub fn check_user(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
     .responder()
 }
 
-pub fn signin((log_user, state, req): (Json<LogUser>, State<AppState>, HttpRequest<AppState>))
+pub fn signin((log_user, req): (Json<LogUser>, HttpRequest<AppState>))
  -> FutureResponse<HttpResponse> {
-    println!("{:?}", req); 
-    state.db.send(LogUser{
+    req.state().db.send(LogUser{
         uname: log_user.uname.clone(),
         password: log_user.password.clone(),
     })
@@ -61,7 +59,7 @@ impl<S> FromRequest<S> for CheckUser {
     type Config = ();
     type Result = Result<CheckUser, Error>;
     fn from_request(req: &HttpRequest<S>, _: &Self::Config) -> Self::Result {
-        println!("From Auth_Token: {:?}", req); 
+        // println!("From Auth_Token: {:?}", req); 
         if let Some(auth_token) = req.headers().get("authorization") {
             if let Ok(i) = auth_token.to_str() {
                let user: CheckUser = decode_token(i)?;
@@ -74,4 +72,30 @@ impl<S> FromRequest<S> for CheckUser {
 
 pub fn auth_token(user: CheckUser) -> HttpResponse {
     HttpResponse::Ok().json(user)
+}
+
+pub fn get_user(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
+    let userid = String::from(req.match_info().get("userid").unwrap());
+    req.state().db.send( UserID{userid})
+    .from_err().and_then(|res| match res {
+        Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
+        Err(_) => Ok(HttpResponse::InternalServerError().into())
+    })
+    .responder()
+}
+
+pub fn update_user((user, req, auth): (Json<UpdateUser>, HttpRequest<AppState>, CheckUser))
+ -> FutureResponse<HttpResponse> {
+    req.state().db.send( UpdateUser{
+        id: auth.id.clone(),
+        uname: user.uname.clone(),
+        avatar: user.avatar.clone(),
+        email: user.email.clone(),
+        intro: user.intro.clone(),
+    })
+    .from_err().and_then(|res| match res {
+        Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
+        Err(_) => Ok(HttpResponse::InternalServerError().into())
+    })
+    .responder()
 }

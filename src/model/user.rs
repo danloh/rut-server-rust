@@ -108,7 +108,32 @@ impl Message for LogUser {
     type Result = Result<LoginMsgs, Error>;
 }
 
+// as msg in get user by id
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct UserID {
+    pub userid: String,
+}
 
+impl Message for UserID {
+    type Result = Result<LoginMsgs, Error>;
+}
+
+// message to update user
+#[derive(Deserialize,Serialize,Debug,Clone,AsChangeset)]
+#[table_name="users"]
+pub struct UpdateUser {
+    pub id: String,
+    pub uname: String,
+    pub avatar: String,
+    pub email: String,
+    pub intro: String,
+}
+
+impl Message for UpdateUser {
+    type Result = Result<LoginMsgs, Error>;
+}
+
+//////////////////////////
 // jwt util: Claim, token
 
 #[derive(Debug, Serialize, Deserialize)]

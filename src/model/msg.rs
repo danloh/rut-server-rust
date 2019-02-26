@@ -11,7 +11,7 @@ pub struct Msgs {
     pub message: String,
 }
 
-// msg for login
+// msg for login or get user info
 #[derive(Deserialize,Serialize,Debug)]
 pub struct LoginMsgs {
     pub status: i32,

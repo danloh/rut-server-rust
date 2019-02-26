@@ -11,7 +11,6 @@ use model::user::{ CheckUser };
 
 pub fn new_rut((rut, state, user): (Json<CreateRut>, State<AppState>, CheckUser))
  -> FutureResponse<HttpResponse> {
-    // println!("{:?}", rut);
     // check authed via user:FromRequest
     state.db.send( CreateRut {
         title: rut.title.clone(),

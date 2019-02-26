@@ -66,7 +66,7 @@ impl Handler<ItemID> for Dba {
             Some(q) => {
                 item = q.clone();
             },
-            None => { println!("No Result"); },
+            None => (),
         }
     
         Ok( ItemMsgs { 
