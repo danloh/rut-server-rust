@@ -74,7 +74,7 @@ impl Handler<RutID> for Dba {
 impl Handler<RutsPerID> for Dba {
     type Result = Result<RutListMsgs, Error>;
 
-    fn handle(&mut self, list_type: RutsPerID, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, per: RutsPerID, _: &mut Self::Context) -> Self::Result {
         use db::schema::ruts::dsl::*;
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
         
@@ -82,19 +82,40 @@ impl Handler<RutsPerID> for Dba {
         let mut rut_list: Vec<Rut> = Vec::new();
         
         // build id_list per query type
-        match list_type {
+        match per {
             RutsPerID::Index(_) => {
                 id_list = ruts.select(id).order(id.desc()).limit(20)
                     .load::<String>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
-            RutsPerID::UserID(u) => { println!("userid is {}", u); }, // todo
-            RutsPerID::ItemID(i) => { println!("itemid is {}", i); }, // todo
+            RutsPerID::UserID(u,f) => {
+                if &f == "create" {
+                    rut_list = ruts.filter(&user_id.eq(&u)).load::<Rut>(conn)
+                        .map_err(error::ErrorInternalServerError)?;
+                } else {
+                    use db::schema::starruts::dsl::*;
+                    id_list = starruts.filter(&user_id.eq(&u)).select(rut_id)
+                        .load::<String>(conn)
+                        .map_err(error::ErrorInternalServerError)?;
+                }
+            },
+            RutsPerID::ItemID(i) => {
+                use db::schema::collects::dsl::*;
+                id_list = collects.filter(&item_id.eq(&i)).select(rut_id)
+                    .load::<String>(conn)
+                    .map_err(error::ErrorInternalServerError)?;
+            },
+            RutsPerID::TagID(t) => {
+                use db::schema::tagruts::dsl::*;
+                id_list = tagruts.filter(&tag_id.eq(&t)).select(rut_id)
+                    .load::<String>(conn)
+                    .map_err(error::ErrorInternalServerError)?;
+            },
         }
         // build rut_list
         for rid in id_list {
             let rut_query = ruts.filter(&id.eq(&rid)).load::<Rut>(conn)
-                            .map_err(error::ErrorInternalServerError)?.pop();
+                .map_err(error::ErrorInternalServerError)?.pop();
             let mut rut = Rut::new(); 
             match rut_query {
                 Some(r_q) => {

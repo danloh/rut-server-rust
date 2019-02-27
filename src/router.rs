@@ -9,7 +9,7 @@ use db::dba::{ Dba, init };
 use api::auth::{ signup, signin, check_user, auth_token, get_user, update_user };
 use api::rut::{ new_rut, get_rut, get_rut_list, update_rut, star_unstar_rut };
 use api::item::{ 
-    submit_item, get_item, get_item_list, get_items_per, 
+    submit_item, get_item, get_item_list, 
     update_item, collect_item, get_collect
 };
 
@@ -47,8 +47,8 @@ pub fn app_with_state() -> App<AppState> {
             r.get().with(get_rut);
             r.post().with(update_rut);
         })
-        .resource("/ruts/{type:[0|1|2]}/{tid}", |r| { // Type: 0- user, 1- item, 2- index
-            r.get().with(get_rut_list);
+        .resource("/ruts/{per}/{tid}/{flag}", |r| { // Per: user,item,tag,index
+            r.get().with(get_rut_list);             // flag: create, star
         })
         .resource("/ruts/{rid}/{action:[0|1]}/star", |r| { // 0- unstar, 1- star
             r.get().with(star_unstar_rut);
@@ -63,11 +63,8 @@ pub fn app_with_state() -> App<AppState> {
             r.get().with(get_item);
             r.post().with(update_item);
         })
-        .resource("/items/{per}/{itemid}", |r| { // per: id,uiid,title,url
-            r.get().with(get_item_list);
-        })
-        .resource("/items/{per}/{id}/{flag:[0|1|2]}", |r| { // per: rut,tag,user
-            r.get().with(get_items_per);
+        .resource("/items/{per}/{id}/{flag:[0|1|2]}", |r| { // per: rut,tag,user,id,url,title
+            r.get().with(get_item_list);                    // flag: 0-to,1-ing,2-done
         })
         .resource("/{rutid}/collects/{itemid}", |r| {
             r.get().with(get_collect);

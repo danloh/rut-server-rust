@@ -7,7 +7,7 @@ use chrono::Utc;
 use uuid;
 
 use model::item::{
-    Item, NewItem, SubmitItem, UpdateItem, ItemID, ItemIDs, ItemsPerID,
+    Item, NewItem, SubmitItem, UpdateItem, ItemID, ItemsPerID,
     Collect, NewCollect, CollectItem, CollectID 
 };
 use model::msg::{ Msgs, ItemMsgs, ItemListMsgs, CollectMsgs };
@@ -78,53 +78,51 @@ impl Handler<ItemID> for Dba {
 }
 
 // handle msg from api::item.get_item_list
-impl Handler<ItemIDs> for Dba {
-    type Result = Result<ItemListMsgs, Error>;
-
-    fn handle(&mut self, itemid: ItemIDs, _: &mut Self::Context) -> Self::Result {
-        use db::schema::items::dsl::*;
-        let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
-
-        let item_vec = match itemid {
-            ItemIDs::ID(i) => items.filter(&id.eq(&i)).load::<Item>(conn),
-            ItemIDs::Title(t) => items.filter(&title.eq(&t)).load::<Item>(conn), // to do contains
-            ItemIDs::Uiid(d) => items.filter(&uiid.eq(&d)).load::<Item>(conn),
-            ItemIDs::Url(u) => items.filter(&url.eq(&u)).load::<Item>(conn),
-        };
-
-        let item_query = item_vec.map_err(error::ErrorInternalServerError)?;
-    
-        Ok( ItemListMsgs { 
-            status: 200, 
-            message: "Success".to_string(),
-            items: item_query.clone(),
-            count: item_query.clone().len(),
-        })
-    }
-}
-
-// handle msg from api::item.get_item_per
 impl Handler<ItemsPerID> for Dba {
     type Result = Result<ItemListMsgs, Error>;
 
     fn handle(&mut self, perid: ItemsPerID, _: &mut Self::Context) -> Self::Result {
         use db::schema::items::dsl::*;
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
+        
+        let mut item_id_vec: Vec<String> = Vec::new();
+        let mut item_list: Vec<Item> = Vec::new();
 
-        let item_id_q = match perid {
+        match perid {
+            ItemsPerID::ItemID(i) => {
+                item_list = items.filter(&id.eq(&i)).load::<Item>(conn)
+                    .map_err(error::ErrorInternalServerError)?;
+            },
+            ItemsPerID::Title(t) => {
+                item_list = items
+                    .filter(&title.eq(&t)).load::<Item>(conn) //to do contains
+                    .map_err(error::ErrorInternalServerError)?;
+            },
+            ItemsPerID::Uiid(d) => {
+                item_list = items.filter(&uiid.eq(&d)).load::<Item>(conn)
+                    .map_err(error::ErrorInternalServerError)?;
+            },
+            ItemsPerID::ItemUrl(u) => {
+                item_list = items.filter(&url.eq(&u)).load::<Item>(conn)
+                    .map_err(error::ErrorInternalServerError)?;
+            },
             ItemsPerID::RutID(pid) => {
                 use db::schema::collects::dsl::*;
-                collects.filter(&rut_id.eq(&pid)).select(item_id).load::<String>(conn)
+                item_id_vec = collects
+                    .filter(&rut_id.eq(&pid)).select(item_id).load::<String>(conn)
+                    .map_err(error::ErrorInternalServerError)?;
             },
             ItemsPerID::TagID(pid) => {
                 use db::schema::tagitems::dsl::*;
-                tagitems.filter(&tag_id.eq(&pid)).select(item_id).load::<String>(conn)
+                item_id_vec = tagitems
+                    .filter(&tag_id.eq(&pid)).select(item_id).load::<String>(conn)
+                    .map_err(error::ErrorInternalServerError)?;
             },
             // ItemsPerID::UserID(pid, flag) => {},
         };
 
-        let item_id_vec = item_id_q.map_err(error::ErrorInternalServerError)?;
-        let mut item_list: Vec<Item> = Vec::new();
+        // let item_id_vec = item_id_q.map_err(error::ErrorInternalServerError)?;
+        
         for i in item_id_vec {
             let mut items_query = items
                 .filter(&id.eq(&i)).load::<Item>(conn)

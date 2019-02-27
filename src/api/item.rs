@@ -7,7 +7,7 @@ use actix_web::{
 use futures::Future;
 use router::AppState;
 use model::item::{ 
-    SubmitItem, UpdateItem, ItemID, ItemIDs, ItemsPerID, CollectItem, CollectID 
+    SubmitItem, UpdateItem, ItemID, ItemsPerID, CollectItem, CollectID 
 };
 use model::user::{ CheckUser };
 
@@ -45,33 +45,18 @@ pub fn get_item(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
 }
 
 pub fn get_item_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
-    let per = req.match_info().get("per").unwrap();
-    let item_id = String::from(req.match_info().get("itemid").unwrap());
-    let itemIDs = match per {
-        "id" => ItemIDs::ID(item_id),
-        "uiid" => ItemIDs::Uiid(item_id),
-        "title" => ItemIDs::Title(item_id),
-        "url" => ItemIDs::Url(item_id),
-        _ => ItemIDs::ID(item_id),
-    };
-
-    req.state().db.send(itemIDs)
-    .from_err().and_then(|res| match res {
-        Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
-        Err(_) => Ok(HttpResponse::InternalServerError().into()),
-    })
-    .responder()
-}
-
-pub fn get_items_per(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
     let per = req.match_info().get("per").unwrap();  // per tag, user, rut
     let perid = String::from(req.match_info().get("id").unwrap());
     let flag = String::from(req.match_info().get("flag").unwrap());
     let itemsPerID = match per {
+        "id" => ItemsPerID::ItemID(perid),
+        "uiid" => ItemsPerID::Uiid(perid),
+        "title" => ItemsPerID::Title(perid),
+        "url" => ItemsPerID::ItemUrl(perid),
         "rut" => ItemsPerID::RutID(perid),
         "tag" => ItemsPerID::TagID(perid),
         // "user" => ItemsPerID::UserID(perid, flag),
-        _ => ItemsPerID::RutID(perid),
+        _ => ItemsPerID::ItemID(perid),
     };
 
     req.state().db.send(itemsPerID)

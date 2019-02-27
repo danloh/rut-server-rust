@@ -40,17 +40,18 @@ pub fn get_rut(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
 }
 
 pub fn get_rut_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
-    let list_type = req.match_info().get("type").unwrap().parse().unwrap();
+    let per = req.match_info().get("per").unwrap();
     let tid = String::from(req.match_info().get("tid").unwrap());
+    let flag = String::from(req.match_info().get("flag").unwrap());
     
-    let q_type = match list_type {
-        // 0 - user, 1 - item, other - index
-        0 => RutsPerID::UserID(String::from(tid)),
-        1 => RutsPerID::ItemID(String::from(tid)),
+    let q_per = match per {
+        "user" => RutsPerID::UserID(tid, flag),
+        "item" => RutsPerID::ItemID(tid),
+        "tag" => RutsPerID::TagID(tid),
         _ => RutsPerID::Index(String::from("index")),
     };
 
-    req.state().db.send(q_type).from_err().and_then(|res| match res {
+    req.state().db.send(q_per).from_err().and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
         Err(_) => Ok(HttpResponse::InternalServerError().into()),
     })

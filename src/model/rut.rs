@@ -87,8 +87,9 @@ impl Message for RutID {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum RutsPerID {
     Index(String),
-    UserID(String),
+    UserID(String, String),
     ItemID(String),
+    TagID(String),
 }
 
 impl Message for RutsPerID {

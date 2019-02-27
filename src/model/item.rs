@@ -95,16 +95,19 @@ impl Message for ItemID {
     type Result = Result<ItemMsgs, Error>;
 }
 
-// as msg in query item (or list) by id, uiid, title, ..
+// as msg to query items per tag, rut, user; id,title,url,uiid
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub enum ItemIDs {
-    ID(String),
+pub enum ItemsPerID {
+    ItemID(String),
     Uiid(String),
     Title(String),
-    Url(String),
+    ItemUrl(String),
+    RutID(String),
+    TagID(String),
+    // UserID(String, String),  // (userid, flag)
 }
 
-impl Message for ItemIDs {
+impl Message for ItemsPerID {
     type Result = Result<ItemListMsgs, Error>;
 }
 
@@ -180,16 +183,4 @@ pub struct CollectID {
 
 impl Message for CollectID {
     type Result = Result<CollectMsgs, Error>;
-}
-
-// as msg to query items per tag, rut, user
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub enum ItemsPerID {
-    RutID(String),
-    TagID(String),
-    // UserID(String, String),  // (userid, flag)
-}
-
-impl Message for ItemsPerID {
-    type Result = Result<ItemListMsgs, Error>;
 }
