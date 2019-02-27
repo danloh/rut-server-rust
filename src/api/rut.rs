@@ -6,7 +6,7 @@ use actix_web::{
 };
 use futures::Future;
 use router::AppState;
-use model::rut::{ CreateRut, RutID, RutListType, UpdateRut, StarOrRut };
+use model::rut::{ CreateRut, RutID, RutsPerID, UpdateRut, StarOrRut };
 use model::user::{ CheckUser };
 
 pub fn new_rut((rut, state, user): (Json<CreateRut>, State<AppState>, CheckUser))
@@ -45,9 +45,9 @@ pub fn get_rut_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> 
     
     let q_type = match list_type {
         // 0 - user, 1 - item, other - index
-        0 => RutListType::UserID(String::from(tid)),
-        1 => RutListType::ItemID(String::from(tid)),
-        _ => RutListType::Index(String::from("index")),
+        0 => RutsPerID::UserID(String::from(tid)),
+        1 => RutsPerID::ItemID(String::from(tid)),
+        _ => RutsPerID::Index(String::from("index")),
     };
 
     req.state().db.send(q_type).from_err().and_then(|res| match res {

@@ -85,13 +85,13 @@ impl Message for RutID {
 
 // as msg in select rutlist
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub enum RutListType {
+pub enum RutsPerID {
     Index(String),
     UserID(String),
     ItemID(String),
 }
 
-impl Message for RutListType {
+impl Message for RutsPerID {
     type Result = Result<RutListMsgs, Error>;
 }
 

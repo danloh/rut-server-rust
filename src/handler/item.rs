@@ -7,7 +7,7 @@ use chrono::Utc;
 use uuid;
 
 use model::item::{
-    Item, NewItem, SubmitItem, UpdateItem, ItemID, ItemIDs, ItemPerID,
+    Item, NewItem, SubmitItem, UpdateItem, ItemID, ItemIDs, ItemsPerID,
     Collect, NewCollect, CollectItem, CollectID 
 };
 use model::msg::{ Msgs, ItemMsgs, ItemListMsgs, CollectMsgs };
@@ -104,23 +104,23 @@ impl Handler<ItemIDs> for Dba {
 }
 
 // handle msg from api::item.get_item_per
-impl Handler<ItemPerID> for Dba {
+impl Handler<ItemsPerID> for Dba {
     type Result = Result<ItemListMsgs, Error>;
 
-    fn handle(&mut self, perid: ItemPerID, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, perid: ItemsPerID, _: &mut Self::Context) -> Self::Result {
         use db::schema::items::dsl::*;
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
 
         let item_id_q = match perid {
-            ItemPerID::RutID(pid) => {
+            ItemsPerID::RutID(pid) => {
                 use db::schema::collects::dsl::*;
                 collects.filter(&rut_id.eq(&pid)).select(item_id).load::<String>(conn)
             },
-            ItemPerID::TagID(pid) => {
+            ItemsPerID::TagID(pid) => {
                 use db::schema::tagitems::dsl::*;
                 tagitems.filter(&tag_id.eq(&pid)).select(item_id).load::<String>(conn)
             },
-            // ItemPerID::UserID(pid, flag) => {},
+            // ItemsPerID::UserID(pid, flag) => {},
         };
 
         let item_id_vec = item_id_q.map_err(error::ErrorInternalServerError)?;

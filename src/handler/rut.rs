@@ -7,7 +7,7 @@ use chrono::Utc;
 use uuid;
 
 use model::rut::{
-    Rut, NewRut, CreateRut, RutID, RutListType, UpdateRut, 
+    Rut, NewRut, CreateRut, RutID, RutsPerID, UpdateRut, 
     StarRut, RutStar, StarOrRut
 };
 use model::msg::{ Msgs, RutMsgs, RutListMsgs };
@@ -71,10 +71,10 @@ impl Handler<RutID> for Dba {
 }
 
 // handle msg from api::rut.get_rut_list
-impl Handler<RutListType> for Dba {
+impl Handler<RutsPerID> for Dba {
     type Result = Result<RutListMsgs, Error>;
 
-    fn handle(&mut self, list_type: RutListType, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, list_type: RutsPerID, _: &mut Self::Context) -> Self::Result {
         use db::schema::ruts::dsl::*;
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
         
@@ -83,13 +83,13 @@ impl Handler<RutListType> for Dba {
         
         // build id_list per query type
         match list_type {
-            RutListType::Index(_) => {
+            RutsPerID::Index(_) => {
                 id_list = ruts.select(id).order(id.desc()).limit(20)
                     .load::<String>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
-            RutListType::UserID(u) => { println!("userid is {}", u); }, // todo
-            RutListType::ItemID(i) => { println!("itemid is {}", i); }, // todo
+            RutsPerID::UserID(u) => { println!("userid is {}", u); }, // todo
+            RutsPerID::ItemID(i) => { println!("itemid is {}", i); }, // todo
         }
         // build rut_list
         for rid in id_list {

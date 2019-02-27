@@ -7,7 +7,7 @@ use actix_web::{
 use futures::Future;
 use router::AppState;
 use model::item::{ 
-    SubmitItem, UpdateItem, ItemID, ItemIDs, ItemPerID, CollectItem, CollectID 
+    SubmitItem, UpdateItem, ItemID, ItemIDs, ItemsPerID, CollectItem, CollectID 
 };
 use model::user::{ CheckUser };
 
@@ -67,14 +67,14 @@ pub fn get_items_per(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse>
     let per = req.match_info().get("per").unwrap();  // per tag, user, rut
     let perid = String::from(req.match_info().get("id").unwrap());
     let flag = String::from(req.match_info().get("flag").unwrap());
-    let itemPerID = match per {
-        "rut" => ItemPerID::RutID(perid),
-        "tag" => ItemPerID::TagID(perid),
-        // "user" => ItemPerID::UserID(perid, flag),
-        _ => ItemPerID::RutID(perid),
+    let itemsPerID = match per {
+        "rut" => ItemsPerID::RutID(perid),
+        "tag" => ItemsPerID::TagID(perid),
+        // "user" => ItemsPerID::UserID(perid, flag),
+        _ => ItemsPerID::RutID(perid),
     };
 
-    req.state().db.send(itemPerID)
+    req.state().db.send(itemsPerID)
     .from_err().and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
         Err(_) => Ok(HttpResponse::InternalServerError().into()),

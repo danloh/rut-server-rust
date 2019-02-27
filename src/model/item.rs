@@ -184,12 +184,12 @@ impl Message for CollectID {
 
 // as msg to query items per tag, rut, user
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub enum ItemPerID {
+pub enum ItemsPerID {
     RutID(String),
     TagID(String),
     // UserID(String, String),  // (userid, flag)
 }
 
-impl Message for ItemPerID {
+impl Message for ItemsPerID {
     type Result = Result<ItemListMsgs, Error>;
 }
