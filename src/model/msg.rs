@@ -61,5 +61,5 @@ pub struct CollectMsgs {
     pub status: i32,
     pub message: String,
     pub rut_id: String,
-    pub items: Vec<Collect>,
+    pub collects: Vec<Collect>,
 }

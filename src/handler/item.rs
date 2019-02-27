@@ -7,8 +7,8 @@ use chrono::Utc;
 use uuid;
 
 use model::item::{
-    Item, NewItem, SubmitItem, UpdateItem, ItemID, ItemIDs,
-    Collect, NewCollect, CollectItem 
+    Item, NewItem, SubmitItem, UpdateItem, ItemID, ItemIDs, ItemPerID,
+    Collect, NewCollect, CollectItem, CollectID 
 };
 use model::msg::{ Msgs, ItemMsgs, ItemListMsgs, CollectMsgs };
 use model::rut::Rut;
@@ -103,6 +103,44 @@ impl Handler<ItemIDs> for Dba {
     }
 }
 
+// handle msg from api::item.get_item_per
+impl Handler<ItemPerID> for Dba {
+    type Result = Result<ItemListMsgs, Error>;
+
+    fn handle(&mut self, perid: ItemPerID, _: &mut Self::Context) -> Self::Result {
+        use db::schema::items::dsl::*;
+        let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
+
+        let item_id_q = match perid {
+            ItemPerID::RutID(pid) => {
+                use db::schema::collects::dsl::*;
+                collects.filter(&rut_id.eq(&pid)).select(item_id).load::<String>(conn)
+            },
+            ItemPerID::TagID(pid) => {
+                use db::schema::tagitems::dsl::*;
+                tagitems.filter(&tag_id.eq(&pid)).select(item_id).load::<String>(conn)
+            },
+            // ItemPerID::UserID(pid, flag) => {},
+        };
+
+        let item_id_vec = item_id_q.map_err(error::ErrorInternalServerError)?;
+        let mut item_list: Vec<Item> = Vec::new();
+        for i in item_id_vec {
+            let mut items_query = items
+                .filter(&id.eq(&i)).load::<Item>(conn)
+                .map_err(error::ErrorInternalServerError)?;
+            item_list.append(&mut items_query);
+        }
+    
+        Ok( ItemListMsgs { 
+            status: 200, 
+            message: "Success".to_string(),
+            items: item_list.clone(),
+            count: item_list.clone().len(),
+        })
+    }
+}
+
 // handle msg from api::item.update_item
 impl Handler<UpdateItem> for Dba {
     type Result = Result<ItemMsgs, Error>;
@@ -170,7 +208,37 @@ impl Handler<CollectItem> for Dba {
             status: 200, 
             message: "Collected".to_string(),
             rut_id: rutID.clone(),
-            items: vec!(collect_new),
+            collects: vec!(collect_new),
         })
+    }
+}
+
+// handle msg from api::item.get_collect
+impl Handler<CollectID> for Dba {
+    type Result = Result<CollectMsgs, Error>;
+
+    fn handle(&mut self, cid: CollectID, _: &mut Self::Context) -> Self::Result {
+        use db::schema::collects::dsl::*;
+        let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
+
+        let c_query = collects
+            .filter(&item_id.eq(&cid.item_id)).filter(&rut_id.eq(&cid.rut_id))
+            .load::<Collect>(conn).map_err(error::ErrorInternalServerError)?.pop();
+        
+        if let Some(c) = c_query {
+            Ok( CollectMsgs { 
+                status: 200, 
+                message: "Success".to_string(),
+                rut_id: cid.rut_id.clone(),
+                collects: vec!(c),
+            })
+        } else {
+            Ok( CollectMsgs { 
+                status: 400, 
+                message: "Nothing".to_string(),
+                rut_id: cid.rut_id.clone(),
+                collects: Vec::new(),
+            })
+        }
     }
 }
