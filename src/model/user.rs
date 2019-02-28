@@ -76,7 +76,7 @@ impl From<Claims> for CheckUser {
     fn from(claims: Claims) -> Self {
         CheckUser {
             id: claims.uid,
-            uname: "".to_owned(),
+            uname: claims.uname,
             join_at: Utc::now().naive_utc(), // ??
             avatar: "".to_owned(),
             email: "".to_owned(),
@@ -142,18 +142,20 @@ pub struct Claims {
     pub sub: String,   // subject
     pub iat: i64,      // issued at
     pub exp: i64,      // expiry
-    pub uid: String, // user id
+    pub uid: String,   // user id
+    pub uname: String,
 }
 
 // claims's constructor
 impl Claims {
-    pub fn new(uid: &str) -> Self {
+    pub fn new(uid: &str, uname: &str) -> Self {
         Claims {
             iss: "ruthub".into(),
             sub: "auth".into(),
-            uid: uid.to_owned(),
             iat: Local::now().timestamp(),
             exp: (Local::now() + Duration::hours(24)).timestamp(),
+            uid: uid.to_owned(),
+            uname: uname.to_owned(),
         }
     }
 }

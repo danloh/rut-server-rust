@@ -17,7 +17,7 @@ pub struct Rut {
     pub renew_at: NaiveDateTime,
     pub author_id: String,
     pub user_id: String,      // as who post
-    // pub user_name: String, // to do
+    pub user_name: String,
     pub credential: String,
     pub item_count: i32,
     pub comment_count: i32,
@@ -36,6 +36,7 @@ pub struct NewRut<'a> {
     pub renew_at: NaiveDateTime,
     pub author_id: &'a str,
     pub user_id: &'a str,
+    pub user_name: &'a str,
     pub credential: &'a str,
     pub item_count: i32,
     pub comment_count: i32,
@@ -49,6 +50,7 @@ pub struct CreateRut {
     pub url: String,
     pub content: String,
     pub user_id: String,
+    pub user_name: String,
     pub author_id: String,
     pub credential: String,
 }
@@ -107,6 +109,7 @@ impl Rut {
             create_at: Utc::now().naive_utc(),
             renew_at: Utc::now().naive_utc(),
             user_id: "".to_owned(),
+            user_name: "".to_owned(),
             author_id: "".to_owned(),
             credential: "".to_owned(),
             item_count: 0,
@@ -122,6 +125,8 @@ pub struct StarRut {
     pub id: String,
     pub user_id: String,
     pub rut_id: String,
+    pub star_at: NaiveDateTime,
+    pub note: String,
 }
 
 // use to build insert query
@@ -131,6 +136,8 @@ pub struct RutStar<'a> {
     pub id: &'a str,
     pub user_id: &'a str,
     pub rut_id: &'a str,
+    pub star_at: NaiveDateTime,
+    pub note: &'a str,
 }
 
 // as msg in star or unstar rut
@@ -138,6 +145,7 @@ pub struct RutStar<'a> {
 pub struct StarOrRut {
     pub rut_id: String,
     pub user_id: String,
+    pub note: String,
     pub action: u8,  // 0- unstar, 1- star
 }
 

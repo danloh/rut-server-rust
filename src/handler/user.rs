@@ -109,7 +109,7 @@ impl Handler<LogUser> for Dba {
             match verify(&log_user.password, &login_user.password) {
                 Ok(valid) if valid => {
                     // generate token
-                    let claims = Claims::new(&login_user.id);
+                    let claims = Claims::new(&login_user.id, &login_user.uname);
                     let secret_key: String = dotenv::var("SECRET_KEY")
                                             .expect("AHaRdGuESsSeCREkY");
                     let token = encode(&Header::default(), &claims, secret_key.as_ref())

@@ -4,7 +4,7 @@
 **/*.rs.bk
 .env
 
-migrations
 Cargo.lock
 
 static/index.html
+migrations/.gitkeep

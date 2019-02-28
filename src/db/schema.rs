@@ -5,7 +5,7 @@ table! {
         item_id -> Varchar,
         item_order -> Int4,
         content -> Text,
-        creator_id -> Varchar,
+        user_id -> Varchar,
         collect_at -> Timestamp,
     }
 }
@@ -24,8 +24,8 @@ table! {
         id -> Varchar,
         title -> Varchar,
         uiid -> Varchar,
-        pub_at -> Varchar,
         authors -> Varchar,
+        pub_at -> Varchar,
         publisher -> Varchar,
         category -> Varchar,
         url -> Varchar,
@@ -48,6 +48,7 @@ table! {
         renew_at -> Timestamp,
         author_id -> Varchar,
         user_id -> Varchar,
+        user_name -> Varchar,
         credential -> Varchar,
         item_count -> Int4,
         comment_count -> Int4,
@@ -56,10 +57,22 @@ table! {
 }
 
 table! {
+    staritems (id) {
+        id -> Varchar,
+        user_id -> Varchar,
+        item_id -> Varchar,
+        star_at -> Timestamp,
+        note -> Varchar,
+    }
+}
+
+table! {
     starruts (id) {
         id -> Varchar,
         user_id -> Varchar,
         rut_id -> Varchar,
+        star_at -> Timestamp,
+        note -> Varchar,
     }
 }
 
@@ -67,14 +80,16 @@ table! {
     startags (id) {
         id -> Varchar,
         user_id -> Varchar,
-        tag_id -> Varchar,
+        tname -> Varchar,
+        star_at -> Timestamp,
+        note -> Varchar,
     }
 }
 
 table! {
     tagetcs (id) {
         id -> Varchar,
-        tag_id -> Varchar,
+        tname -> Varchar,
         etc_id -> Varchar,
     }
 }
@@ -82,16 +97,18 @@ table! {
 table! {
     tagitems (id) {
         id -> Varchar,
-        tag_id -> Varchar,
+        tname -> Varchar,
         item_id -> Varchar,
+        count -> Int4,
     }
 }
 
 table! {
     tagruts (id) {
         id -> Varchar,
-        tag_id -> Varchar,
+        tname -> Varchar,
         rut_id -> Varchar,
+        count -> Int4,
     }
 }
 
@@ -126,6 +143,7 @@ allow_tables_to_appear_in_same_query!(
     etcs,
     items,
     ruts,
+    staritems,
     starruts,
     startags,
     tagetcs,

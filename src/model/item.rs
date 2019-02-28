@@ -141,7 +141,7 @@ pub struct Collect {
     pub item_id: String,
     pub item_order: i32,
     pub content: String,
-    // pub spoiler: bool,  // to do
+    // pub spoiler: bool,  // to do but 
     pub creator_id: String,
     pub collect_at: NaiveDateTime,
 }
@@ -154,8 +154,7 @@ pub struct NewCollect<'a> {
     pub item_id: &'a str,
     pub item_order: i32,
     pub content: &'a str,
-    // pub spoiler: bool,  // to do
-    pub creator_id: &'a str,
+    pub user_id: &'a str,
     pub collect_at: NaiveDateTime,
 }
 
@@ -166,8 +165,7 @@ pub struct CollectItem {
     pub item_id: String,
     pub item_order: i32,
     pub content: String,
-    // pub spoiler: bool,  // to do
-    pub creator_id: String,
+    pub user_id: String,
 }
 
 impl Message for CollectItem {

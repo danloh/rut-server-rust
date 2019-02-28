@@ -23,12 +23,13 @@ impl Handler<CreateRut> for Dba {
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
         
         let uuid = format!("{}", uuid::Uuid::new_v4());
-        let new_rut = NewRut {
+        let newrut = NewRut {
             id: &uuid,
             title: &new_rut.title,
             url: &new_rut.url,
             content: &new_rut.content,
             user_id: &new_rut.user_id,
+            user_name: &new_rut.user_name,
             author_id: &new_rut.author_id,
             credential: &new_rut.credential,
             create_at: Utc::now().naive_utc(),
@@ -38,7 +39,7 @@ impl Handler<CreateRut> for Dba {
             star_count: 0,
         };
         let rut_new = diesel::insert_into(ruts)
-            .values(&new_rut)
+            .values(&newrut)
             .get_result::<Rut>(conn)
             .map_err(error::ErrorInternalServerError)?;
 
@@ -107,7 +108,7 @@ impl Handler<RutsPerID> for Dba {
             },
             RutsPerID::TagID(t) => {
                 use db::schema::tagruts::dsl::*;
-                id_list = tagruts.filter(&tag_id.eq(&t)).select(rut_id)
+                id_list = tagruts.filter(&tname.eq(&t)).select(rut_id)
                     .load::<String>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
@@ -180,6 +181,8 @@ impl Handler<StarOrRut> for Dba {
                     id: &uuid,
                     user_id: &action.user_id,
                     rut_id: &action.rut_id,
+                    star_at: Utc::now().naive_utc(),
+                    note: &action.note,
                 };
                 diesel::insert_into(starruts).values(&new_star)
                         .execute(conn).map_err(error::ErrorInternalServerError)?;

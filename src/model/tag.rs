@@ -2,6 +2,7 @@
 
 use db::schema::{ tags, tagruts, tagitems, tagetcs, startags };
 use actix_web::{ Error, actix::Message };
+use chrono::{Utc, NaiveDateTime};
 
 // use to build select query
 #[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
@@ -22,23 +23,25 @@ pub struct Tag {
 #[table_name="tagruts"]
 pub struct TagRut {
     pub id: String,
-    pub tag_id: String,
+    pub tname: String,
     pub rut_id: String,
+    pub count: i32,
 }
 
 #[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
 #[table_name="tagitems"]
 pub struct TagItem {
     pub id: String,
-    pub tag_id: String,
+    pub tname: String,
     pub item_id: String,
+    pub count: i32,
 }
 
 #[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
 #[table_name="tagetcs"]
 pub struct TagEtc {
     pub id: String,
-    pub tag_id: String,
+    pub tname: String,
     pub etc_id: String,
 }
 
@@ -47,5 +50,7 @@ pub struct TagEtc {
 pub struct StarTag {
     pub id: String,
     pub user_id: String,
-    pub tag_id: String,
+    pub tname: String,
+    pub star_at: NaiveDateTime,
+    pub note: String,
 }

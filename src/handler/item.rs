@@ -115,7 +115,7 @@ impl Handler<ItemsPerID> for Dba {
             ItemsPerID::TagID(pid) => {
                 use db::schema::tagitems::dsl::*;
                 item_id_vec = tagitems
-                    .filter(&tag_id.eq(&pid)).select(item_id).load::<String>(conn)
+                    .filter(&tname.eq(&pid)).select(item_id).load::<String>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
             // ItemsPerID::UserID(pid, flag) => {},
@@ -192,9 +192,8 @@ impl Handler<CollectItem> for Dba {
             rut_id: &rutID,
             item_id: &collect.item_id, // need to check??
             item_order: item_num + 1,
-            content: &&collect.content,
-            // spoiler: bool,  // to do
-            creator_id: &&collect.creator_id,
+            content: &collect.content,
+            user_id: &collect.user_id,
             collect_at: Utc::now().naive_utc(),
         };
         let collect_new = diesel::insert_into(collects)

@@ -95,8 +95,8 @@ pub fn collect_item((item, state, user): (Json<CollectItem>, State<AppState>, Ch
         rut_id: item.rut_id.clone(),
         item_id: item.item_id.clone(),
         item_order: item.item_order.clone(),  
-        content: item.content.clone(), 
-        creator_id: user.id,
+        content: item.content.clone(),
+        user_id: user.id,
     })
     .from_err().and_then(|res| match res {
         Ok(item) => Ok(HttpResponse::Ok().json(item)),

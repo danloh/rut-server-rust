@@ -17,6 +17,7 @@ pub fn new_rut((rut, state, user): (Json<CreateRut>, State<AppState>, CheckUser)
         url: rut.url.clone(),
         content: rut.content.clone(),
         user_id: user.id.clone(),     // extracted from request as user
+        user_name: user.uname.clone(), 
         author_id: rut.author_id.clone(),
         credential: rut.credential.clone(), 
     })
@@ -79,10 +80,12 @@ pub fn star_unstar_rut(req: HttpRequest<AppState>, user: CheckUser)
  -> FutureResponse<HttpResponse> {
     let star_action: u8 = req.match_info().get("action").unwrap().parse().unwrap();
     let rid = String::from(req.match_info().get("rid").unwrap());
+    let note = String::from(req.match_info().get("note").unwrap());
     
     req.state().db.send( StarOrRut {
         rut_id: rid.clone(),
         user_id: user.id.clone(),
+        note: note.clone(),
         action: star_action,
     })
     .from_err().and_then(|res| match res {
