@@ -118,7 +118,7 @@ table! {
         tname -> Varchar,
         intro -> Text,
         logo -> Varchar,
-        parent_id -> Varchar,
+        pname -> Varchar,
         item_count -> Int4,
         rut_count -> Int4,
         etc_count -> Int4,

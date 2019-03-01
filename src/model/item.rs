@@ -3,7 +3,7 @@
 use db::schema::{items, collects};
 use actix_web::{ Error, actix::Message };
 use chrono::{Utc, NaiveDateTime};
-use model::msg::{ Msgs, ItemMsgs, ItemListMsgs, CollectMsgs };
+use model::msg::{ Msg, ItemMsg, ItemListMsg, CollectMsg };
 
 // use to build select query
 #[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
@@ -61,7 +61,7 @@ pub struct SubmitItem {
 }
 
 impl Message for SubmitItem {
-    type Result = Result<ItemMsgs, Error>;
+    type Result = Result<ItemMsg, Error>;
 }
 
 // as msg in update item
@@ -82,7 +82,7 @@ pub struct UpdateItem {
 }
 
 impl Message for UpdateItem {
-    type Result = Result<ItemMsgs, Error>;
+    type Result = Result<ItemMsg, Error>;
 }
 
 // as msg in query item by id
@@ -92,7 +92,7 @@ pub struct ItemID {
 }
 
 impl Message for ItemID {
-    type Result = Result<ItemMsgs, Error>;
+    type Result = Result<ItemMsg, Error>;
 }
 
 // as msg to query items per tag, rut, user; id,title,url,uiid
@@ -108,7 +108,7 @@ pub enum ItemsPerID {
 }
 
 impl Message for ItemsPerID {
-    type Result = Result<ItemListMsgs, Error>;
+    type Result = Result<ItemListMsg, Error>;
 }
 
 // Item's constructor
@@ -169,7 +169,7 @@ pub struct CollectItem {
 }
 
 impl Message for CollectItem {
-    type Result = Result<CollectMsgs, Error>;
+    type Result = Result<CollectMsg, Error>;
 }
 
 // as msg in rut get collect info
@@ -180,5 +180,5 @@ pub struct CollectID {
 }
 
 impl Message for CollectID {
-    type Result = Result<CollectMsgs, Error>;
+    type Result = Result<CollectMsg, Error>;
 }

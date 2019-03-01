@@ -3,7 +3,7 @@
 use db::schema::{ ruts, starruts };
 use actix_web::{ Error, actix::Message };
 use chrono::{Utc, NaiveDateTime};
-use model::msg::{ Msgs, RutMsgs, RutListMsgs };
+use model::msg::{ Msg, RutMsg, RutListMsg };
 
 // use to build select query
 #[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
@@ -56,7 +56,7 @@ pub struct CreateRut {
 }
 
 impl Message for CreateRut {
-    type Result = Result<RutMsgs, Error>;
+    type Result = Result<RutMsg, Error>;
 }
 
 // as msg in update rut
@@ -72,7 +72,7 @@ pub struct UpdateRut {
 }
 
 impl Message for UpdateRut {
-    type Result = Result<RutMsgs, Error>;
+    type Result = Result<RutMsg, Error>;
 }
 
 // as msg in select by id
@@ -82,7 +82,7 @@ pub struct RutID {
 }
 
 impl Message for RutID {
-    type Result = Result<RutMsgs, Error>;
+    type Result = Result<RutMsg, Error>;
 }
 
 // as msg in select rutlist
@@ -95,7 +95,7 @@ pub enum RutsPerID {
 }
 
 impl Message for RutsPerID {
-    type Result = Result<RutListMsgs, Error>;
+    type Result = Result<RutListMsg, Error>;
 }
 
 // Rut's constructor
@@ -150,5 +150,5 @@ pub struct StarOrRut {
 }
 
 impl Message for StarOrRut {
-    type Result = Result<Msgs, Error>;
+    type Result = Result<Msg, Error>;
 }

@@ -3,7 +3,7 @@
 use db::schema::users;
 use actix_web::{ Error, actix::Message };
 use chrono::{Utc, NaiveDateTime, Duration, Local};
-use model::msg::{ Msgs, LoginMsgs };
+use model::msg::{ Msg, LoginMsg };
 
 #[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
 #[table_name="users"]
@@ -56,7 +56,7 @@ pub struct CheckUser {
 }
 
 impl Message for CheckUser {
-    type Result = Result<Msgs, Error>;
+    type Result = Result<Msg, Error>;
 }
 
 impl From<User> for CheckUser {
@@ -94,7 +94,7 @@ pub struct SignUser {
 }
 
 impl Message for SignUser {
-    type Result = Result<Msgs, Error>;
+    type Result = Result<Msg, Error>;
 }
 
 // message to login user
@@ -105,7 +105,7 @@ pub struct LogUser {
 }
 
 impl Message for LogUser {
-    type Result = Result<LoginMsgs, Error>;
+    type Result = Result<LoginMsg, Error>;
 }
 
 // as msg in get user by id
@@ -115,7 +115,7 @@ pub struct UserID {
 }
 
 impl Message for UserID {
-    type Result = Result<LoginMsgs, Error>;
+    type Result = Result<LoginMsg, Error>;
 }
 
 // message to update user
@@ -130,7 +130,7 @@ pub struct UpdateUser {
 }
 
 impl Message for UpdateUser {
-    type Result = Result<LoginMsgs, Error>;
+    type Result = Result<LoginMsg, Error>;
 }
 
 //////////////////////////
@@ -159,3 +159,7 @@ impl Claims {
         }
     }
 }
+
+
+// per userid to query rut, item, tag, to do
+// struct PerUser { userID: (String, String, String)} // e.g. id, rut, create

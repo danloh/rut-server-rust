@@ -12,11 +12,11 @@ use dotenv;
 use model::user::{ 
     User, UserID, NewUser, SignUser, LogUser, CheckUser, UpdateUser, Claims 
 };
-use model::msg::{ Msgs, LoginMsgs };
+use model::msg::{ Msg, LoginMsg };
 
 // handle msg from api::auth.signup
 impl Handler<SignUser> for Dba {
-    type Result = Result<Msgs, Error>;
+    type Result = Result<Msg, Error>;
 
     fn handle(&mut self, msg: SignUser, _: &mut Self::Context) -> Self::Result {
         use db::schema::users::dsl::*;
@@ -27,7 +27,7 @@ impl Handler<SignUser> for Dba {
             .map_err(error::ErrorInternalServerError)?.pop();
         match check_user {
             Some(user) => {
-                Ok( Msgs {
+                Ok( Msg {
                     status: 409,
                     message: "Duplicated".to_string(),
                 })
@@ -54,12 +54,12 @@ impl Handler<SignUser> for Dba {
                     diesel::insert_into(users)
                         .values(&new_user).execute(conn)
                         .map_err(|_| error::ErrorInternalServerError("Error inserting person"))?;
-                    Ok(Msgs { 
+                    Ok(Msg { 
                         status: 200,
                         message : "Success".to_string(),
                     })
                 } else {
-                    Ok(Msgs { 
+                    Ok(Msg { 
                         status: 400,
                         message : "wrong password".to_string(),
                     })
@@ -70,7 +70,7 @@ impl Handler<SignUser> for Dba {
 }
 
 impl Handler<CheckUser> for Dba {
-    type Result = Result<Msgs, Error>;
+    type Result = Result<Msg, Error>;
 
     fn handle(&mut self, msg: CheckUser, _: &mut Self::Context) -> Self::Result {
         use db::schema::users::dsl::*;
@@ -81,12 +81,12 @@ impl Handler<CheckUser> for Dba {
             .map_err(error::ErrorInternalServerError)?.pop();
 
         if let Some(_) = check_user {
-            return Ok(Msgs { 
+            return Ok(Msg { 
                         status: 409,
                         message : "Occupied".to_string(),
                     });
         }
-        Ok(Msgs { 
+        Ok(Msg { 
             status: 200,
             message : "Bingo".to_string(),
         })
@@ -95,7 +95,7 @@ impl Handler<CheckUser> for Dba {
 
 // handle msg from api::auth.signin, auth psw
 impl Handler<LogUser> for Dba {
-    type Result = Result<LoginMsgs, Error>;
+    type Result = Result<LoginMsg, Error>;
 
     fn handle(&mut self, log_user: LogUser, _: &mut Self::Context) -> Self::Result {
         use db::schema::users::dsl::*;
@@ -115,7 +115,7 @@ impl Handler<LogUser> for Dba {
                     let token = encode(&Header::default(), &claims, secret_key.as_ref())
                                 .map_err(error::ErrorInternalServerError)?;
 
-                    Ok(LoginMsgs {
+                    Ok(LoginMsg {
                         status: 200,
                         message: "Success".to_string(),
                         token: token,
@@ -124,7 +124,7 @@ impl Handler<LogUser> for Dba {
                     })
                 },
                 _ => {
-                    Ok(LoginMsgs { 
+                    Ok(LoginMsg { 
                         status: 401,
                         message: "Somehing Wrong".to_string(),
                         token: "".to_string(),
@@ -134,7 +134,7 @@ impl Handler<LogUser> for Dba {
                 },
             }
         } else {
-            Ok(LoginMsgs { 
+            Ok(LoginMsg { 
                 status: 400,
                 message: "wrong password".to_string(),
                 token: "".to_string(),
@@ -147,7 +147,7 @@ impl Handler<LogUser> for Dba {
 
 // handle msg from api::auth.get_user
 impl Handler<UserID> for Dba {
-    type Result = Result<LoginMsgs, Error>;
+    type Result = Result<LoginMsg, Error>;
 
     fn handle(&mut self, uid: UserID, _: &mut Self::Context) -> Self::Result {
         use db::schema::users::dsl::*;
@@ -157,7 +157,7 @@ impl Handler<UserID> for Dba {
             .get_result::<User>(conn)
             .map_err(error::ErrorInternalServerError)?;
 
-        Ok(LoginMsgs {
+        Ok(LoginMsg {
             status: 200,
             message: "Success".to_string(),
             token: "None".to_string(),  // just for placehold
@@ -169,7 +169,7 @@ impl Handler<UserID> for Dba {
 
 // handle msg from api::auth.update_user
 impl Handler<UpdateUser> for Dba {
-    type Result = Result<LoginMsgs, Error>;
+    type Result = Result<LoginMsg, Error>;
 
     fn handle(&mut self, user: UpdateUser, _: &mut Self::Context) -> Self::Result {
         use db::schema::users::dsl::*;
@@ -187,7 +187,7 @@ impl Handler<UpdateUser> for Dba {
             .get_result::<User>(conn)
             .map_err(error::ErrorInternalServerError)?;
 
-        Ok(LoginMsgs {
+        Ok(LoginMsg {
             status: 200,
             message: "Updated".to_string(),
             token: "".to_string(),

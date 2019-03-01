@@ -10,12 +10,12 @@ use model::item::{
     Item, NewItem, SubmitItem, UpdateItem, ItemID, ItemsPerID,
     Collect, NewCollect, CollectItem, CollectID 
 };
-use model::msg::{ Msgs, ItemMsgs, ItemListMsgs, CollectMsgs };
+use model::msg::{ Msg, ItemMsg, ItemListMsg, CollectMsg };
 use model::rut::Rut;
 
 // handle msg from api::item.submit_item
 impl Handler<SubmitItem> for Dba {
-    type Result = Result<ItemMsgs, Error>;
+    type Result = Result<ItemMsg, Error>;
 
     fn handle(&mut self, submit_item: SubmitItem, _: &mut Self::Context) -> Self::Result {
         use db::schema::items::dsl::*;
@@ -43,7 +43,7 @@ impl Handler<SubmitItem> for Dba {
             .get_result::<Item>(conn)
             .map_err(error::ErrorInternalServerError)?;
 
-        Ok( ItemMsgs { 
+        Ok( ItemMsg { 
             status: 200, 
             message: "Submitted".to_string(),
             item: item_new.clone(),
@@ -53,7 +53,7 @@ impl Handler<SubmitItem> for Dba {
 
 // handle msg from api::item.get_item
 impl Handler<ItemID> for Dba {
-    type Result = Result<ItemMsgs, Error>;
+    type Result = Result<ItemMsg, Error>;
 
     fn handle(&mut self, itemid: ItemID, _: &mut Self::Context) -> Self::Result {
         use db::schema::items::dsl::*;
@@ -69,7 +69,7 @@ impl Handler<ItemID> for Dba {
             None => (),
         }
     
-        Ok( ItemMsgs { 
+        Ok( ItemMsg { 
             status: 200, 
             message: "Success".to_string(),
             item: item,
@@ -79,7 +79,7 @@ impl Handler<ItemID> for Dba {
 
 // handle msg from api::item.get_item_list
 impl Handler<ItemsPerID> for Dba {
-    type Result = Result<ItemListMsgs, Error>;
+    type Result = Result<ItemListMsg, Error>;
 
     fn handle(&mut self, perid: ItemsPerID, _: &mut Self::Context) -> Self::Result {
         use db::schema::items::dsl::*;
@@ -130,7 +130,7 @@ impl Handler<ItemsPerID> for Dba {
             item_list.append(&mut items_query);
         }
     
-        Ok( ItemListMsgs { 
+        Ok( ItemListMsg { 
             status: 200, 
             message: "Success".to_string(),
             items: item_list.clone(),
@@ -141,7 +141,7 @@ impl Handler<ItemsPerID> for Dba {
 
 // handle msg from api::item.update_item
 impl Handler<UpdateItem> for Dba {
-    type Result = Result<ItemMsgs, Error>;
+    type Result = Result<ItemMsg, Error>;
 
     fn handle(&mut self, item: UpdateItem, _: &mut Self::Context) -> Self::Result {
         use db::schema::items::dsl::*;
@@ -165,7 +165,7 @@ impl Handler<UpdateItem> for Dba {
             .get_result::<Item>(conn)
             .map_err(error::ErrorInternalServerError)?;
 
-        Ok( ItemMsgs { 
+        Ok( ItemMsg { 
             status: 200, 
             message: "Updated".to_string(),
             item: item_update.clone(),
@@ -175,7 +175,7 @@ impl Handler<UpdateItem> for Dba {
 
 // handle msg from api::item.collect_item
 impl Handler<CollectItem> for Dba {
-    type Result = Result<CollectMsgs, Error>;
+    type Result = Result<CollectMsg, Error>;
 
     fn handle(&mut self, collect: CollectItem, _: &mut Self::Context) -> Self::Result {
         use db::schema::collects::dsl::*;
@@ -201,7 +201,7 @@ impl Handler<CollectItem> for Dba {
             .get_result::<Collect>(conn)
             .map_err(error::ErrorInternalServerError)?;
     
-        Ok( CollectMsgs { 
+        Ok( CollectMsg { 
             status: 200, 
             message: "Collected".to_string(),
             rut_id: rutID.clone(),
@@ -212,7 +212,7 @@ impl Handler<CollectItem> for Dba {
 
 // handle msg from api::item.get_collect
 impl Handler<CollectID> for Dba {
-    type Result = Result<CollectMsgs, Error>;
+    type Result = Result<CollectMsg, Error>;
 
     fn handle(&mut self, cid: CollectID, _: &mut Self::Context) -> Self::Result {
         use db::schema::collects::dsl::*;
@@ -223,14 +223,14 @@ impl Handler<CollectID> for Dba {
             .load::<Collect>(conn).map_err(error::ErrorInternalServerError)?.pop();
         
         if let Some(c) = c_query {
-            Ok( CollectMsgs { 
+            Ok( CollectMsg { 
                 status: 200, 
                 message: "Success".to_string(),
                 rut_id: cid.rut_id.clone(),
                 collects: vec!(c),
             })
         } else {
-            Ok( CollectMsgs { 
+            Ok( CollectMsg { 
                 status: 400, 
                 message: "Nothing".to_string(),
                 rut_id: cid.rut_id.clone(),

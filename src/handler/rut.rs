@@ -10,11 +10,11 @@ use model::rut::{
     Rut, NewRut, CreateRut, RutID, RutsPerID, UpdateRut, 
     StarRut, RutStar, StarOrRut
 };
-use model::msg::{ Msgs, RutMsgs, RutListMsgs };
+use model::msg::{ Msg, RutMsg, RutListMsg };
 
 // handle msg from api::rut.new_rut
 impl Handler<CreateRut> for Dba {
-    type Result = Result<RutMsgs, Error>;
+    type Result = Result<RutMsg, Error>;
 
     fn handle(&mut self, new_rut: CreateRut, _: &mut Self::Context) -> Self::Result {
         // import table, column
@@ -43,7 +43,7 @@ impl Handler<CreateRut> for Dba {
             .get_result::<Rut>(conn)
             .map_err(error::ErrorInternalServerError)?;
 
-        Ok( RutMsgs { 
+        Ok( RutMsg { 
             status: 200, 
             message: "Created".to_string(),
             rut: rut_new.clone(),
@@ -53,7 +53,7 @@ impl Handler<CreateRut> for Dba {
 
 // handle msg from api::rut.get_rut
 impl Handler<RutID> for Dba {
-    type Result = Result<RutMsgs, Error>;
+    type Result = Result<RutMsg, Error>;
 
     fn handle(&mut self, rid: RutID, _: &mut Self::Context) -> Self::Result {
         use db::schema::ruts::dsl::*;
@@ -63,7 +63,7 @@ impl Handler<RutID> for Dba {
             .get_result::<Rut>(conn)
             .map_err(error::ErrorInternalServerError)?;
     
-        Ok( RutMsgs { 
+        Ok( RutMsg { 
             status: 200, 
             message: "Success".to_string(),
             rut: rut_query.clone(),
@@ -73,7 +73,7 @@ impl Handler<RutID> for Dba {
 
 // handle msg from api::rut.get_rut_list
 impl Handler<RutsPerID> for Dba {
-    type Result = Result<RutListMsgs, Error>;
+    type Result = Result<RutListMsg, Error>;
 
     fn handle(&mut self, per: RutsPerID, _: &mut Self::Context) -> Self::Result {
         use db::schema::ruts::dsl::*;
@@ -127,7 +127,7 @@ impl Handler<RutsPerID> for Dba {
             }
         }
 
-        Ok( RutListMsgs { 
+        Ok( RutListMsg { 
             status: 200, 
             message: "Success".to_string(),
             ruts: rut_list.clone(),
@@ -138,7 +138,7 @@ impl Handler<RutsPerID> for Dba {
 
 // handle msg from api::rut.update_rut
 impl Handler<UpdateRut> for Dba {
-    type Result = Result<RutMsgs, Error>;
+    type Result = Result<RutMsg, Error>;
 
     fn handle(&mut self, rut: UpdateRut, _: &mut Self::Context) -> Self::Result {
         use db::schema::ruts::dsl::*;
@@ -157,7 +157,7 @@ impl Handler<UpdateRut> for Dba {
             .get_result::<Rut>(conn)
             .map_err(error::ErrorInternalServerError)?;
 
-        Ok( RutMsgs { 
+        Ok( RutMsg { 
             status: 200, 
             message: "Updated".to_string(),
             rut: rut_update.clone(),
@@ -167,7 +167,7 @@ impl Handler<UpdateRut> for Dba {
 
 // handle msg from api::rut.star_unstar_rut
 impl Handler<StarOrRut> for Dba {
-    type Result = Result<Msgs, Error>;
+    type Result = Result<Msg, Error>;
 
     fn handle(&mut self, action: StarOrRut, _: &mut Self::Context) -> Self::Result {
         // use db::schema::ruts::dsl::*;
@@ -187,7 +187,7 @@ impl Handler<StarOrRut> for Dba {
                 diesel::insert_into(starruts).values(&new_star)
                         .execute(conn).map_err(error::ErrorInternalServerError)?;
 
-                Ok( Msgs { 
+                Ok( Msg { 
                     status: 200, 
                     message: "Satr".to_string(),
                 })
@@ -196,13 +196,13 @@ impl Handler<StarOrRut> for Dba {
                 diesel::delete(starruts.filter(id.eq(action.rut_id)))
                         .execute(conn).map_err(error::ErrorInternalServerError)?;
 
-                Ok( Msgs { 
+                Ok( Msg { 
                     status: 200, 
                     message: "unSatr".to_string(),
                 })
             },
             _ =>  {
-                Ok( Msgs { 
+                Ok( Msg { 
                     status: 400, 
                     message: "Bad Request".to_string(),
                 })

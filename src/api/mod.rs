@@ -14,7 +14,7 @@ pub mod index;
 pub mod auth;
 pub mod rut;
 pub mod item;
-
+pub mod tag;
 
 // Note: new, update, post, need to auth the identity, i.e. who can update
 // auth in frontend or backend or both ?? -- to do
