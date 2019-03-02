@@ -12,8 +12,8 @@ pub struct Item {
     pub id: String,
     pub title: String,
     pub uiid: String,  // unique item id, like isbn...
-    pub pub_at: String,  // "MM-DD-YYYY"
     pub authors: String,
+    pub pub_at: String,  // "MM-DD-YYYY
     pub publisher: String,
     pub category: String, // Book or Cource ...
     pub url: String,
@@ -32,8 +32,8 @@ pub struct NewItem<'a> {
     pub id: &'a str,
     pub title: &'a str,
     pub uiid: &'a str,  // unique item id, like isbn...
-    pub pub_at: &'a str,  // "MM-DD-YYYY"
     pub authors: &'a str,
+    pub pub_at: &'a str,  // "MM-DD-YYYY"
     pub publisher: &'a str,
     pub category: &'a str, // Book or Cource ...
     pub url: &'a str,
@@ -50,8 +50,8 @@ pub struct NewItem<'a> {
 pub struct SubmitItem {
     pub title: String,
     pub uiid: String,  // unique item id, like isbn...
-    pub pub_at: String,  // "MM-DD-YYYY"
     pub authors: String,
+    pub pub_at: String,  // "MM-DD-YYYY"
     pub publisher: String,
     pub category: String, // Book or Cource ...
     pub url: String,
@@ -71,8 +71,8 @@ pub struct UpdateItem {
     pub id: String,
     pub title: String,
     pub uiid: String,
-    pub pub_at: String, 
     pub authors: String,
+    pub pub_at: String, 
     pub publisher: String,
     pub category: String,
     pub url: String,
@@ -117,9 +117,9 @@ impl Item {
         Item {
             id: "".to_owned(),
             title: "".to_owned(),
-            uiid: "".to_owned(),   
+            uiid: "".to_owned(),
+            authors: "".to_owned(), 
             pub_at: "".to_owned(),   
-            authors: "".to_owned(),
             publisher: "".to_owned(),
             category: "".to_owned(), 
             url: "".to_owned(),
