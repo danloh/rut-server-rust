@@ -13,8 +13,15 @@ pub fn new_tag((req, user): (HttpRequest<AppState>, CheckUser))
  -> FutureResponse<HttpResponse> {
     let tname = String::from(req.match_info().get("tname").unwrap());
     let action = String::from("POST");
-    // println!("{:?}", req.method().as_str());
-    
+    //println!("{:?}", req.method().as_str());
+    //println!("{:?}", tname);
+    // check the length of tname 
+    let l = tname.trim().len();
+    if l ==0 || l > 16 {
+        use api::gen_response;
+        return gen_response(req)
+    }
+
     req.state().db.send( CheckTag { tname, action })
     .from_err().and_then(|res| match res {
         Ok(rut) => Ok(HttpResponse::Ok().json(rut)),
@@ -23,8 +30,7 @@ pub fn new_tag((req, user): (HttpRequest<AppState>, CheckUser))
     .responder()
 }
 
-pub fn get_tag(req: HttpRequest<AppState>)
- -> FutureResponse<HttpResponse> {
+pub fn get_tag(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
     let tname = String::from(req.match_info().get("tname").unwrap());
     let action = String::from("GET");
     // println!("{:?}", req.method().as_str());
@@ -56,9 +62,9 @@ pub fn get_tag_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> 
     .responder()
 }
 
-pub fn update_tag((tag, state, user): (Json<UpdateTag>, State<AppState>, CheckUser))
+pub fn update_tag((tag, req, user): (Json<UpdateTag>, HttpRequest<AppState>, CheckUser))
  -> FutureResponse<HttpResponse> {
-    state.db.send( UpdateTag {
+    req.state().db.send( UpdateTag {
         tname: tag.tname.clone(),
         intro: tag.intro.clone(),
         logo: tag.logo.clone(),
@@ -71,14 +77,25 @@ pub fn update_tag((tag, state, user): (Json<UpdateTag>, State<AppState>, CheckUs
     .responder()
 }
 
-pub fn tag_rut((tag, req, user): (Json<RutTag>, HttpRequest<AppState>, CheckUser))
+pub fn tag_rut((tags, req, user): (Json<RutTag>, HttpRequest<AppState>, CheckUser))
  -> FutureResponse<HttpResponse> {
     let action = String::from(req.match_info().get("action").unwrap()); // 0/1
     let rut_id = String::from(req.match_info().get("rutid").unwrap());
-    // println!("{:?}", tag);
+    // println!("{:?}", tags);
+
+    // filter per length, no inner space
+    let tnames: Vec<String> = tags.tname.clone().into_iter().filter(
+        |t| t.trim().len() < 16 && t.trim().len() > 0 && !(t.trim().contains(" "))
+    ).collect();
+    // check if any
+    if tnames.len() == 0  {
+        use api::gen_response;
+        return gen_response(req)
+    }
+
     req.state().db.send( RutTag { 
-        tname: tag.tname.clone(),
-        rut_id: tag.rut_id.clone(),
+        tname: tnames.clone(),
+        rut_id: tags.rut_id.clone(),
         action: action.clone(), 
     })
     .from_err().and_then(|res| match res {

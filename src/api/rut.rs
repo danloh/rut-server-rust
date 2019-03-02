@@ -9,17 +9,28 @@ use router::AppState;
 use model::rut::{ CreateRut, RutID, RutsPerID, UpdateRut, StarOrRut };
 use model::user::{ CheckUser };
 
-pub fn new_rut((rut, state, user): (Json<CreateRut>, State<AppState>, CheckUser))
+pub fn new_rut((rut, req, user): (Json<CreateRut>, HttpRequest<AppState>, CheckUser))
  -> FutureResponse<HttpResponse> {
     // check authed via user:FromRequest
-    state.db.send( CreateRut {
+
+    // do some check, length of input
+    let l_t = rut.title.trim().len();
+    let l_u = rut.url.trim().len();
+    let l_a = rut.author_id.trim().len();
+    let check: bool = l_t > 0 && l_t <=120 && l_u <=120 && l_a <=120;
+    if !check {
+        use api::gen_response;
+        return gen_response(req)
+    }
+
+    req.state().db.send( CreateRut {
         title: rut.title.clone(),
         url: rut.url.clone(),
         content: rut.content.clone(),
         user_id: user.id.clone(),     // extracted from request as user
-        user_name: user.uname.clone(), 
+        user_name: user.uname.clone(),
         author_id: rut.author_id.clone(),
-        credential: rut.credential.clone(), 
+        credential: rut.credential.clone(),
     })
     .from_err().and_then(|res| match res {
         Ok(rut) => Ok(HttpResponse::Ok().json(rut)),

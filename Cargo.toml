@@ -11,9 +11,9 @@ path = "tests/lib.rs"
 futures = "0.1.25"
 actix = "0.7.9"
 actix-web = "0.7.18"
-serde = "1.0.88"
-serde_derive = "1.0.88"
-serde_json = "1.0.38"
+serde = "1.0.89"
+serde_derive = "1.0.89"
+serde_json = "1.0.39"
 diesel = { version = "1.4.1", features = ["postgres","chrono","serde_json", "r2d2"] }
 postgres = {version= "0.15.2", features = ["with-chrono"]}
 uuid = { version = "0.7.2", features = ["serde", "v4"] }
@@ -25,8 +25,5 @@ dotenv = "0.13.0"
 log = "0.4.6" 
 env_logger = "0.6.0"
 
-md5 = "0.6.1"
-regex = "1.1.2"
-bytes = "0.4.11"
-openssl = "0.10.18"
-timeago = "0.1.5"
+# regex = "1.1.2"
+# openssl = "0.10.19"

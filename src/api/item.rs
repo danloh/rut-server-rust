@@ -11,9 +11,16 @@ use model::item::{
 };
 use model::user::{ CheckUser };
 
-pub fn submit_item((item, state, user): (Json<SubmitItem>, State<AppState>, CheckUser))
+pub fn submit_item((item, req, user): (Json<SubmitItem>, HttpRequest<AppState>, CheckUser))
  -> FutureResponse<HttpResponse> {
-    state.db.send( SubmitItem {
+    // do some check of input
+    let l_t = item.title.trim().len();
+    if l_t == 0 || l_t > 120 {
+        use api::gen_response;
+        return gen_response(req)
+    }
+    
+    req.state().db.send( SubmitItem {
         title: item.title.clone(),
         uiid: item.uiid.clone(),
         pub_at: item.pub_at.clone(), 
