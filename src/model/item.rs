@@ -195,6 +195,7 @@ pub struct UpdateCollect {
     pub id: String,
     // pub item_order: i32,  // re-order, to do
     pub content: String,
+    pub user_id: String,  // to check permission
     // pub spoiler: bool,  // to do but 
 }
 
@@ -211,6 +212,19 @@ pub struct CollectID {
 
 impl Message for CollectID {
     type Result = Result<CollectMsg, Error>;
+}
+
+// as msg to del collect
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct DelCollect {
+    pub collect_id: String,
+    pub rut_id: String,   // to update rut after del
+    pub item_id: String,  // to update item after del
+    pub user_id: String,  // to check permission
+}
+
+impl Message for DelCollect {
+    type Result = Result<Msg, Error>;
 }
 
 // as msg in collect list per rutid or itemid

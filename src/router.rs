@@ -73,7 +73,7 @@ pub fn app_with_state() -> App<AppState> {
         .resource("/collects/{cid}", |r| {
             r.get().with(get_collect);
             r.put().with(update_collect);
-            r.delete().with(del_collect);
+            r.delete().with(del_collect);  // body data to pass when del
         })
         .resource("/tags/{tname}", |r| {
             r.get().with(get_tag);

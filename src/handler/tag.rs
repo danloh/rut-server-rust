@@ -11,7 +11,7 @@ use model::tag::{
 };
 use model::msg::{ Msg, TagMsg, TagListMsg };
 
-// handle msg from api::tag.new_tag
+// handle msg from api::tag.new_tag and get_tag
 impl Handler<CheckTag> for Dba {
     type Result = Result<TagMsg, Error>;
 

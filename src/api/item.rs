@@ -8,7 +8,7 @@ use futures::Future;
 use router::AppState;
 use model::item::{ 
     SubmitItem, UpdateItem, ItemID, ItemsPerID, CollectItem,
-    CollectID, CollectIDs, UpdateCollect 
+    CollectID, CollectIDs, UpdateCollect, DelCollect 
 };
 use model::user::{ CheckUser };
 
@@ -159,13 +159,21 @@ pub fn get_collect(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
     .responder()
 }
 
-pub fn del_collect(req: HttpRequest<AppState>, user: CheckUser)
+pub fn del_collect((dc, req, user): (Json<DelCollect>, HttpRequest<AppState>, CheckUser))
  -> FutureResponse<HttpResponse> {
-    let collect_id = String::from(req.match_info().get("cid").unwrap());
-    let action = String::from("DELETE");
-    req.state().db.send(
-        CollectID{ collect_id, action }
-    )
+    // do some check
+    let c_id = String::from(req.match_info().get("cid").unwrap());
+    if c_id != dc.collect_id  || dc.user_id != user.id {
+        use api::gen_response;
+        return gen_response(req)
+    }
+
+    req.state().db.send( DelCollect{
+        collect_id: dc.collect_id.clone(),
+        rut_id: dc.rut_id.clone(),
+        item_id: dc.item_id.clone(),
+        user_id: user.id.clone(),   // pass to handler to check permission
+    })
     .from_err().and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
         Err(_) => Ok(HttpResponse::InternalServerError().into()),
@@ -178,13 +186,14 @@ pub fn update_collect((c, req, user): (Json<UpdateCollect>, HttpRequest<AppState
     // need to check the auth_userid == collect_userid, on frontend??
     // check id eque
     let cid = String::from(req.match_info().get("cid").unwrap());
-    if cid != c.id {
+    if cid != c.id || c.user_id != user.id {
         use api::gen_response;
         return gen_response(req)
     }
     req.state().db.send( UpdateCollect {
         id: c.id.clone(),
         content: c.content.clone(),
+        user_id: user.id.clone(),
     })
     .from_err().and_then(|res| match res {
         Ok(item) => Ok(HttpResponse::Ok().json(item)),

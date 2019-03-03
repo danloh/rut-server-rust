@@ -7,8 +7,8 @@ use chrono::Utc;
 use uuid;
 
 use model::item::{
-    Item, NewItem, SubmitItem, UpdateItem, ItemID, ItemsPerID,
-    Collect, NewCollect, CollectItem, CollectID, CollectIDs, UpdateCollect  
+    Item, NewItem, SubmitItem, UpdateItem, ItemID, ItemsPerID, Collect, NewCollect, 
+    CollectItem, CollectID, CollectIDs, UpdateCollect, DelCollect  
 };
 use model::msg::{ Msg, ItemMsg, ItemListMsg, CollectMsg, CollectsMsg };
 use model::rut::Rut;
@@ -202,9 +202,14 @@ impl Handler<CollectItem> for Dba {
             .get_result::<Collect>(conn)
             .map_err(error::ErrorInternalServerError)?;
         
-        // to update the item_count in rut
+        // to update the item_count + 1 in rut
         diesel::update(ruts).filter(&rid.eq(&rutID))
             .set(item_count.eq(item_count + 1)).execute(conn)
+            .map_err(error::ErrorInternalServerError)?;
+        // to update the rut_count + 1 in item
+        use db::schema::items::dsl::{items, id as itemid, rut_count};
+        diesel::update(items).filter(&itemid.eq(&collect.item_id))
+            .set(rut_count.eq(rut_count + 1)).execute(conn)
             .map_err(error::ErrorInternalServerError)?;
     
         Ok( CollectMsg { 
@@ -258,36 +263,63 @@ impl Handler<CollectID> for Dba {
         use db::schema::collects::dsl::*;
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
         
-        let action = cid.action;
-        if &action == "GET" {
-            let c_query = collects
-                .filter(&id.eq(&cid.collect_id)).load::<Collect>(conn)
-                .map_err(error::ErrorInternalServerError)?.pop();
-            
-            if let Some(c) = c_query {
-                Ok( CollectMsg { 
-                    status: 200, 
-                    message: "Success".to_string(),
-                    collect: c,
-                })
-            } else {
-                Ok( CollectMsg { 
-                    status: 404, 
-                    message: "Nothing".to_string(),
-                    collect: Collect::new(),
-                })
-            }
-        } else { // delete
-            diesel::delete(collects.filter(&id.eq(&cid.collect_id)))
-                .execute(conn).map_err(error::ErrorInternalServerError)?;
-
+        let c_query = collects
+            .filter(&id.eq(&cid.collect_id)).load::<Collect>(conn)
+            .map_err(error::ErrorInternalServerError)?.pop();
+        
+        if let Some(c) = c_query {
             Ok( CollectMsg { 
                 status: 200, 
-                message: "Deleted".to_string(),
+                message: "Get".to_string(),
+                collect: c,
+            })
+        } else {
+            Ok( CollectMsg { 
+                status: 404, 
+                message: "Nothing".to_string(),
                 collect: Collect::new(),
             })
-        }
+        }    
+    }
+}
+
+// handle msg from api::item.del_collect
+impl Handler<DelCollect> for Dba {
+    type Result = Result<Msg, Error>;
+
+    fn handle(&mut self, dc: DelCollect, _: &mut Self::Context) -> Self::Result {
+        use db::schema::collects::dsl::*;
+        let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
         
+        let q_user_id = collects.filter(&id.eq(&dc.collect_id))
+            .select(user_id).get_result::<String>(conn)
+            .map_err(error::ErrorInternalServerError)?;
+        
+        if dc.user_id == q_user_id {
+            diesel::delete(collects.filter(&id.eq(&dc.collect_id)))
+                .execute(conn).map_err(error::ErrorInternalServerError)?;
+
+            // to update the item_count - 1 in rut
+            use db::schema::ruts::dsl::{ruts, id as rid, item_count};
+            diesel::update(ruts).filter(&rid.eq(&dc.rut_id))
+                .set(item_count.eq(item_count - 1)).execute(conn)
+                .map_err(error::ErrorInternalServerError)?;
+            // to update the rut_count - 1 in item
+            use db::schema::items::dsl::{items, id as itemid, rut_count};
+            diesel::update(items).filter(&itemid.eq(&dc.item_id))
+                .set(rut_count.eq(rut_count - 1)).execute(conn)
+                .map_err(error::ErrorInternalServerError)?;
+
+            Ok( Msg { 
+                status: 200, 
+                message: "Deleted".to_string(),
+            })
+        } else {
+            Ok( Msg { 
+                status: 401, 
+                message: "No Permission".to_string(),
+            })
+        }
     }
 }
 
@@ -299,12 +331,20 @@ impl Handler<UpdateCollect> for Dba {
         use db::schema::collects::dsl::*;
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
 
+        let q_user_id = collects.filter(&id.eq(&c.id))
+            .select(user_id).get_result::<String>(conn)
+            .map_err(error::ErrorInternalServerError)?;
+        if q_user_id != c.user_id {
+            return Ok( CollectMsg { 
+                        status: 401,
+                        message: "No Permission ".to_string(),
+                        collect: Collect::new(),
+                    })
+        }
+
         let collect_update = diesel::update(collects)
             .filter(&id.eq(&c.id))
-            .set( &UpdateCollect{
-                id: c.id.clone(),
-                content: c.content.clone(),
-            })
+            .set(content.eq(c.content))
             .get_result::<Collect>(conn)
             .map_err(error::ErrorInternalServerError)?;
 
