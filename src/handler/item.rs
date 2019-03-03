@@ -8,9 +8,9 @@ use uuid;
 
 use model::item::{
     Item, NewItem, SubmitItem, UpdateItem, ItemID, ItemsPerID,
-    Collect, NewCollect, CollectItem, CollectID 
+    Collect, NewCollect, CollectItem, CollectID, CollectIDs, UpdateCollect  
 };
-use model::msg::{ Msg, ItemMsg, ItemListMsg, CollectMsg };
+use model::msg::{ Msg, ItemMsg, ItemListMsg, CollectMsg, CollectsMsg };
 use model::rut::Rut;
 
 // handle msg from api::item.submit_item
@@ -166,7 +166,7 @@ impl Handler<UpdateItem> for Dba {
             .map_err(error::ErrorInternalServerError)?;
 
         Ok( ItemMsg { 
-            status: 200, 
+            status: 200,
             message: "Updated".to_string(),
             item: item_update.clone(),
         })
@@ -184,8 +184,9 @@ impl Handler<CollectItem> for Dba {
         
         // to gen item order, curr_item_count + 1, or pass fron frontend
         let rutID = collect.rut_id;
-        let item_num = ruts.filter(&rid.eq(&rutID)).select(item_count)
-                        .first::<i32>(conn).map_err(error::ErrorInternalServerError)?;
+        let item_num = ruts.filter(&rid.eq(&rutID)) //how to query once for select/update
+            .select(item_count)
+            .first::<i32>(conn).map_err(error::ErrorInternalServerError)?;
         let uuid = format!("{}", uuid::Uuid::new_v4());
         let new_collect = NewCollect {
             id: &uuid,
@@ -200,12 +201,51 @@ impl Handler<CollectItem> for Dba {
             .values(&new_collect)
             .get_result::<Collect>(conn)
             .map_err(error::ErrorInternalServerError)?;
+        
+        // to update the item_count in rut
+        diesel::update(ruts).filter(&rid.eq(&rutID))
+            .set(item_count.eq(item_count + 1)).execute(conn)
+            .map_err(error::ErrorInternalServerError)?;
     
         Ok( CollectMsg { 
             status: 200, 
             message: "Collected".to_string(),
-            rut_id: rutID.clone(),
-            collects: vec!(collect_new),
+            collect: collect_new,
+        })
+    }
+}
+
+// handle msg from api::item.get_collect_list
+impl Handler<CollectIDs> for Dba {
+    type Result = Result<CollectsMsg, Error>;
+
+    fn handle(&mut self, cid: CollectIDs, _: &mut Self::Context) -> Self::Result {
+        use db::schema::collects::dsl::*;
+        let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
+        
+        let mut collect_list: Vec<Collect> = Vec::new();
+        match cid {
+            CollectIDs::RutID(r) => {
+                collect_list = collects.filter(&rut_id.eq(&r))
+                    .load::<Collect>(conn)
+                    .map_err(error::ErrorInternalServerError)?;
+            },
+            CollectIDs::ItemID(i) => {
+                collect_list = collects.filter(&item_id.eq(&i))
+                    .load::<Collect>(conn)
+                    .map_err(error::ErrorInternalServerError)?;
+            },
+            CollectIDs::UserID(u) => {
+                collect_list = collects.filter(&user_id.eq(&u))
+                    .load::<Collect>(conn)
+                    .map_err(error::ErrorInternalServerError)?;
+            },
+        }
+        
+        Ok( CollectsMsg { 
+            status: 200,
+            message: "Get".to_string(),
+            collects: collect_list,
         })
     }
 }
@@ -217,25 +257,61 @@ impl Handler<CollectID> for Dba {
     fn handle(&mut self, cid: CollectID, _: &mut Self::Context) -> Self::Result {
         use db::schema::collects::dsl::*;
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
-
-        let c_query = collects
-            .filter(&item_id.eq(&cid.item_id)).filter(&rut_id.eq(&cid.rut_id))
-            .load::<Collect>(conn).map_err(error::ErrorInternalServerError)?.pop();
         
-        if let Some(c) = c_query {
+        let action = cid.action;
+        if &action == "GET" {
+            let c_query = collects
+                .filter(&id.eq(&cid.collect_id)).load::<Collect>(conn)
+                .map_err(error::ErrorInternalServerError)?.pop();
+            
+            if let Some(c) = c_query {
+                Ok( CollectMsg { 
+                    status: 200, 
+                    message: "Success".to_string(),
+                    collect: c,
+                })
+            } else {
+                Ok( CollectMsg { 
+                    status: 404, 
+                    message: "Nothing".to_string(),
+                    collect: Collect::new(),
+                })
+            }
+        } else { // delete
+            diesel::delete(collects.filter(&id.eq(&cid.collect_id)))
+                .execute(conn).map_err(error::ErrorInternalServerError)?;
+
             Ok( CollectMsg { 
                 status: 200, 
-                message: "Success".to_string(),
-                rut_id: cid.rut_id.clone(),
-                collects: vec!(c),
-            })
-        } else {
-            Ok( CollectMsg { 
-                status: 400, 
-                message: "Nothing".to_string(),
-                rut_id: cid.rut_id.clone(),
-                collects: Vec::new(),
+                message: "Deleted".to_string(),
+                collect: Collect::new(),
             })
         }
+        
+    }
+}
+
+// handle msg from api::item.update_collect
+impl Handler<UpdateCollect> for Dba {
+    type Result = Result<CollectMsg, Error>;
+
+    fn handle(&mut self, c: UpdateCollect, _: &mut Self::Context) -> Self::Result {
+        use db::schema::collects::dsl::*;
+        let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
+
+        let collect_update = diesel::update(collects)
+            .filter(&id.eq(&c.id))
+            .set( &UpdateCollect{
+                id: c.id.clone(),
+                content: c.content.clone(),
+            })
+            .get_result::<Collect>(conn)
+            .map_err(error::ErrorInternalServerError)?;
+
+        Ok( CollectMsg { 
+            status: 200,
+            message: "Updated".to_string(),
+            collect: collect_update.clone(),
+        })
     }
 }

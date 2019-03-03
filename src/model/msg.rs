@@ -56,12 +56,19 @@ pub struct ItemListMsg {
     pub count: usize,
 }
 
-// result struct in response an items in a rut 
+// result struct in response collect in a rut 
 #[derive(Deserialize,Serialize,Debug)]
 pub struct CollectMsg {
     pub status: i32,
     pub message: String,
-    pub rut_id: String,
+    pub collect: Collect,
+}
+
+// result struct in response collects  
+#[derive(Deserialize,Serialize,Debug)]
+pub struct CollectsMsg {
+    pub status: i32,
+    pub message: String,
     pub collects: Vec<Collect>,
 }
 

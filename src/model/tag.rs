@@ -97,7 +97,7 @@ pub struct StarTag {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CheckTag {
     pub tname: String,
-    pub action: String, // get / post
+    pub action: String, // get / post / delete
 }
 
 impl Message for CheckTag {

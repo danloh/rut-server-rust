@@ -30,6 +30,8 @@ pub fn new_tag((req, user): (HttpRequest<AppState>, CheckUser))
     .responder()
 }
 
+// new_tag Post, get_tag Get, 2 api send msg to a same msg handler
+
 pub fn get_tag(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
     let tname = String::from(req.match_info().get("tname").unwrap());
     let action = String::from("GET");
@@ -79,7 +81,7 @@ pub fn update_tag((tag, req, user): (Json<UpdateTag>, HttpRequest<AppState>, Che
 
 pub fn tag_rut((tags, req, user): (Json<RutTag>, HttpRequest<AppState>, CheckUser))
  -> FutureResponse<HttpResponse> {
-    let action = String::from(req.match_info().get("action").unwrap()); // 0/1
+    let action = String::from(req.match_info().get("action").unwrap()); // 0-untag/1-tag
     let rut_id = String::from(req.match_info().get("rutid").unwrap());
     // println!("{:?}", tags);
 

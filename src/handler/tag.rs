@@ -133,7 +133,7 @@ impl Handler<RutTag> for Dba {
 
         let action = rtgs.action;
 
-        if &action == "1" {
+        if &action == "1" {  // tag
             for rtg in rtgs.tname {
                 let tr = tagruts.filter(&tname.eq(&rtg)).load::<TagRut>(conn)
                     .map_err(error::ErrorInternalServerError)?.pop();
@@ -189,7 +189,7 @@ impl Handler<RutTag> for Dba {
                     },
                 }
             }
-        } else {
+        } else { // untag
             for rtg in rtgs.tname {
                 diesel::delete(tagruts.filter(&tname.eq(&rtg)))
                     .execute(conn).map_err(error::ErrorInternalServerError)?;

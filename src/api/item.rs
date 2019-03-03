@@ -7,7 +7,8 @@ use actix_web::{
 use futures::Future;
 use router::AppState;
 use model::item::{ 
-    SubmitItem, UpdateItem, ItemID, ItemsPerID, CollectItem, CollectID 
+    SubmitItem, UpdateItem, ItemID, ItemsPerID, CollectItem,
+    CollectID, CollectIDs, UpdateCollect 
 };
 use model::user::{ CheckUser };
 
@@ -74,9 +75,15 @@ pub fn get_item_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse>
     .responder()
 }
 
-pub fn update_item((item, state, user): (Json<UpdateItem>, State<AppState>, CheckUser))
+pub fn update_item((item, req, user): (Json<UpdateItem>, HttpRequest<AppState>, CheckUser))
  -> FutureResponse<HttpResponse> {
-    state.db.send( UpdateItem {
+    // do some check of input
+    let l_t = item.title.trim().len();
+    if l_t == 0 || l_t > 120 {
+        use api::gen_response;
+        return gen_response(req)
+    }
+    req.state().db.send( UpdateItem {
         id: item.id.clone(),
         title: item.title.clone(),
         uiid: item.uiid.clone(),
@@ -96,12 +103,20 @@ pub fn update_item((item, state, user): (Json<UpdateItem>, State<AppState>, Chec
     .responder()
 }
 
-pub fn collect_item((item, state, user): (Json<CollectItem>, State<AppState>, CheckUser))
+pub fn collect_item((item, req, user): (Json<CollectItem>, HttpRequest<AppState>, CheckUser))
  -> FutureResponse<HttpResponse> {
-    state.db.send( CollectItem {
+    // do some check of input
+    let l_r = item.rut_id.trim().len();
+    let l_i = item.item_id.trim().len();
+    if l_r == 0 || l_i == 0 {
+        use api::gen_response;
+        return gen_response(req)
+    }
+    
+    req.state().db.send( CollectItem {
         rut_id: item.rut_id.clone(),
         item_id: item.item_id.clone(),
-        item_order: item.item_order.clone(),  
+        item_order: item.item_order.clone(),
         content: item.content.clone(),
         user_id: user.id,
     })
@@ -112,14 +127,67 @@ pub fn collect_item((item, state, user): (Json<CollectItem>, State<AppState>, Ch
     .responder()
 }
 
+pub fn get_collect_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
+    let per = req.match_info().get("per").unwrap();
+    let id = String::from(req.match_info().get("id").unwrap());
+
+    let collectIDs = match per {
+        "item" => CollectIDs::ItemID(id),
+        "rut" => CollectIDs::RutID(id),
+        "user" => CollectIDs::UserID(id),
+        _ => CollectIDs::RutID(id),
+    };
+
+    req.state().db.send(collectIDs)
+    .from_err().and_then(|res| match res {
+        Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
+        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+    })
+    .responder()
+}
+
 pub fn get_collect(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
-    let rut_id = String::from(req.match_info().get("rutid").unwrap());
-    let item_id = String::from(req.match_info().get("itemid").unwrap());
+    let collect_id = String::from(req.match_info().get("cid").unwrap());
+    let action = String::from("GET");
     req.state().db.send(
-        CollectID{rut_id, item_id}
+        CollectID{ collect_id, action }
     )
     .from_err().and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
+        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+    })
+    .responder()
+}
+
+pub fn del_collect(req: HttpRequest<AppState>, user: CheckUser)
+ -> FutureResponse<HttpResponse> {
+    let collect_id = String::from(req.match_info().get("cid").unwrap());
+    let action = String::from("DELETE");
+    req.state().db.send(
+        CollectID{ collect_id, action }
+    )
+    .from_err().and_then(|res| match res {
+        Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
+        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+    })
+    .responder()
+}
+
+pub fn update_collect((c, req, user): (Json<UpdateCollect>, HttpRequest<AppState>, CheckUser))
+ -> FutureResponse<HttpResponse> {
+    // need to check the auth_userid == collect_userid, on frontend??
+    // check id eque
+    let cid = String::from(req.match_info().get("cid").unwrap());
+    if cid != c.id {
+        use api::gen_response;
+        return gen_response(req)
+    }
+    req.state().db.send( UpdateCollect {
+        id: c.id.clone(),
+        content: c.content.clone(),
+    })
+    .from_err().and_then(|res| match res {
+        Ok(item) => Ok(HttpResponse::Ok().json(item)),
         Err(_) => Ok(HttpResponse::InternalServerError().into()),
     })
     .responder()

@@ -9,8 +9,8 @@ use db::dba::{ Dba, init };
 use api::auth::{ signup, signin, check_user, auth_token, get_user, update_user };
 use api::rut::{ new_rut, get_rut, get_rut_list, update_rut, star_unstar_rut };
 use api::item::{ 
-    submit_item, get_item, get_item_list, 
-    update_item, collect_item, get_collect
+    submit_item, get_item, get_item_list, update_item, collect_item, 
+    get_collect_list, update_collect, get_collect, del_collect
 };
 use api::tag::{ new_tag, get_tag, get_tag_list, update_tag, tag_rut };
 
@@ -54,9 +54,6 @@ pub fn app_with_state() -> App<AppState> {
         .resource("/ruts/{rid}/{action:[0|1]}/star", |r| { // 0- unstar, 1- star
             r.get().with(star_unstar_rut);
         })
-        .resource("/ruts/{rid}/collect", |r| {
-            r.post().with(collect_item);
-        })
         .resource("/items", |r| {
             r.post().with(submit_item);
         })
@@ -67,8 +64,16 @@ pub fn app_with_state() -> App<AppState> {
         .resource("/items/{per}/{id}/{flag:[0|1|2]}", |r| { // per: rut,tag,user,id,url,title
             r.get().with(get_item_list);                    // flag: 0-to,1-ing,2-done
         })
-        .resource("/{rutid}/collects/{itemid}", |r| {
+        .resource("/ruts/{rid}/collect", |r| {
+            r.post().with(collect_item);
+        })
+        .resource("/collects/{per}/{id}", |r| {
+            r.get().with(get_collect_list);
+        })
+        .resource("/collects/{cid}", |r| {
             r.get().with(get_collect);
+            r.put().with(update_collect);
+            r.delete().with(del_collect);
         })
         .resource("/tags/{tname}", |r| {
             r.get().with(get_tag);

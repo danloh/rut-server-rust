@@ -3,7 +3,7 @@
 use db::schema::{items, collects};
 use actix_web::{ Error, actix::Message };
 use chrono::{Utc, NaiveDateTime};
-use model::msg::{ Msg, ItemMsg, ItemListMsg, CollectMsg };
+use model::msg::{ Msg, ItemMsg, ItemListMsg, CollectMsg, CollectsMsg };
 
 // use to build select query
 #[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
@@ -89,6 +89,7 @@ impl Message for UpdateItem {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ItemID {
     pub item_id: String,
+    // pub action: String, // get / delete, to do
 }
 
 impl Message for ItemID {
@@ -142,8 +143,23 @@ pub struct Collect {
     pub item_order: i32,
     pub content: String,
     // pub spoiler: bool,  // to do but 
-    pub creator_id: String,
+    pub user_id: String,
     pub collect_at: NaiveDateTime,
+}
+
+// Collect's constructor
+impl Collect {
+    pub fn new() -> Self {
+        Collect {
+            id: "".to_owned(),
+            rut_id: "".to_owned(),
+            item_id: "".to_owned(),
+            item_order: 0,
+            content: "".to_owned(), 
+            user_id: "".to_owned(),   
+            collect_at: Utc::now().naive_utc(),
+        }
+    }
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize,Insertable)]
@@ -172,13 +188,39 @@ impl Message for CollectItem {
     type Result = Result<CollectMsg, Error>;
 }
 
+// as msg in update item
+#[derive(Deserialize,Serialize,Debug,Clone,AsChangeset)]
+#[table_name="collects"]
+pub struct UpdateCollect {
+    pub id: String,
+    // pub item_order: i32,  // re-order, to do
+    pub content: String,
+    // pub spoiler: bool,  // to do but 
+}
+
+impl Message for UpdateCollect {
+    type Result = Result<CollectMsg, Error>;
+}
+
 // as msg in rut get collect info
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CollectID {
-    pub rut_id: String,
-    pub item_id: String,
+    pub collect_id: String,
+    pub action: String,    // get / delete
 }
 
 impl Message for CollectID {
     type Result = Result<CollectMsg, Error>;
+}
+
+// as msg in collect list per rutid or itemid
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub enum CollectIDs {
+    RutID(String),
+    ItemID(String),
+    UserID(String),
+}
+
+impl Message for CollectIDs {
+    type Result = Result<CollectsMsg, Error>;
 }
