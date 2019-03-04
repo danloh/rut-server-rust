@@ -32,6 +32,7 @@ impl Handler<CreateRut> for Dba {
             user_name: &new_rut.user_name,
             author_id: &new_rut.author_id,
             credential: &new_rut.credential,
+            logo: "",
             create_at: Utc::now().naive_utc(),
             renew_at: Utc::now().naive_utc(),
             item_count: 0,
@@ -146,14 +147,14 @@ impl Handler<UpdateRut> for Dba {
         
         let rut_update = diesel::update(ruts)
             .filter(&id.eq(&rut.id))
-            .set( &UpdateRut {
-                id: rut.id.clone(),
-                title: rut.title.clone(),
-                url: rut.url.clone(),
-                content: rut.content.clone(),
-                author_id: rut.author_id.clone(),
-                credential: rut.credential.clone(), 
-            })
+            .set((
+                title.eq(rut.title.clone()),
+                url.eq(rut.url.clone()),
+                content.eq(rut.content.clone()),
+                author_id.eq(rut.author_id.clone()),
+                credential.eq(rut.credential.clone()),
+                renew_at.eq(Utc::now().naive_utc()),
+            ))
             .get_result::<Rut>(conn)
             .map_err(error::ErrorInternalServerError)?;
 

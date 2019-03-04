@@ -16,9 +16,10 @@ pub struct Rut {
     pub create_at: NaiveDateTime,
     pub renew_at: NaiveDateTime,
     pub author_id: String,
-    pub user_id: String,      // as who post
+    pub user_id: String,     // as who post
     pub user_name: String,
     pub credential: String,
+    pub logo: String,
     pub item_count: i32,
     pub comment_count: i32,
     pub star_count: i32,
@@ -38,6 +39,7 @@ pub struct NewRut<'a> {
     pub user_id: &'a str,
     pub user_name: &'a str,
     pub credential: &'a str,
+    pub logo: &'a str,
     pub item_count: i32,
     pub comment_count: i32,
     pub star_count: i32,
@@ -112,6 +114,7 @@ impl Rut {
             user_name: "".to_owned(),
             author_id: "".to_owned(),
             credential: "".to_owned(),
+            logo: "".to_owned(),
             item_count: 0,
             comment_count: 0,
             star_count: 0,

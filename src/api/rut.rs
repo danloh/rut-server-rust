@@ -78,7 +78,7 @@ pub fn update_rut((rut, state, user): (Json<UpdateRut>, State<AppState>, CheckUs
         url: rut.url.clone(),
         content: rut.content.clone(),
         author_id: rut.author_id.clone(),
-        credential: rut.credential.clone(), 
+        credential: rut.credential.clone(),
     })
     .from_err().and_then(|res| match res {
         Ok(rut) => Ok(HttpResponse::Ok().json(rut)),

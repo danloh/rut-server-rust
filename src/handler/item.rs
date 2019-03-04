@@ -179,35 +179,45 @@ impl Handler<CollectItem> for Dba {
 
     fn handle(&mut self, collect: CollectItem, _: &mut Self::Context) -> Self::Result {
         use db::schema::collects::dsl::*;
-        use db::schema::ruts::dsl::{ruts, id as rid, item_count}; 
+        use db::schema::ruts::dsl::{ruts, id as rid, item_count, logo, renew_at};
+        use db::schema::items::dsl::{items, id as itemid, rut_count, cover};
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
+        
+        // get item cover then as rut logo, and check if item exist
+        let (itm_id, itm_cover): (String, String) = items
+            .filter(&itemid.eq(&collect.item_id))
+            .select((itemid, cover)).get_result::<(String,String)>(conn)
+            .map_err(error::ErrorInternalServerError)?;
         
         // to gen item order, curr_item_count + 1, or pass fron frontend
         let rutID = collect.rut_id;
         let item_num = ruts.filter(&rid.eq(&rutID)) //how to query once for select/update
-            .select(item_count)
-            .first::<i32>(conn).map_err(error::ErrorInternalServerError)?;
+            .select(item_count).first::<i32>(conn)
+            .map_err(error::ErrorInternalServerError)?;
         let uuid = format!("{}", uuid::Uuid::new_v4());
         let new_collect = NewCollect {
             id: &uuid,
             rut_id: &rutID,
-            item_id: &collect.item_id, // need to check??
+            item_id: &itm_id, // ok?
             item_order: item_num + 1,
             content: &collect.content,
             user_id: &collect.user_id,
             collect_at: Utc::now().naive_utc(),
         };
         let collect_new = diesel::insert_into(collects)
-            .values(&new_collect)
-            .get_result::<Collect>(conn)
+            .values(&new_collect).get_result::<Collect>(conn)
             .map_err(error::ErrorInternalServerError)?;
         
-        // to update the item_count + 1 in rut
+        // to update the item_count + 1 and logo and renew_at in rut
         diesel::update(ruts).filter(&rid.eq(&rutID))
-            .set(item_count.eq(item_count + 1)).execute(conn)
+            .set((
+                item_count.eq(item_count + 1),
+                logo.eq(itm_cover),
+                renew_at.eq(Utc::now().naive_utc()),
+            ))
+            .execute(conn)
             .map_err(error::ErrorInternalServerError)?;
         // to update the rut_count + 1 in item
-        use db::schema::items::dsl::{items, id as itemid, rut_count};
         diesel::update(items).filter(&itemid.eq(&collect.item_id))
             .set(rut_count.eq(rut_count + 1)).execute(conn)
             .map_err(error::ErrorInternalServerError)?;
@@ -301,10 +311,14 @@ impl Handler<DelCollect> for Dba {
             )
             .execute(conn).map_err(error::ErrorInternalServerError)?;
 
-            // to update the item_count - 1 in rut
-            use db::schema::ruts::dsl::{ruts, id as rid, item_count};
+            // to update the item_count - 1 and renew_at in rut
+            use db::schema::ruts::dsl::{ruts, id as rid, item_count, renew_at};
             diesel::update(ruts).filter(&rid.eq(&dc.rut_id))
-                .set(item_count.eq(item_count - 1)).execute(conn)
+                .set((
+                    item_count.eq(item_count - 1),
+                    renew_at.eq(Utc::now().naive_utc()),
+                ))
+                .execute(conn)
                 .map_err(error::ErrorInternalServerError)?;
             // to update the rut_count - 1 in item
             use db::schema::items::dsl::{items, id as itemid, rut_count};

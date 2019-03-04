@@ -15,7 +15,7 @@ table! {
         id -> Varchar,
         content -> Text,
         create_at -> Timestamp,
-        etc_id -> Varchar,
+        petc_id -> Varchar,
     }
 }
 
@@ -50,6 +50,7 @@ table! {
         user_id -> Varchar,
         user_name -> Varchar,
         credential -> Varchar,
+        logo -> Varchar,
         item_count -> Int4,
         comment_count -> Int4,
         star_count -> Int4,
