@@ -152,3 +152,14 @@ pub struct StarOrRut {
 impl Message for StarOrRut {
     type Result = Result<Msg, Error>;
 }
+
+// as msg to check if star a rut
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct StarRutStatus {
+    pub user_id: String,
+    pub rut_id: String,
+}
+
+impl Message for StarRutStatus {
+    type Result = Result<Msg, Error>;
+}

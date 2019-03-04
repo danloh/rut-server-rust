@@ -7,7 +7,9 @@ use actix_web::{
 };
 use db::dba::{ Dba, init };
 use api::auth::{ signup, signin, check_user, auth_token, get_user, update_user };
-use api::rut::{ new_rut, get_rut, get_rut_list, update_rut, star_unstar_rut };
+use api::rut::{
+    new_rut, get_rut, get_rut_list, update_rut, star_unstar_rut, star_rut_status 
+};
 use api::item::{ 
     submit_item, get_item, get_item_list, update_item, collect_item, 
     get_collect_list, update_collect, get_collect, del_collect
@@ -51,8 +53,11 @@ pub fn app_with_state() -> App<AppState> {
         .resource("/ruts/{per}/{tid}/{flag}", |r| { // Per: user,item,tag,index
             r.get().with(get_rut_list);             // flag: create, star
         })
-        .resource("/ruts/{rid}/{action:[0|1]}/star", |r| { // 0- unstar, 1- star
+        .resource("/ruts/{rid}/{action:[0|1]}/star/{note}", |r| { // 0- unstar, 1- star
             r.get().with(star_unstar_rut);
+        })
+        .resource("/ifstar/ruts/{rutid}", |r| {
+            r.get().with(star_rut_status);
         })
         .resource("/items", |r| {
             r.post().with(submit_item);

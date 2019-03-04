@@ -8,3 +8,4 @@ Cargo.lock
 
 static/index.html
 migrations/.gitkeep
+src/util/macros.rs

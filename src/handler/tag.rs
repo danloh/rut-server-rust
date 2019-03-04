@@ -70,7 +70,8 @@ impl Handler<TagsPerID> for Dba {
             TagsPerID::RutID(r) => {
                 use db::schema::tagruts::dsl::*;
                 tag_list = tagruts.filter(&rut_id.eq(&r)).select(tname)
-                    .load::<String>(conn)
+                    .order(count.desc()).limit(10) // order per count
+                    .load::<String>(conn)           
                     .map_err(error::ErrorInternalServerError)?;
             },
             TagsPerID::ItemID(i) => {
@@ -191,8 +192,10 @@ impl Handler<RutTag> for Dba {
             }
         } else { // untag
             for rtg in rtgs.tname {
-                diesel::delete(tagruts.filter(&tname.eq(&rtg)))
-                    .execute(conn).map_err(error::ErrorInternalServerError)?;
+                diesel::delete(
+                    tagruts.filter(&tname.eq(&rtg))
+                ) 
+                .execute(conn).map_err(error::ErrorInternalServerError)?;
             }
         }
 

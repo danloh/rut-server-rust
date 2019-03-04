@@ -296,8 +296,10 @@ impl Handler<DelCollect> for Dba {
             .map_err(error::ErrorInternalServerError)?;
         
         if dc.user_id == q_user_id {
-            diesel::delete(collects.filter(&id.eq(&dc.collect_id)))
-                .execute(conn).map_err(error::ErrorInternalServerError)?;
+            diesel::delete(
+                collects.filter(&id.eq(&dc.collect_id))
+            )
+            .execute(conn).map_err(error::ErrorInternalServerError)?;
 
             // to update the item_count - 1 in rut
             use db::schema::ruts::dsl::{ruts, id as rid, item_count};

@@ -6,7 +6,7 @@ use actix_web::{
 };
 use futures::Future;
 use router::AppState;
-use model::rut::{ CreateRut, RutID, RutsPerID, UpdateRut, StarOrRut };
+use model::rut::{ CreateRut, RutID, RutsPerID, UpdateRut, StarOrRut, StarRutStatus };
 use model::user::{ CheckUser };
 
 pub fn new_rut((rut, req, user): (Json<CreateRut>, HttpRequest<AppState>, CheckUser))
@@ -99,6 +99,19 @@ pub fn star_unstar_rut(req: HttpRequest<AppState>, user: CheckUser)
         note: note.clone(),
         action: star_action,
     })
+    .from_err().and_then(|res| match res {
+        Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
+        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+    })
+    .responder()
+}
+
+pub fn star_rut_status(req: HttpRequest<AppState>, user: CheckUser)
+ -> FutureResponse<HttpResponse> {
+    let user_id = user.id;  //String::from(req.match_info().get("userid").unwrap());
+    let rut_id = String::from(req.match_info().get("rutid").unwrap());
+    
+    req.state().db.send( StarRutStatus { user_id, rut_id })
     .from_err().and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
         Err(_) => Ok(HttpResponse::InternalServerError().into()),

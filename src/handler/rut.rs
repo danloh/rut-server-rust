@@ -8,7 +8,7 @@ use uuid;
 
 use model::rut::{
     Rut, NewRut, CreateRut, RutID, RutsPerID, UpdateRut, 
-    StarRut, RutStar, StarOrRut
+    StarRut, RutStar, StarOrRut, StarRutStatus
 };
 use model::msg::{ Msg, RutMsg, RutListMsg };
 
@@ -108,8 +108,8 @@ impl Handler<RutsPerID> for Dba {
             },
             RutsPerID::TagID(t) => {
                 use db::schema::tagruts::dsl::*;
-                id_list = tagruts.filter(&tname.eq(&t)).select(rut_id)
-                    .load::<String>(conn)
+                id_list = tagruts.filter(&tname.eq(&t)).select(rut_id)  
+                    .load::<String>(conn)    // to do order per count
                     .map_err(error::ErrorInternalServerError)?;
             },
         }
@@ -169,44 +169,67 @@ impl Handler<UpdateRut> for Dba {
 impl Handler<StarOrRut> for Dba {
     type Result = Result<Msg, Error>;
 
-    fn handle(&mut self, action: StarOrRut, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, act: StarOrRut, _: &mut Self::Context) -> Self::Result {
         // use db::schema::ruts::dsl::*;
         use db::schema::starruts::dsl::*;
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
         
-        match action.action {
+        match act.action {
             1  => {
                 let uuid = format!("{}", uuid::Uuid::new_v4());
                 let new_star = RutStar {
                     id: &uuid,
-                    user_id: &action.user_id,
-                    rut_id: &action.rut_id,
+                    user_id: &act.user_id,
+                    rut_id: &act.rut_id,
                     star_at: Utc::now().naive_utc(),
-                    note: &action.note,
+                    note: &act.note,
                 };
                 diesel::insert_into(starruts).values(&new_star)
                         .execute(conn).map_err(error::ErrorInternalServerError)?;
+                // to update star_count + 1 in rut
+                use db::schema::ruts::dsl::{ruts, id as rid, star_count};
+                diesel::update(ruts).filter(&rid.eq(&act.rut_id))
+                    .set(star_count.eq(star_count + 1)).execute(conn)
+                    .map_err(error::ErrorInternalServerError)?;
 
-                Ok( Msg { 
-                    status: 200, 
-                    message: "Satr".to_string(),
-                })
+                Ok( Msg { status: 200, message: "star".to_string(),})
             },
             0 => {
-                diesel::delete(starruts.filter(id.eq(action.rut_id)))
-                        .execute(conn).map_err(error::ErrorInternalServerError)?;
+                diesel::delete(
+                    starruts.filter(&rut_id.eq(&act.rut_id))
+                            .filter(&user_id.eq(&act.user_id))
+                )
+                .execute(conn).map_err(error::ErrorInternalServerError)?;
+                // to update the star_count - 1 in rut
+                use db::schema::ruts::dsl::{ruts, id as rid, star_count};
+                diesel::update(ruts).filter(&rid.eq(&act.rut_id))
+                    .set(star_count.eq(star_count - 1)).execute(conn)
+                    .map_err(error::ErrorInternalServerError)?;
 
-                Ok( Msg { 
-                    status: 200, 
-                    message: "unSatr".to_string(),
-                })
+                Ok( Msg { status: 200, message: "unstar".to_string(),})
             },
-            _ =>  {
-                Ok( Msg { 
-                    status: 400, 
-                    message: "Bad Request".to_string(),
-                })
-            },
+            _ =>  { Ok( Msg { status: 400, message: "unstar".to_string(),}) },
+        }
+    }
+}
+
+// handle msg from api::rut.star_unstar_rut
+impl Handler<StarRutStatus> for Dba {
+    type Result = Result<Msg, Error>;
+
+    fn handle(&mut self, status: StarRutStatus, _: &mut Self::Context) -> Self::Result {
+        use db::schema::starruts::dsl::*;
+        let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
+
+        let check_status = starruts
+            .filter(&rut_id.eq(&status.rut_id))
+            .filter(&user_id.eq(&status.user_id))
+            .load::<StarRut>(conn)
+            .map_err(error::ErrorInternalServerError)?.pop();
+        
+        match check_status {
+            Some(_) => { Ok( Msg {status: 200, message: "star".to_string() }) },
+            None => { Ok( Msg { status: 200, message: "unstar".to_string() }) },
         }
     }
 }

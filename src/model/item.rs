@@ -1,6 +1,6 @@
 // item module
 
-use db::schema::{items, collects};
+use db::schema::{items, collects, staritems};
 use actix_web::{ Error, actix::Message };
 use chrono::{Utc, NaiveDateTime};
 use model::msg::{ Msg, ItemMsg, ItemListMsg, CollectMsg, CollectsMsg };
@@ -237,4 +237,15 @@ pub enum CollectIDs {
 
 impl Message for CollectIDs {
     type Result = Result<CollectsMsg, Error>;
+}
+
+#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
+#[table_name="staritems"]
+pub struct StarItem {
+    pub id: String,
+    pub user_id: String,
+    pub rut_id: String,
+    pub star_at: NaiveDateTime,
+    pub note: String,
+    pub flag: String,    // 0->todo,1->doing,2->done
 }
