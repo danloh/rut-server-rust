@@ -18,6 +18,7 @@ pub struct Tag {
     pub rut_count: i32,
     pub etc_count: i32,
     pub star_count: i32,
+    // pub vote: i32,  // to do, cal per star,rut,item,comment
 }
 
 // use to build insert query

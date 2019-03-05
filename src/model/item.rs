@@ -23,6 +23,7 @@ pub struct Item {
     pub rut_count: i32,
     pub etc_count: i32,   // review, etc.
     pub done_count: i32,  // num of who done
+    // pub vote: i32,    // to do, cal per rut, done, etc
 }
 
 // use to build insert query

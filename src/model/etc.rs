@@ -12,4 +12,5 @@ pub struct Etc {
     pub content: String,
     pub create_at: NaiveDateTime,
     pub etc_id: String, // e.g. comment a comment
+    // pub vote: i32,  // to do, vote
 }
