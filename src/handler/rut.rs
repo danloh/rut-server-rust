@@ -145,8 +145,7 @@ impl Handler<UpdateRut> for Dba {
         use db::schema::ruts::dsl::*;
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
         
-        let rut_update = diesel::update(ruts)
-            .filter(&id.eq(&rut.id))
+        let rut_update = diesel::update(ruts.filter(&id.eq(&rut.id)))
             .set((
                 title.eq(rut.title.clone()),
                 url.eq(rut.url.clone()),
@@ -189,7 +188,7 @@ impl Handler<StarOrRut> for Dba {
                         .execute(conn).map_err(error::ErrorInternalServerError)?;
                 // to update star_count + 1 in rut
                 use db::schema::ruts::dsl::{ruts, id as rid, star_count};
-                diesel::update(ruts).filter(&rid.eq(&act.rut_id))
+                diesel::update(ruts.filter(&rid.eq(&act.rut_id)))
                     .set(star_count.eq(star_count + 1)).execute(conn)
                     .map_err(error::ErrorInternalServerError)?;
 
@@ -203,7 +202,7 @@ impl Handler<StarOrRut> for Dba {
                 .execute(conn).map_err(error::ErrorInternalServerError)?;
                 // to update the star_count - 1 in rut
                 use db::schema::ruts::dsl::{ruts, id as rid, star_count};
-                diesel::update(ruts).filter(&rid.eq(&act.rut_id))
+                diesel::update(ruts.filter(&rid.eq(&act.rut_id)))
                     .set(star_count.eq(star_count - 1)).execute(conn)
                     .map_err(error::ErrorInternalServerError)?;
 

@@ -105,8 +105,7 @@ impl Handler<UpdateTag> for Dba {
         use db::schema::tags::dsl::*;
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
 
-        let tag_update = diesel::update(tags)
-            .filter(&tname.eq(&tg.tname))
+        let tag_update = diesel::update(tags.filter(&tname.eq(&tg.tname)))
             .set( &UpdateTag{
                 tname: tg.tname.clone(),
                 intro: tg.intro.clone(),
@@ -139,9 +138,8 @@ impl Handler<RutTag> for Dba {
                 let tr = tagruts.filter(&tname.eq(&rtg)).load::<TagRut>(conn)
                     .map_err(error::ErrorInternalServerError)?.pop();
                 match tr {
-                    Some(t) => {
-                        diesel::update(tagruts)
-                        .filter(&tname.eq(&t.tname))  // how to not query again?
+                    Some(tgr) => {
+                        diesel::update(&tgr)
                         .set(count.eq(count + 1))
                         .execute(conn).map_err(error::ErrorInternalServerError)?;
                     },
@@ -161,11 +159,10 @@ impl Handler<RutTag> for Dba {
                             Some(t) => {
                                 diesel::insert_into(tagruts).values(&new_tag_rut)
                                     .execute(conn).map_err(error::ErrorInternalServerError)?;
-                                // then update tags__rut_count
-                                diesel::update(tags)
-                                    .filter(&tname.eq(&t.tname)) 
-                                    .set(rut_count.eq(rut_count + 1)).execute(conn)
-                                    .map_err(error::ErrorInternalServerError)?;
+                                // then update tags.rut_count
+                                diesel::update(&t)
+                                .set(rut_count.eq(rut_count + 1)).execute(conn)
+                                .map_err(error::ErrorInternalServerError)?;
                             },
                             // if no existing, new_tag
                             None => {
@@ -192,9 +189,7 @@ impl Handler<RutTag> for Dba {
             }
         } else { // untag
             for rtg in rtgs.tname {
-                diesel::delete(
-                    tagruts.filter(&tname.eq(&rtg))
-                ) 
+                diesel::delete(tagruts.filter(&tname.eq(&rtg))) 
                 .execute(conn).map_err(error::ErrorInternalServerError)?;
             }
         }

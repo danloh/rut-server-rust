@@ -15,6 +15,7 @@ pub struct User {
     pub avatar: String,
     pub email: String,
     pub intro: String,
+    // pub location: String, // to do
 }
 
 // User's constructor
@@ -131,6 +132,18 @@ pub struct UpdateUser {
 
 impl Message for UpdateUser {
     type Result = Result<LoginMsg, Error>;
+}
+
+// msg to change psw
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct ChangePsw {
+    pub old_psw: String,
+    pub new_psw: String,
+    pub user_id: String,
+}
+
+impl Message for ChangePsw {
+    type Result = Result<Msg, Error>;
 }
 
 //////////////////////////

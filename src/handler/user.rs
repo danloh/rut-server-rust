@@ -10,7 +10,7 @@ use uuid;
 use dotenv;
 
 use model::user::{ 
-    User, UserID, NewUser, SignUser, LogUser, CheckUser, UpdateUser, Claims 
+    User, UserID, NewUser, SignUser, LogUser, CheckUser, UpdateUser, ChangePsw, Claims 
 };
 use model::msg::{ Msg, LoginMsg };
 
@@ -175,8 +175,7 @@ impl Handler<UpdateUser> for Dba {
         use db::schema::users::dsl::*;
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
 
-        let update_user = diesel::update(users)
-            .filter(&id.eq(&user.id))
+        let update_user = diesel::update(users.filter(&id.eq(&user.id)))
             .set( UpdateUser{
                 id: user.id.clone(),
                 uname: user.uname.clone(),  // unique??
@@ -194,5 +193,47 @@ impl Handler<UpdateUser> for Dba {
             exp: 0,
             user: update_user.into(),
         })
+    }
+}
+
+// handle msg from api::auth.change_psw
+impl Handler<ChangePsw> for Dba {
+    type Result = Result<Msg, Error>;
+
+    fn handle(&mut self, psw: ChangePsw, _: &mut Self::Context) -> Self::Result {
+        use db::schema::users::dsl::*;
+        let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
+
+        let check_user = users.filter(&id.eq(&psw.user_id)).load::<User>(conn)
+            .map_err(error::ErrorInternalServerError)?.pop();
+        
+        if let Some(old) = check_user {
+            match verify(&psw.old_psw, &old.password) {
+                Ok(valid) if valid => {
+                    // hash psw then update
+                    let hash_password = hash(&psw.new_psw, DEFAULT_COST)
+                        .map_err(error::ErrorInternalServerError)?;
+                    diesel::update(&old)
+                        .set(password.eq(hash_password),).execute(conn)
+                        .map_err(error::ErrorInternalServerError)?;
+
+                    Ok(Msg {
+                        status: 200,
+                        message: "Success".to_string(),
+                    })
+                },
+                _ => {
+                    Ok(Msg { 
+                        status: 401,
+                        message: "Somehing Wrong".to_string(),
+                    })
+                },
+            }
+        } else {
+            Ok(Msg { 
+                status: 404,
+                message: "wrong password".to_string(),
+            })
+        }
     }
 }

@@ -7,7 +7,9 @@ use actix_web::{
 use futures::Future;
 use jwt::{decode, Validation};
 use router::AppState;
-use model::user::{ User, UserID, SignUser, LogUser, CheckUser, UpdateUser, Claims };
+use model::user::{ 
+    User, UserID, SignUser, LogUser, CheckUser, UpdateUser, ChangePsw, Claims 
+};
 
 pub fn signup((sign, req): (Json<SignUser>, HttpRequest<AppState>))
  -> FutureResponse<HttpResponse> {
@@ -119,6 +121,29 @@ pub fn update_user((user, req, auth): (Json<UpdateUser>, HttpRequest<AppState>, 
         avatar: user.avatar.clone(),
         email: user.email.clone(),
         intro: user.intro.clone(),
+    })
+    .from_err().and_then(|res| match res {
+        Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
+        Err(_) => Ok(HttpResponse::InternalServerError().into())
+    })
+    .responder()
+}
+
+pub fn change_psw((psw, req, user): (Json<ChangePsw>, HttpRequest<AppState>, CheckUser))
+ -> FutureResponse<HttpResponse> {
+    // do some check
+    let userid = String::from(req.match_info().get("userid").unwrap());
+    let l_p = psw.new_psw.trim().len();
+    let check = user.id != userid || l_p < 8;
+    if check {
+        use api::gen_response;
+        return gen_response(req)
+    }
+
+    req.state().db.send( ChangePsw{
+        old_psw: psw.old_psw.clone(),
+        new_psw: psw.new_psw.clone(),
+        user_id: user.id.clone(),
     })
     .from_err().and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),

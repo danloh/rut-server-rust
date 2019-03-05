@@ -6,7 +6,9 @@ use actix_web::{
     middleware::{self, cors::Cors},
 };
 use db::dba::{ Dba, init };
-use api::auth::{ signup, signin, check_user, auth_token, get_user, update_user };
+use api::auth::{ 
+    signup, signin, check_user, auth_token, get_user, update_user, change_psw 
+};
 use api::rut::{
     new_rut, get_rut, get_rut_list, update_rut, star_unstar_rut, star_rut_status 
 };
@@ -42,6 +44,7 @@ pub fn app_with_state() -> App<AppState> {
         .resource("/users/{userid}", |r| {
             r.get().with(get_user);
             r.post().with(update_user);
+            r.put().with(change_psw);
         })
         .resource("/ruts", |r| {
             r.post().with(new_rut);
