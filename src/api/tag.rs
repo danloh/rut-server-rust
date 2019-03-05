@@ -15,9 +15,9 @@ pub fn new_tag((req, user): (HttpRequest<AppState>, CheckUser))
     let action = String::from("POST");
     //println!("{:?}", req.method().as_str());
     //println!("{:?}", tname);
-    // check the length of tname 
+    // check the length of tname and inner whitespace
     let l = tname.trim().len();
-    if l ==0 || l > 16 {
+    if l ==0 || l > 16 || tname.contains(" ") {
         use api::gen_response;
         return gen_response(req)
     }
@@ -85,9 +85,9 @@ pub fn tag_rut((tags, req, user): (Json<RutTag>, HttpRequest<AppState>, CheckUse
     let rut_id = String::from(req.match_info().get("rutid").unwrap());
     // println!("{:?}", tags);
 
-    // filter per length, no inner space
+    // filter per length, no inner space; to do: regex to test tag name
     let tnames: Vec<String> = tags.tname.clone().into_iter().filter(
-        |t| t.trim().len() < 16 && t.trim().len() > 0 && !(t.trim().contains(" "))
+        |t| t.trim().len() < 16 && t.trim().len() > 0 && !(t.contains(" "))
     ).collect();
     // check if any
     if tnames.len() == 0  {

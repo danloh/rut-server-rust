@@ -28,6 +28,7 @@ impl User {
             avatar: "".to_owned(),
             email: "".to_owned(),
             intro: "".to_owned(),
+            location: "".to_owned(),
         }
     }
 }
@@ -42,6 +43,7 @@ pub struct NewUser<'a> {
     pub avatar: &'a str,
     pub email: &'a str,
     pub intro: &'a str,
+    pub location: &'a str,
 }
 
 // message to check username, or return as user info
@@ -54,6 +56,7 @@ pub struct CheckUser {
     pub avatar: String,
     pub email: String,
     pub intro: String,
+    pub location: String,
 }
 
 impl Message for CheckUser {
@@ -69,6 +72,7 @@ impl From<User> for CheckUser {
             avatar: user.avatar,
             email: user.email,
             intro: user.intro,
+            location: user.location,
         }
     }
 }
@@ -82,6 +86,7 @@ impl From<Claims> for CheckUser {
             avatar: "".to_owned(),
             email: "".to_owned(),
             intro: "".to_owned(),
+            location: "".to_owned(),
         }
     }
 }
@@ -127,6 +132,7 @@ pub struct UpdateUser {
     pub avatar: String,
     pub email: String,
     pub intro: String,
+    pub location: String,
 }
 
 impl Message for UpdateUser {

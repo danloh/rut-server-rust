@@ -33,38 +33,32 @@ impl Handler<SignUser> for Dba {
                 })
             },
             None => {
-                if &msg.password == &msg.confirm_password {
-                    use db::schema::users::dsl::*;
-                    // hash password
-                    let hash_password = hash(&msg.password, DEFAULT_COST)
-                            .map_err(error::ErrorInternalServerError)?;
-                    // generae uuid as user.id
-                    let uuid = format!("{}", uuid::Uuid::new_v4());
-                    let avatar_url = "http://www.gravatar.com/avatar/1".to_string();
-                    // prepare insertable data struct as insert_into.value
-                    let new_user = NewUser {
-                        id: &uuid,
-                        uname: &msg.uname,
-                        password: &hash_password,
-                        join_at: Utc::now().naive_utc(),
-                        avatar: &avatar_url,
-                        email: "",
-                        intro: "",
-                    };
-                    diesel::insert_into(users)
-                        .values(&new_user).execute(conn)
-                        .map_err(|_| error::ErrorInternalServerError("Error inserting person"))?;
-                    Ok(Msg { 
-                        status: 200,
-                        message : "Success".to_string(),
-                    })
-                } else {
-                    Ok(Msg { 
-                        status: 400,
-                        message : "wrong password".to_string(),
-                    })
-                }
-            }
+                use db::schema::users::dsl::*;
+                // hash password
+                let hash_password = hash(&msg.password, DEFAULT_COST)
+                        .map_err(error::ErrorInternalServerError)?;
+                // generae uuid as user.id
+                let uuid = format!("{}", uuid::Uuid::new_v4());
+                // prepare insertable data struct as insert_into.value
+                let new_user = NewUser {
+                    id: &uuid,
+                    uname: &msg.uname,
+                    password: &hash_password,
+                    join_at: Utc::now().naive_utc(),
+                    avatar: "",
+                    email: "",
+                    intro: "",
+                    location: "",
+                };
+                diesel::insert_into(users)
+                    .values(&new_user).execute(conn)
+                    .map_err(error::ErrorInternalServerError)?;
+
+                Ok(Msg { 
+                    status: 200,
+                    message : "Success".to_string(),
+                })
+            },
         }
     }
 }
@@ -181,6 +175,7 @@ impl Handler<UpdateUser> for Dba {
                 avatar: user.avatar.clone(),
                 email: user.email.clone(),
                 intro: user.intro.clone(),
+                location: user.location.clone(),
             })
             .get_result::<User>(conn)
             .map_err(error::ErrorInternalServerError)?;

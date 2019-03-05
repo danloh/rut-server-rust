@@ -14,19 +14,21 @@ use model::user::{
 pub fn signup((sign, req): (Json<SignUser>, HttpRequest<AppState>))
  -> FutureResponse<HttpResponse> {
     // do some check
-    let l_u = sign.uname.trim().len();
-    let l_p = sign.password.trim().len();
-    let l_rp = sign.confirm_password.trim().len();
-    let check: bool = l_u > 0 && l_u <= 16 && l_p >= 8 && l_p == l_rp;
-    if !check {
+    let uname = sign.uname.clone();
+    let l_u = uname.trim().len();
+    let psw = sign.password.clone();
+    let repsw = sign.confirm_password.clone();
+    let l_p = psw.trim().len();
+    let check = l_u == 0 || l_u > 16 || l_p < 8 || psw != repsw || uname.contains(" ");
+    if check {
         use api::gen_response;
         return gen_response(req)
     }
 
     req.state().db.send(SignUser{
-        uname: sign.uname.clone(),
-        password: sign.password.clone(),
-        confirm_password: sign.confirm_password.clone(),
+        uname: uname,
+        password: psw,
+        confirm_password: repsw,
     })
     .from_err().and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
@@ -48,16 +50,17 @@ pub fn check_user(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
 pub fn signin((login, req): (Json<LogUser>, HttpRequest<AppState>))
  -> FutureResponse<HttpResponse> {
     // do some check
-    let l_u = login.uname.trim().len();
+    let uname = login.uname.clone();
+    let l_u = uname.trim().len();
     let l_p = login.password.trim().len();
-    let check: bool = l_u > 0 && l_u <= 16 && l_p >= 8;
-    if !check {
+    let check = l_u == 0 || l_u > 16 || l_p < 8 || uname.contains(" ");
+    if check {
         use api::gen_response;
         return gen_response(req)
     }
 
     req.state().db.send(LogUser{
-        uname: login.uname.clone(),
+        uname: uname,
         password: login.password.clone(),
     })
     .from_err().and_then(|res| match res {
@@ -108,18 +111,20 @@ pub fn get_user(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
 pub fn update_user((user, req, auth): (Json<UpdateUser>, HttpRequest<AppState>, CheckUser))
  -> FutureResponse<HttpResponse> {
     // do some check
-    let l_u = user.uname.trim().len();
-    let check = auth.uname != user.uname || l_u > 16 || l_u == 0;
+    let uname = user.uname.clone();
+    let l_u = uname.trim().len();
+    let check = auth.uname != uname || l_u > 16 || l_u == 0 || uname.contains(" ");
     if check {
         use api::gen_response;
         return gen_response(req)
     }
 
     req.state().db.send( UpdateUser{
-        uname: user.uname.clone(),
+        uname: uname,
         avatar: user.avatar.clone(),
         email: user.email.clone(),
         intro: user.intro.clone(),
+        location: user.location.clone(),
     })
     .from_err().and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
