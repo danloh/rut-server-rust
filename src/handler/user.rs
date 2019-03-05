@@ -153,7 +153,7 @@ impl Handler<UserID> for Dba {
         use db::schema::users::dsl::*;
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
 
-        let query_user = users.filter(&id.eq(&uid.userid))
+        let query_user = users.filter(&uname.eq(&uid.uname))
             .get_result::<User>(conn)
             .map_err(error::ErrorInternalServerError)?;
 
@@ -175,10 +175,9 @@ impl Handler<UpdateUser> for Dba {
         use db::schema::users::dsl::*;
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
 
-        let update_user = diesel::update(users.filter(&id.eq(&user.id)))
+        let update_user = diesel::update(users.filter(&uname.eq(&user.uname)))
             .set( UpdateUser{
-                id: user.id.clone(),
-                uname: user.uname.clone(),  // unique??
+                uname: user.uname.clone(),  // unique
                 avatar: user.avatar.clone(),
                 email: user.email.clone(),
                 intro: user.intro.clone(),
@@ -204,7 +203,7 @@ impl Handler<ChangePsw> for Dba {
         use db::schema::users::dsl::*;
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
 
-        let check_user = users.filter(&id.eq(&psw.uname)).load::<User>(conn)
+        let check_user = users.filter(&uname.eq(&psw.uname)).load::<User>(conn)
             .map_err(error::ErrorInternalServerError)?.pop();
         
         if let Some(old) = check_user {

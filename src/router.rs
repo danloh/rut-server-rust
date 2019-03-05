@@ -42,7 +42,7 @@ pub fn app_with_state() -> App<AppState> {
             r.post().with(signin);
             r.get().with(auth_token);
         })
-        .resource("/users/{userid}", |r| {
+        .resource("/users/{uname}", |r| {
             r.get().with(get_user);
             r.post().with(update_user);
             r.put().with(change_psw);

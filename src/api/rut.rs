@@ -107,7 +107,7 @@ pub fn star_unstar_rut(req: HttpRequest<AppState>, user: CheckUser)
 
 pub fn star_rut_status(req: HttpRequest<AppState>, user: CheckUser)
  -> FutureResponse<HttpResponse> {
-    let uname = user.uname;  //String::from(req.match_info().get("userid").unwrap());
+    let uname = user.uname;
     let rut_id = String::from(req.match_info().get("rutid").unwrap());
     
     req.state().db.send( StarRutStatus { uname, rut_id })

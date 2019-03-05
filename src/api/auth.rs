@@ -96,8 +96,8 @@ pub fn auth_token(user: CheckUser) -> HttpResponse {
 }
 
 pub fn get_user(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
-    let userid = String::from(req.match_info().get("userid").unwrap());
-    req.state().db.send( UserID{userid})
+    let uname = String::from(req.match_info().get("uname").unwrap());
+    req.state().db.send( UserID{uname})
     .from_err().and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
         Err(_) => Ok(HttpResponse::InternalServerError().into())
@@ -109,14 +109,13 @@ pub fn update_user((user, req, auth): (Json<UpdateUser>, HttpRequest<AppState>, 
  -> FutureResponse<HttpResponse> {
     // do some check
     let l_u = user.uname.trim().len();
-    let check = auth.id != user.id || l_u > 16 || l_u == 0;
+    let check = auth.uname != user.uname || l_u > 16 || l_u == 0;
     if check {
         use api::gen_response;
         return gen_response(req)
     }
 
     req.state().db.send( UpdateUser{
-        id: auth.id.clone(),
         uname: user.uname.clone(),
         avatar: user.avatar.clone(),
         email: user.email.clone(),
@@ -132,14 +131,14 @@ pub fn update_user((user, req, auth): (Json<UpdateUser>, HttpRequest<AppState>, 
 pub fn change_psw((psw, req, user): (Json<ChangePsw>, HttpRequest<AppState>, CheckUser))
  -> FutureResponse<HttpResponse> {
     // do some check
-    let userid = String::from(req.match_info().get("userid").unwrap());
+    let uname = String::from(req.match_info().get("uname").unwrap());
     let l_p = psw.new_psw.trim().len();
-    let check = user.id != userid || l_p < 8;
+    let check = user.uname != uname || l_p < 8;
     if check {
         use api::gen_response;
         return gen_response(req)
     }
-
+    println!("{:?}",user.uname);
     req.state().db.send( ChangePsw{
         old_psw: psw.old_psw.clone(),
         new_psw: psw.new_psw.clone(),

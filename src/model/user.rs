@@ -109,10 +109,10 @@ impl Message for LogUser {
     type Result = Result<LoginMsg, Error>;
 }
 
-// as msg in get user by id
+// as msg in get user by uname
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct UserID {
-    pub userid: String,
+    pub uname: String,
 }
 
 impl Message for UserID {
@@ -123,7 +123,6 @@ impl Message for UserID {
 #[derive(Deserialize,Serialize,Debug,Clone,AsChangeset)]
 #[table_name="users"]
 pub struct UpdateUser {
-    pub id: String,
     pub uname: String,
     pub avatar: String,
     pub email: String,
@@ -174,5 +173,5 @@ impl Claims {
 }
 
 
-// per userid to query rut, item, tag, to do
+// per user to query rut, item, tag, to do
 // struct PerUser { userID: (String, String, String)} // e.g. id, rut, create
