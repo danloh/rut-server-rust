@@ -97,19 +97,19 @@ impl Handler<CheckUser> for Dba {
 impl Handler<LogUser> for Dba {
     type Result = Result<LoginMsg, Error>;
 
-    fn handle(&mut self, log_user: LogUser, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, login: LogUser, _: &mut Self::Context) -> Self::Result {
         use db::schema::users::dsl::*;
 
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
-        let mut query_user = users.filter(&uname.eq(&log_user.uname)).load::<User>(conn)
+        let mut query_user = users.filter(&uname.eq(&login.uname)).load::<User>(conn)
                         .map_err(error::ErrorInternalServerError)?.pop();
         let lg_user = User::new("","");
 
-        if let Some(login_user) = query_user {
-            match verify(&log_user.password, &login_user.password) {
+        if let Some(check_user) = query_user {
+            match verify(&login.password, &check_user.password) {
                 Ok(valid) if valid => {
                     // generate token
-                    let claims = Claims::new(&login_user.id, &login_user.uname);
+                    let claims = Claims::new(&check_user.id, &check_user.uname);
                     let secret_key: String = dotenv::var("SECRET_KEY")
                                             .expect("AHaRdGuESsSeCREkY");
                     let token = encode(&Header::default(), &claims, secret_key.as_ref())
@@ -120,7 +120,7 @@ impl Handler<LogUser> for Dba {
                         message: "Success".to_string(),
                         token: token,
                         exp: 5,  // unit: day
-                        user: login_user.into(),
+                        user: check_user.into(),
                     })
                 },
                 _ => {
@@ -214,7 +214,7 @@ impl Handler<ChangePsw> for Dba {
                     let hash_password = hash(&psw.new_psw, DEFAULT_COST)
                         .map_err(error::ErrorInternalServerError)?;
                     diesel::update(&old)
-                        .set(password.eq(hash_password),).execute(conn)
+                        .set(password.eq(hash_password)).execute(conn)
                         .map_err(error::ErrorInternalServerError)?;
 
                     Ok(Msg {
@@ -232,7 +232,7 @@ impl Handler<ChangePsw> for Dba {
         } else {
             Ok(Msg { 
                 status: 404,
-                message: "wrong password".to_string(),
+                message: "No Existing".to_string(),
             })
         }
     }

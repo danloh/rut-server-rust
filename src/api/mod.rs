@@ -15,6 +15,7 @@ pub mod auth;
 pub mod rut;
 pub mod item;
 pub mod tag;
+pub mod etc;
 
 use actix_web::{HttpResponse,HttpRequest,HttpMessage,FutureResponse,AsyncResponder};
 use futures::Future;

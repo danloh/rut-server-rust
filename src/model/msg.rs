@@ -4,6 +4,7 @@ use model::rut::Rut;
 use model::item::{ Item, Collect };
 use model::user::{ User, CheckUser };
 use model::tag::{ Tag };
+use model::etc::{ Etc };
 
 // general response msg struct
 #[derive(Deserialize,Serialize,Debug)]
@@ -86,5 +87,22 @@ pub struct TagListMsg {
     pub status: i32,
     pub message: String,
     pub tags: Vec<String>, // tag name
+    pub count: usize,
+}
+
+// result struct in response etc
+#[derive(Deserialize,Serialize,Debug)]
+pub struct EtcMsg {
+    pub status: i32,
+    pub message: String,
+    pub etc: Etc,
+}
+
+// result struct in response etc list
+#[derive(Deserialize,Serialize,Debug)]
+pub struct EtcListMsg {
+    pub status: i32,
+    pub message: String,
+    pub etcs: Vec<Etc>,
     pub count: usize,
 }

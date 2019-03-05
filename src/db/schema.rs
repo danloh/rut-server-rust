@@ -14,8 +14,13 @@ table! {
     etcs (id) {
         id -> Varchar,
         content -> Text,
-        create_at -> Timestamp,
+        post_at -> Timestamp,
         petc_id -> Varchar,
+        rut_id -> Varchar,
+        item_id -> Varchar,
+        tname -> Varchar,
+        uname -> Varchar,
+        vote -> Int4,
     }
 }
 

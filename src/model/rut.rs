@@ -88,7 +88,7 @@ impl Message for RutID {
     type Result = Result<RutMsg, Error>;
 }
 
-// as msg in select rutlist
+// as msg to get  rut list
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum RutsPerID {
     Index(String),

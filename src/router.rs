@@ -17,6 +17,7 @@ use api::item::{
     get_collect_list, update_collect, get_collect, del_collect
 };
 use api::tag::{ new_tag, get_tag, get_tag_list, update_tag, tag_rut };
+use api::etc::{ post_etc, get_etc_list };
 
 pub struct AppState {
     pub db: Addr<Dba>,
@@ -93,6 +94,12 @@ pub fn app_with_state() -> App<AppState> {
         })
         .resource("/tag/{action:[0|1]}/{rutid}", |r| { // 0-untag,1-tag
             r.post().with(tag_rut);
+        })
+        .resource("/etcs", |r| {
+            r.post().with(post_etc);
+        })
+        .resource("/etcs/{per}/{perid}", |r| {
+            r.get().with(get_etc_list);
         })
     })
     // or: /* .prefix("/api").configure( |app| { Cors::for_app(app).max_age(3600) }) */
