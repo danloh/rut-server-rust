@@ -27,8 +27,7 @@ pub fn new_rut((rut, req, user): (Json<CreateRut>, HttpRequest<AppState>, CheckU
         title: rut.title.clone(),
         url: rut.url.clone(),
         content: rut.content.clone(),
-        user_id: user.id.clone(),     // extracted from request as user
-        user_name: user.uname.clone(),
+        uname: user.uname.clone(),     // extracted from request as user
         author_id: rut.author_id.clone(),
         credential: rut.credential.clone(),
     })
@@ -95,7 +94,7 @@ pub fn star_unstar_rut(req: HttpRequest<AppState>, user: CheckUser)
     
     req.state().db.send( StarOrRut {
         rut_id: rid.clone(),
-        user_id: user.id.clone(),
+        uname: user.uname.clone(),
         note: note.clone(),
         action: star_action,
     })
@@ -108,10 +107,10 @@ pub fn star_unstar_rut(req: HttpRequest<AppState>, user: CheckUser)
 
 pub fn star_rut_status(req: HttpRequest<AppState>, user: CheckUser)
  -> FutureResponse<HttpResponse> {
-    let user_id = user.id;  //String::from(req.match_info().get("userid").unwrap());
+    let uname = user.uname;  //String::from(req.match_info().get("userid").unwrap());
     let rut_id = String::from(req.match_info().get("rutid").unwrap());
     
-    req.state().db.send( StarRutStatus { user_id, rut_id })
+    req.state().db.send( StarRutStatus { uname, rut_id })
     .from_err().and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
         Err(_) => Ok(HttpResponse::InternalServerError().into()),

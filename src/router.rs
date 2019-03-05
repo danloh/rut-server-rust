@@ -106,7 +106,7 @@ pub fn app_with_state() -> App<AppState> {
     // handle static files
     .handler("/static", fs::StaticFiles::new("./static/").unwrap().index_file("index.html"))
     // redirect
-    .resource("/", |r| { /* todo: redirect */ })
+    .resource("/", |r| { /* to do: redirect */ })
     // default
-    .default_resource(|r| { /* todo: default, for 404, etc. */ })
+    .default_resource(|r| { /* to do: default, for 404, etc. */ })
 }

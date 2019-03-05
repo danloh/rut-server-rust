@@ -202,7 +202,7 @@ impl Handler<CollectItem> for Dba {
             item_id: &item_q.id, // ok?
             item_order: (&rut_q).item_count + 1,
             content: &collect.content,
-            user_id: &collect.user_id,
+            uname: &collect.uname,
             collect_at: Utc::now().naive_utc(),
         };
         let collect_new = diesel::insert_into(collects)
@@ -252,7 +252,7 @@ impl Handler<CollectIDs> for Dba {
                     .map_err(error::ErrorInternalServerError)?;
             },
             CollectIDs::UserID(u) => {
-                collect_list = collects.filter(&user_id.eq(&u))
+                collect_list = collects.filter(&uname.eq(&u))
                     .load::<Collect>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
@@ -302,11 +302,11 @@ impl Handler<DelCollect> for Dba {
         use db::schema::collects::dsl::*;
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
         
-        let q_user_id = collects.filter(&id.eq(&dc.collect_id))
-            .select(user_id).get_result::<String>(conn)
+        let q_uname = collects.filter(&id.eq(&dc.collect_id))
+            .select(uname).get_result::<String>(conn)
             .map_err(error::ErrorInternalServerError)?;
         
-        if dc.user_id == q_user_id {
+        if dc.uname == q_uname {
             diesel::delete(
                 collects.filter(&id.eq(&dc.collect_id))
             )
@@ -351,7 +351,7 @@ impl Handler<UpdateCollect> for Dba {
         let c_q = collects.filter(&id.eq(&c.id))
             .get_result::<Collect>(conn)
             .map_err(error::ErrorInternalServerError)?;
-        if c_q.user_id != c.user_id {
+        if c_q.uname != c.uname {
             return Ok( CollectMsg { 
                         status: 401,
                         message: "No Permission ".to_string(),

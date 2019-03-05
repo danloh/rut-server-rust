@@ -118,7 +118,7 @@ pub fn collect_item((item, req, user): (Json<CollectItem>, HttpRequest<AppState>
         item_id: item.item_id.clone(),
         item_order: item.item_order.clone(),
         content: item.content.clone(),
-        user_id: user.id,
+        uname: user.uname,
     })
     .from_err().and_then(|res| match res {
         Ok(item) => Ok(HttpResponse::Ok().json(item)),
@@ -163,7 +163,7 @@ pub fn del_collect((dc, req, user): (Json<DelCollect>, HttpRequest<AppState>, Ch
  -> FutureResponse<HttpResponse> {
     // do some check
     let c_id = String::from(req.match_info().get("cid").unwrap());
-    if c_id != dc.collect_id  || dc.user_id != user.id {
+    if c_id != dc.collect_id  || dc.uname != user.uname {
         use api::gen_response;
         return gen_response(req)
     }
@@ -172,7 +172,7 @@ pub fn del_collect((dc, req, user): (Json<DelCollect>, HttpRequest<AppState>, Ch
         collect_id: dc.collect_id.clone(),
         rut_id: dc.rut_id.clone(),
         item_id: dc.item_id.clone(),
-        user_id: user.id.clone(),   // pass to handler to check permission
+        uname: user.uname.clone(),   // pass to handler to check permission
     })
     .from_err().and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
@@ -183,17 +183,17 @@ pub fn del_collect((dc, req, user): (Json<DelCollect>, HttpRequest<AppState>, Ch
 
 pub fn update_collect((c, req, user): (Json<UpdateCollect>, HttpRequest<AppState>, CheckUser))
  -> FutureResponse<HttpResponse> {
-    // need to check the auth_userid == collect_userid, on frontend??
+    // need to check the auth_uname == collect_uname, on frontend??
     // check id eque
     let cid = String::from(req.match_info().get("cid").unwrap());
-    if cid != c.id || c.user_id != user.id {
+    if cid != c.id || c.uname != user.uname {
         use api::gen_response;
         return gen_response(req)
     }
     req.state().db.send( UpdateCollect {
         id: c.id.clone(),
         content: c.content.clone(),
-        user_id: user.id.clone(),
+        uname: user.uname.clone(),
     })
     .from_err().and_then(|res| match res {
         Ok(item) => Ok(HttpResponse::Ok().json(item)),

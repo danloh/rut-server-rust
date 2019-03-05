@@ -23,7 +23,7 @@ pub struct Item {
     pub rut_count: i32,
     pub etc_count: i32,   // review, etc.
     pub done_count: i32,  // num of who done
-    // pub vote: i32,    // to do, cal per rut, done, etc
+    pub vote: i32,        //  cal per rut, done, etc
 }
 
 // use to build insert query
@@ -131,6 +131,7 @@ impl Item {
             rut_count: 0,
             etc_count: 0,   
             done_count: 0,
+            vote: 0,
         }
     }
 }
@@ -144,7 +145,7 @@ pub struct Collect {
     pub item_order: i32,
     pub content: String,
     // pub spoiler: bool,  // to do but 
-    pub user_id: String,
+    pub uname: String,
     pub collect_at: NaiveDateTime,
 }
 
@@ -157,7 +158,7 @@ impl Collect {
             item_id: "".to_owned(),
             item_order: 0,
             content: "".to_owned(), 
-            user_id: "".to_owned(),   
+            uname: "".to_owned(),   
             collect_at: Utc::now().naive_utc(),
         }
     }
@@ -171,7 +172,7 @@ pub struct NewCollect<'a> {
     pub item_id: &'a str,
     pub item_order: i32,
     pub content: &'a str,
-    pub user_id: &'a str,
+    pub uname: &'a str,
     pub collect_at: NaiveDateTime,
 }
 
@@ -182,7 +183,7 @@ pub struct CollectItem {
     pub item_id: String,
     pub item_order: i32,
     pub content: String,
-    pub user_id: String,
+    pub uname: String,
 }
 
 impl Message for CollectItem {
@@ -196,7 +197,7 @@ pub struct UpdateCollect {
     pub id: String,
     // pub item_order: i32,  // re-order, to do
     pub content: String,
-    pub user_id: String,  // to check permission
+    pub uname: String,  // to check permission
     // pub spoiler: bool,  // to do but 
 }
 
@@ -221,7 +222,7 @@ pub struct DelCollect {
     pub collect_id: String,
     pub rut_id: String,   // to update rut after del
     pub item_id: String,  // to update item after del
-    pub user_id: String,  // to check permission
+    pub uname: String,  // to check permission
 }
 
 impl Message for DelCollect {
@@ -244,9 +245,9 @@ impl Message for CollectIDs {
 #[table_name="staritems"]
 pub struct StarItem {
     pub id: String,
-    pub user_id: String,
+    pub uname: String,
     pub rut_id: String,
     pub star_at: NaiveDateTime,
     pub note: String,
-    pub flag: String,    // 0->todo,1->doing,2->done
+    pub flag: String,    // 0->to do,1->doing,2->done
 }

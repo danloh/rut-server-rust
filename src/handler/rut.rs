@@ -28,8 +28,7 @@ impl Handler<CreateRut> for Dba {
             title: &new_rut.title,
             url: &new_rut.url,
             content: &new_rut.content,
-            user_id: &new_rut.user_id,
-            user_name: &new_rut.user_name,
+            uname: &new_rut.uname,
             author_id: &new_rut.author_id,
             credential: &new_rut.credential,
             logo: "",
@@ -92,11 +91,11 @@ impl Handler<RutsPerID> for Dba {
             },
             RutsPerID::UserID(u,f) => {
                 if &f == "create" {
-                    rut_list = ruts.filter(&user_id.eq(&u)).load::<Rut>(conn)
+                    rut_list = ruts.filter(&uname.eq(&u)).load::<Rut>(conn)
                         .map_err(error::ErrorInternalServerError)?;
                 } else {
                     use db::schema::starruts::dsl::*;
-                    id_list = starruts.filter(&user_id.eq(&u)).select(rut_id)
+                    id_list = starruts.filter(&uname.eq(&u)).select(rut_id)
                         .load::<String>(conn)
                         .map_err(error::ErrorInternalServerError)?;
                 }
@@ -179,7 +178,7 @@ impl Handler<StarOrRut> for Dba {
                 let uuid = format!("{}", uuid::Uuid::new_v4());
                 let new_star = RutStar {
                     id: &uuid,
-                    user_id: &act.user_id,
+                    uname: &act.uname,
                     rut_id: &act.rut_id,
                     star_at: Utc::now().naive_utc(),
                     note: &act.note,
@@ -197,7 +196,7 @@ impl Handler<StarOrRut> for Dba {
             0 => {
                 diesel::delete(
                     starruts.filter(&rut_id.eq(&act.rut_id))
-                            .filter(&user_id.eq(&act.user_id))
+                            .filter(&uname.eq(&act.uname))
                 )
                 .execute(conn).map_err(error::ErrorInternalServerError)?;
                 // to update the star_count - 1 in rut
@@ -223,7 +222,7 @@ impl Handler<StarRutStatus> for Dba {
 
         let check_status = starruts
             .filter(&rut_id.eq(&status.rut_id))
-            .filter(&user_id.eq(&status.user_id))
+            .filter(&uname.eq(&status.uname))
             .load::<StarRut>(conn)
             .map_err(error::ErrorInternalServerError)?.pop();
         

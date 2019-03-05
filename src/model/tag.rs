@@ -18,7 +18,7 @@ pub struct Tag {
     pub rut_count: i32,
     pub etc_count: i32,
     pub star_count: i32,
-    // pub vote: i32,  // to do, cal per star,rut,item,comment
+    pub vote: i32,       //cal per star,rut,item,comment
 }
 
 // use to build insert query
@@ -88,7 +88,7 @@ pub struct TagEtc {
 #[table_name="startags"]
 pub struct StarTag {
     pub id: String,
-    pub user_id: String,
+    pub uname: String,
     pub tname: String,
     pub star_at: NaiveDateTime,
     pub note: String,

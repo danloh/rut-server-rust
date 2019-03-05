@@ -5,7 +5,7 @@ table! {
         item_id -> Varchar,
         item_order -> Int4,
         content -> Text,
-        user_id -> Varchar,
+        uname -> Varchar,
         collect_at -> Timestamp,
     }
 }
@@ -40,6 +40,7 @@ table! {
         rut_count -> Int4,
         etc_count -> Int4,
         done_count -> Int4,
+        vote -> Int4,
     }
 }
 
@@ -52,20 +53,20 @@ table! {
         create_at -> Timestamp,
         renew_at -> Timestamp,
         author_id -> Varchar,
-        user_id -> Varchar,
-        user_name -> Varchar,
+        uname -> Varchar,
         credential -> Varchar,
         logo -> Varchar,
         item_count -> Int4,
         comment_count -> Int4,
         star_count -> Int4,
+        vote -> Int4,
     }
 }
 
 table! {
     staritems (id) {
         id -> Varchar,
-        user_id -> Varchar,
+        uname -> Varchar,
         item_id -> Varchar,
         star_at -> Timestamp,
         note -> Varchar,
@@ -76,7 +77,7 @@ table! {
 table! {
     starruts (id) {
         id -> Varchar,
-        user_id -> Varchar,
+        uname -> Varchar,
         rut_id -> Varchar,
         star_at -> Timestamp,
         note -> Varchar,
@@ -86,7 +87,7 @@ table! {
 table! {
     startags (id) {
         id -> Varchar,
-        user_id -> Varchar,
+        uname -> Varchar,
         tname -> Varchar,
         star_at -> Timestamp,
         note -> Varchar,
@@ -130,6 +131,7 @@ table! {
         rut_count -> Int4,
         etc_count -> Int4,
         star_count -> Int4,
+        vote -> Int4,
     }
 }
 
@@ -142,6 +144,7 @@ table! {
         avatar -> Varchar,
         email -> Varchar,
         intro -> Text,
+        location -> Varchar,
     }
 }
 

@@ -16,14 +16,13 @@ pub struct Rut {
     pub create_at: NaiveDateTime,
     pub renew_at: NaiveDateTime,
     pub author_id: String,
-    pub user_id: String,     // as who post
-    pub user_name: String,
+    pub uname: String,     // as who post
     pub credential: String,
     pub logo: String,
     pub item_count: i32,
     pub comment_count: i32,
     pub star_count: i32,
-    // pub vote: i32,  // to do, cal per star, comment
+    pub vote: i32,       // cal per star, comment
 }
 
 // use to build insert query
@@ -37,8 +36,7 @@ pub struct NewRut<'a> {
     pub create_at: NaiveDateTime,
     pub renew_at: NaiveDateTime,
     pub author_id: &'a str,
-    pub user_id: &'a str,
-    pub user_name: &'a str,
+    pub uname: &'a str,
     pub credential: &'a str,
     pub logo: &'a str,
     pub item_count: i32,
@@ -52,8 +50,7 @@ pub struct CreateRut {
     pub title: String,
     pub url: String,
     pub content: String,
-    pub user_id: String,
-    pub user_name: String,
+    pub uname: String,
     pub author_id: String,
     pub credential: String,
 }
@@ -111,14 +108,14 @@ impl Rut {
             content: "".to_owned(),
             create_at: Utc::now().naive_utc(),
             renew_at: Utc::now().naive_utc(),
-            user_id: "".to_owned(),
-            user_name: "".to_owned(),
+            uname: "".to_owned(),
             author_id: "".to_owned(),
             credential: "".to_owned(),
             logo: "".to_owned(),
             item_count: 0,
             comment_count: 0,
             star_count: 0,
+            vote: 0,
         }
     }
 }
@@ -127,7 +124,7 @@ impl Rut {
 #[table_name="starruts"]
 pub struct StarRut {
     pub id: String,
-    pub user_id: String,
+    pub uname: String,
     pub rut_id: String,
     pub star_at: NaiveDateTime,
     pub note: String,
@@ -138,7 +135,7 @@ pub struct StarRut {
 #[table_name="starruts"]
 pub struct RutStar<'a> {
     pub id: &'a str,
-    pub user_id: &'a str,
+    pub uname: &'a str,
     pub rut_id: &'a str,
     pub star_at: NaiveDateTime,
     pub note: &'a str,
@@ -148,7 +145,7 @@ pub struct RutStar<'a> {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct StarOrRut {
     pub rut_id: String,
-    pub user_id: String,
+    pub uname: String,
     pub note: String,
     pub action: u8,  // 0- unstar, 1- star
 }
@@ -160,7 +157,7 @@ impl Message for StarOrRut {
 // as msg to check if star a rut
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct StarRutStatus {
-    pub user_id: String,
+    pub uname: String,
     pub rut_id: String,
 }
 

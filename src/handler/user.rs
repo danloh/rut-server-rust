@@ -204,7 +204,7 @@ impl Handler<ChangePsw> for Dba {
         use db::schema::users::dsl::*;
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
 
-        let check_user = users.filter(&id.eq(&psw.user_id)).load::<User>(conn)
+        let check_user = users.filter(&id.eq(&psw.uname)).load::<User>(conn)
             .map_err(error::ErrorInternalServerError)?.pop();
         
         if let Some(old) = check_user {

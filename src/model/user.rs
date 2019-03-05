@@ -15,7 +15,7 @@ pub struct User {
     pub avatar: String,
     pub email: String,
     pub intro: String,
-    // pub location: String, // to do
+    pub location: String,
 }
 
 // User's constructor
@@ -139,7 +139,7 @@ impl Message for UpdateUser {
 pub struct ChangePsw {
     pub old_psw: String,
     pub new_psw: String,
-    pub user_id: String,
+    pub uname: String,
 }
 
 impl Message for ChangePsw {

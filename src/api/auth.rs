@@ -143,7 +143,7 @@ pub fn change_psw((psw, req, user): (Json<ChangePsw>, HttpRequest<AppState>, Che
     req.state().db.send( ChangePsw{
         old_psw: psw.old_psw.clone(),
         new_psw: psw.new_psw.clone(),
-        user_id: user.id.clone(),
+        uname: user.uname.clone(),
     })
     .from_err().and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
