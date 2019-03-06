@@ -23,6 +23,20 @@ impl Handler<CreateRut> for Dba {
         // retrieve a connecion from pool
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
         
+        // check if existing per url
+        let new_url = &new_rut.url;
+        if new_url.trim() != "" {
+            let check_q = ruts.filter(&url.eq(new_url))
+                .load::<Rut>(conn).map_err(error::ErrorInternalServerError)?.pop();
+            if let Some(r) = check_q {
+                return Ok( RutMsg { 
+                    status: 422, 
+                    message: "Existing".to_string(),
+                    rut: r,
+                })
+            }
+        }
+
         let uuid = format!("{}", uuid::Uuid::new_v4());
         let newrut = NewRut {
             id: &uuid,

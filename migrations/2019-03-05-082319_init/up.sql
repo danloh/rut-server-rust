@@ -55,6 +55,7 @@ CREATE TABLE collects (
   content TEXT NOT NULL DEFAULT '',
   uname VARCHAR NOT NULL,
   collect_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  -- UNIQUE (rut_id, item_id, item_order), -- UNIQUE (rut_id, item_order) // cannot
   UNIQUE (rut_id, item_id)
 );
 

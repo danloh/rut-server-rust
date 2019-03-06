@@ -17,23 +17,49 @@ use model::rut::Rut;
 impl Handler<SubmitItem> for Dba {
     type Result = Result<ItemMsg, Error>;
 
-    fn handle(&mut self, submit_item: SubmitItem, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, submit: SubmitItem, _: &mut Self::Context) -> Self::Result {
         use db::schema::items::dsl::*;
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
+        
+        // check if existing, field may be ""
+        let s_uiid = &submit.uiid;
+        let s_url = &submit.url;
+        if s_uiid.trim() != "" {
+            let check_q_id = items.filter(&uiid.eq(s_uiid))
+                .load::<Item>(conn).map_err(error::ErrorInternalServerError)?.pop();
+            if let Some(i) = check_q_id {
+                return Ok( ItemMsg { 
+                    status: 422, 
+                    message: "Existing".to_string(),
+                    item: i,
+                })
+            }
+        }
+        if s_url.trim() != "" {
+            let check_q_id = items.filter(&url.eq(s_url))
+                .load::<Item>(conn).map_err(error::ErrorInternalServerError)?.pop();
+            if let Some(i) = check_q_id {
+                return Ok( ItemMsg { 
+                    status: 422, 
+                    message: "Existing".to_string(),
+                    item: i,
+                })
+            }
+        }
 
         let uuid = format!("{}", uuid::Uuid::new_v4());
         let new_item = NewItem {
             id: &uuid,
-            title: &submit_item.title,
-            uiid: &submit_item.uiid,
-            authors: &submit_item.authors,  
-            pub_at: &submit_item.pub_at,   
-            publisher: &submit_item.publisher,
-            category: &submit_item.category, 
-            url: &submit_item.url,
-            cover: &submit_item.cover,
-            edition: &submit_item.edition,
-            detail: &submit_item.detail,
+            title: &submit.title,
+            uiid: &submit.uiid,
+            authors: &submit.authors,  
+            pub_at: &submit.pub_at,   
+            publisher: &submit.publisher,
+            category: &submit.category, 
+            url: &submit.url,
+            cover: &submit.cover,
+            edition: &submit.edition,
+            detail: &submit.detail,
             rut_count: 0,
             etc_count: 0, 
             done_count: 0, 
@@ -311,19 +337,27 @@ impl Handler<DelCollect> for Dba {
         use db::schema::collects::dsl::*;
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
         
-        let q_uname = collects.filter(&id.eq(&dc.collect_id))
-            .select(uname).get_result::<String>(conn)
+        let q_c = collects.filter(&id.eq(&dc.collect_id))
+            .get_result::<Collect>(conn)
             .map_err(error::ErrorInternalServerError)?;
         
-        if dc.uname == q_uname {
-            diesel::delete(
-                collects.filter(&id.eq(&dc.collect_id))
-            )
-            .execute(conn).map_err(error::ErrorInternalServerError)?;
+        // to use in re-order
+        let q_c_c = q_c.clone();
+        let order_del = q_c_c.item_order;
+        let rutid = q_c_c.rut_id;
+        
+        if dc.uname == q_c.uname {
+            diesel::delete(&q_c).execute(conn)
+                .map_err(error::ErrorInternalServerError)?;
 
             // to update the item_count - 1 and renew_at in rut
             use db::schema::ruts::dsl::{ruts, id as rid, item_count, renew_at};
-            diesel::update(ruts.filter(&rid.eq(&dc.rut_id)))
+            let r_q = ruts.filter(&rid.eq(&dc.rut_id))
+                .get_result::<Rut>(conn).map_err(error::ErrorInternalServerError)?;
+            
+            let item_num = r_q.item_count;  // to use in re-order
+
+            diesel::update(&r_q)
                 .set((
                     item_count.eq(item_count - 1),
                     renew_at.eq(Utc::now().naive_utc()),
@@ -335,6 +369,17 @@ impl Handler<DelCollect> for Dba {
             diesel::update(items.filter(&itemid.eq(&dc.item_id)))
                 .set(rut_count.eq(rut_count - 1)).execute(conn)
                 .map_err(error::ErrorInternalServerError)?;
+            // to update the item order of collect
+            if item_num > order_del {
+                let lower = order_del + 1;
+                let upper = item_num;
+                diesel::update(
+                    collects.filter(rut_id.eq(rutid))
+                        .filter(item_order.between(lower, upper)) // betw, inclusive
+                )
+                .set(item_order.eq(item_order - 1)).execute(conn)
+                .map_err(error::ErrorInternalServerError)?;
+            }
 
             Ok( Msg { 
                 status: 200, 

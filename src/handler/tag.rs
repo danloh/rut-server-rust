@@ -77,11 +77,13 @@ impl Handler<TagsPerID> for Dba {
             TagsPerID::ItemID(i) => {
                 use db::schema::tagitems::dsl::*;
                 tag_list = tagitems.filter(&item_id.eq(&i)).select(tname)
+                    .order(count.desc()).limit(10) 
                     .load::<String>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
             TagsPerID::TagID(t) => {
                 tag_list = tags.filter(&pname.eq(&t)).select(tname)
+                    .order(vote.desc()).limit(10) 
                     .load::<String>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
