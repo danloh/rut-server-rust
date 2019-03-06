@@ -2,7 +2,7 @@
 
 use db::dba::Dba;
 use actix_web::{ actix::Handler, error, Error };
-use diesel::{ self, QueryDsl, ExpressionMethods, RunQueryDsl };
+use diesel::{ self, QueryDsl, ExpressionMethods, PgTextExpressionMethods, RunQueryDsl };
 use chrono::Utc;
 use uuid;
 
@@ -121,15 +121,15 @@ impl Handler<ItemsPerID> for Dba {
             },
             ItemsPerID::Title(t) => {
                 item_list = items
-                    .filter(&title.eq(&t)).load::<Item>(conn) //to do contains
+                    .filter(&title.ilike(&t)).load::<Item>(conn) // ilike
                     .map_err(error::ErrorInternalServerError)?;
             },
             ItemsPerID::Uiid(d) => {
-                item_list = items.filter(&uiid.eq(&d)).load::<Item>(conn)
+                item_list = items.filter(uiid.ilike(d)).load::<Item>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
             ItemsPerID::ItemUrl(u) => {
-                item_list = items.filter(&url.eq(&u)).load::<Item>(conn)
+                item_list = items.filter(&url.ilike(&u)).load::<Item>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
             ItemsPerID::RutID(pid) => {

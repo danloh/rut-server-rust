@@ -58,9 +58,11 @@ pub fn get_item_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse>
     let flag = String::from(req.match_info().get("flag").unwrap());
     let itemsPerID = match per {
         "id" => ItemsPerID::ItemID(perid),
+        // hope can fuzzy query per uiid..url, contains
         "uiid" => ItemsPerID::Uiid(perid),
         "title" => ItemsPerID::Title(perid),
         "url" => ItemsPerID::ItemUrl(perid),
+        // query per relations with  rut, tag, user
         "rut" => ItemsPerID::RutID(perid),
         "tag" => ItemsPerID::TagID(perid),
         // "user" => ItemsPerID::UserID(perid, flag),
