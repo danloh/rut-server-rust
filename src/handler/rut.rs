@@ -11,6 +11,7 @@ use model::rut::{
     StarRut, RutStar, StarOrRut, StarRutStatus
 };
 use model::msg::{ Msg, RutMsg, RutListMsg };
+use PER_PAGE;
 
 // handle msg from api::rut.new_rut
 impl Handler<CreateRut> for Dba {
@@ -81,35 +82,57 @@ impl Handler<RutsPerID> for Dba {
         
         let mut id_list: Vec<String> = Vec::new();
         let mut rut_list: Vec<Rut> = Vec::new();
+        let mut rut_num = 0;  // total
         
         // build id_list per query type
         match per {
             RutsPerID::Index(_) => {
-                id_list = ruts.select(id).order(id.desc()).limit(20)
+                id_list = ruts.select(id).order(create_at.desc()).limit(20)
                     .load::<String>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
-            RutsPerID::UserID(u,f) => {
+            RutsPerID::UserID(u,f,p) => {
                 if &f == "create" {
-                    rut_list = ruts.filter(&uname.eq(&u)).load::<Rut>(conn)
+                    let query = ruts.filter(uname.eq(u));
+                    rut_num = query.clone().count().get_result(conn)
+                        .map_err(error::ErrorInternalServerError)?;
+                    rut_list = query
+                        .order(create_at.desc())
+                        .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
+                        .load::<Rut>(conn)
                         .map_err(error::ErrorInternalServerError)?;
                 } else {
                     use db::schema::starruts::dsl::*;
-                    id_list = starruts.filter(&uname.eq(&u)).select(rut_id)
-                        .load::<String>(conn)
+                    let query = starruts.filter(uname.eq(u));
+                    rut_num = query.clone().count().get_result(conn)
+                        .map_err(error::ErrorInternalServerError)?;
+                    id_list = query
+                        .order(star_at.desc())
+                        .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
+                        .select(rut_id).load::<String>(conn)
                         .map_err(error::ErrorInternalServerError)?;
                 }
             },
-            RutsPerID::ItemID(i) => {
+            RutsPerID::ItemID(i,p) => {
                 use db::schema::collects::dsl::*;
-                id_list = collects.filter(&item_id.eq(&i)).select(rut_id)
-                    .load::<String>(conn)
+                let query = collects.filter(item_id.eq(i));
+                rut_num = query.clone().count().get_result(conn)
+                    .map_err(error::ErrorInternalServerError)?;
+                id_list = query
+                    .order(collect_at.desc())
+                    .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
+                    .select(rut_id).load::<String>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
-            RutsPerID::TagID(t) => {
+            RutsPerID::TagID(t,p) => {
                 use db::schema::tagruts::dsl::*;
-                id_list = tagruts.filter(&tname.eq(&t)).select(rut_id)  
-                    .load::<String>(conn)    // to do order per count
+                let query = tagruts.filter(tname.eq(t));
+                rut_num = query.clone().count().get_result(conn)
+                    .map_err(error::ErrorInternalServerError)?;
+                id_list = query
+                    .order(count.desc())
+                    .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
+                    .select(rut_id).load::<String>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
         }
@@ -131,7 +154,7 @@ impl Handler<RutsPerID> for Dba {
             status: 200, 
             message: "Success".to_string(),
             ruts: rut_list.clone(),
-            count: rut_list.len(),
+            count: rut_num as usize,
         })
     }
 }

@@ -53,12 +53,14 @@ pub fn get_rut(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
 pub fn get_rut_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
     let per = req.match_info().get("per").unwrap();
     let tid = String::from(req.match_info().get("tid").unwrap());
+    // agreen on perPage=20 with frontend, first page=1
+    let paging = req.match_info().get("paging").unwrap().parse().unwrap();
     let flag = String::from(req.match_info().get("flag").unwrap());
     
     let q_per = match per {
-        "user" => RutsPerID::UserID(tid, flag),
-        "item" => RutsPerID::ItemID(tid),
-        "tag" => RutsPerID::TagID(tid),
+        "user" => RutsPerID::UserID(tid, flag, paging),
+        "item" => RutsPerID::ItemID(tid, paging),
+        "tag" => RutsPerID::TagID(tid, paging),
         _ => RutsPerID::Index(String::from("index")),
     };
 

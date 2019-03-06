@@ -54,13 +54,13 @@ pub fn app_with_state() -> App<AppState> {
             r.get().with(get_rut);
             r.post().with(update_rut);
         })
-        .resource("/ruts/{per}/{tid}/{flag}", |r| { // Per: user,item,tag,index
-            r.get().with(get_rut_list);             // flag: create, star
+        .resource("/ruts/{per}/{tid}/{paging}/{flag}", |r| { // Per: user,item,tag,index
+            r.get().with(get_rut_list);                     // flag: create, star
         })
-        .resource("/ruts/{rid}/{action:[0|1]}/star/{note}", |r| { // 0- unstar, 1- star
+        .resource("/starrut/{rid}/{action:[0|1]}/{note}", |r| { // 0- unstar, 1- star
             r.get().with(star_unstar_rut);
         })
-        .resource("/ifstar/ruts/{rutid}", |r| {
+        .resource("/ifstarrut/{rutid}", |r| {
             r.get().with(star_rut_status);
         })
         .resource("/items", |r| {
@@ -98,7 +98,7 @@ pub fn app_with_state() -> App<AppState> {
         .resource("/etcs", |r| {
             r.post().with(post_etc);
         })
-        .resource("/etcs/{per}/{perid}", |r| {
+        .resource("/etcs/{per}/{perid}/{paging}", |r| {
             r.get().with(get_etc_list);
         })
     })

@@ -85,13 +85,13 @@ impl Message for RutID {
     type Result = Result<RutMsg, Error>;
 }
 
-// as msg to get  rut list
+// as msg to get  rut list, + paging
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum RutsPerID {
     Index(String),
-    UserID(String, String),
-    ItemID(String),
-    TagID(String),
+    UserID(String, String, i32), // id, create/star, paging
+    ItemID(String, i32),
+    TagID(String, i32),
 }
 
 impl Message for RutsPerID {

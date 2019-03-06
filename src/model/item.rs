@@ -106,7 +106,7 @@ pub enum ItemsPerID {
     ItemUrl(String),
     RutID(String),
     TagID(String),
-    // UserID(String, String),  // (user, flag)
+    // UserID(String, String, i32),  // (user, flag, paging)
 }
 
 impl Message for ItemsPerID {

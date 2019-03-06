@@ -31,6 +31,8 @@ mod model;
 mod handler;
 mod util;
 
+const PER_PAGE: i32 = 20;   // for paging
+
 fn main() {
     env::set_var("RUST_LOG", "rut-server-rust=debug");
     env::set_var("RUST_BACKTRACE", "1");

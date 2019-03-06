@@ -194,13 +194,22 @@ impl Handler<CollectItem> for Dba {
             .filter(&rid.eq(&rutID)) 
             .get_result::<Rut>(conn)
             .map_err(error::ErrorInternalServerError)?;
+        let item_num = (&rut_q).item_count;
+        // limit the item_count to 42
+        if item_num >= 42 {
+            return Ok( CollectMsg { 
+                        status: 418, 
+                        message: "The answer to life the universe and everything".to_string(),
+                        collect: Collect::new(),
+                    })
+        }
 
         let uuid = format!("{}", uuid::Uuid::new_v4());
         let new_collect = NewCollect {
             id: &uuid,
             rut_id: &rutID,
             item_id: &item_q.id, // ok?
-            item_order: (&rut_q).item_count + 1,
+            item_order: item_num + 1,
             content: &collect.content,
             uname: &collect.uname,
             collect_at: Utc::now().naive_utc(),

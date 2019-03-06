@@ -13,11 +13,11 @@ pub fn post_etc((pe, req, user): (Json<PostEtc>, HttpRequest<AppState>, CheckUse
  -> FutureResponse<HttpResponse> {
 
     let l_pe = pe.content.trim().len();
-    if l_pe > 320 || l_pe == 0 {
+    if l_pe == 0 {
         use api::gen_response;
         return gen_response(req)
     }
-    
+
     req.state().db.send( PostEtc {
         content: pe.content.clone(),
         post_to: pe.post_to.clone(),
@@ -34,8 +34,9 @@ pub fn post_etc((pe, req, user): (Json<PostEtc>, HttpRequest<AppState>, CheckUse
 pub fn get_etc_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
     let per = String::from(req.match_info().get("per").unwrap());
     let per_id = String::from(req.match_info().get("perid").unwrap());
+    let paging: i32 = req.match_info().get("paging").unwrap().parse().unwrap();
     
-    req.state().db.send(EtcsPerID{ per, per_id })
+    req.state().db.send(EtcsPerID{ per, per_id, paging })
     .from_err().and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
         Err(_) => Ok(HttpResponse::InternalServerError().into()),

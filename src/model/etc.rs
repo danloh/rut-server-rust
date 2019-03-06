@@ -53,6 +53,7 @@ impl Message for PostEtc {
 pub struct EtcsPerID {     // diff way from enum to get
     pub per: String,
     pub per_id: String,
+    pub paging: i32,
 }
 
 impl Message for EtcsPerID {

@@ -8,6 +8,7 @@ use uuid;
 
 use model::etc::{ Etc, NewEtc, PostEtc, DelEtc, EtcsPerID };
 use model::msg::{ Msg, EtcMsg, EtcListMsg };
+use PER_PAGE;
 
 // handle msg from api::etc.post_etc
 impl Handler<PostEtc> for Dba {
@@ -66,16 +67,28 @@ impl Handler<EtcsPerID> for Dba {
         
         let per_id = &per.per_id;
         let per_to = &per.per;
+        let p = per.paging;
         let etc_list = if per_to == "rut" {
-            etcs.filter(&rut_id.eq(per_id)).load::<Etc>(conn).map_err(error::ErrorInternalServerError)?
+            etcs.filter(&rut_id.eq(per_id))
+                .order(post_at.desc())
+                .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
+                .load::<Etc>(conn).map_err(error::ErrorInternalServerError)?
         } else if per_to == "item" {
-            etcs.filter(&item_id.eq(per_id)).load::<Etc>(conn).map_err(error::ErrorInternalServerError)?
+            etcs.filter(&item_id.eq(per_id)).order(post_at.desc())
+                .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
+                .load::<Etc>(conn).map_err(error::ErrorInternalServerError)?
         } else if per_to == "tag" {
-            etcs.filter(&tname.eq(per_id)).load::<Etc>(conn).map_err(error::ErrorInternalServerError)?
+            etcs.filter(&tname.eq(per_id)).order(post_at.desc())
+                .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
+                .load::<Etc>(conn).map_err(error::ErrorInternalServerError)?
         } else if per_to == "petc" {
-            etcs.filter(&petc_id.eq(per_id)).load::<Etc>(conn).map_err(error::ErrorInternalServerError)?
+            etcs.filter(&petc_id.eq(per_id)).order(post_at.desc())
+                .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
+                .load::<Etc>(conn).map_err(error::ErrorInternalServerError)?
         } else {
-            etcs.filter(&uname.eq(per_id)).load::<Etc>(conn).map_err(error::ErrorInternalServerError)?
+            etcs.filter(&uname.eq(per_id)).order(post_at.desc())
+                .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
+                .load::<Etc>(conn).map_err(error::ErrorInternalServerError)?
         };  // why cannot match?
         
         Ok( EtcListMsg { 
