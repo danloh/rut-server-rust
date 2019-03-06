@@ -116,32 +116,43 @@ impl Handler<ItemsPerID> for Dba {
 
         match perid {
             ItemsPerID::ItemID(i) => {
-                item_list = items.filter(&id.eq(&i)).load::<Item>(conn)
+                item_list = items
+                    .filter(&id.eq(&i))
+                    .load::<Item>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
             ItemsPerID::Title(t) => {
                 item_list = items
-                    .filter(&title.ilike(&t)).load::<Item>(conn) // ilike
+                    .filter(&title.ilike(&t)) // ilike: %k%, %k, k%
+                    .or_filter(&uiid.ilike(&t))
+                    .load::<Item>(conn) 
                     .map_err(error::ErrorInternalServerError)?;
             },
             ItemsPerID::Uiid(d) => {
-                item_list = items.filter(uiid.ilike(d)).load::<Item>(conn)
+                item_list = items
+                    .filter(&uiid.ilike(&d))
+                    .or_filter(&title.ilike(&d))
+                    .load::<Item>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
             ItemsPerID::ItemUrl(u) => {
-                item_list = items.filter(&url.ilike(&u)).load::<Item>(conn)
+                item_list = items
+                    .filter(&url.ilike(&u))
+                    .load::<Item>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
             ItemsPerID::RutID(pid) => {
                 use db::schema::collects::dsl::*;
                 item_id_vec = collects
-                    .filter(&rut_id.eq(&pid)).select(item_id).load::<String>(conn)
+                    .filter(&rut_id.eq(&pid))
+                    .select(item_id).load::<String>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
             ItemsPerID::TagID(pid) => {
                 use db::schema::tagitems::dsl::*;
                 item_id_vec = tagitems
-                    .filter(&tname.eq(&pid)).select(item_id).load::<String>(conn)
+                    .filter(&tname.eq(&pid))
+                    .select(item_id).load::<String>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
             // ItemsPerID::UserID(pid, flag) => {},
@@ -151,7 +162,8 @@ impl Handler<ItemsPerID> for Dba {
         
         for i in item_id_vec {
             let mut items_query = items
-                .filter(&id.eq(&i)).load::<Item>(conn)
+                .filter(&id.eq(&i))
+                .load::<Item>(conn)
                 .map_err(error::ErrorInternalServerError)?;
             item_list.append(&mut items_query);
         }

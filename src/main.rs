@@ -20,6 +20,7 @@ extern crate dotenv;
 #[macro_use]
 extern crate log;
 extern crate env_logger;
+extern crate base64;
 
 use actix_web::{ server, actix::System };
 use std::{ env };
