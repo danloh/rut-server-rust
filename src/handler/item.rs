@@ -11,7 +11,7 @@ use model::item::{
     CollectItem, CollectID, CollectIDs, UpdateCollect, DelCollect, 
     StarItem, NewStarItem, ItemStar, StarItemStatus  
 };
-use model::msg::{ Msg, ItemMsg, ItemListMsg, CollectMsg, CollectsMsg };
+use model::msg::{ Msg, ItemMsg, ItemListMsg, StarItemMsg, CollectMsg, CollectsMsg };
 use model::rut::Rut;
 use PER_PAGE;
 
@@ -176,6 +176,40 @@ impl Handler<ItemsPerID> for Dba {
                     .map_err(error::ErrorInternalServerError)?
                 };
             },
+            ItemsPerID::KeyID(k,f,i,p) => { // per keyword from taged, star
+                let fr = f.trim();
+                match fr {
+                    "user" => {  
+                        use db::schema::staritems::dsl::{staritems, uname, flag, item_id};
+                        let ids = staritems.filter(&uname.eq(&i))
+                            .filter(&flag.eq("done"))  // just search done
+                            .select(item_id).load::<String>(conn)
+                            .map_err(error::ErrorInternalServerError)?;
+                        item_list = items.filter(&title.ilike(&k))
+                            .filter(&id.eq(any(&ids)))
+                            .order(rut_count.desc()).limit(PER_PAGE.into())
+                            .load::<Item>(conn)
+                            .map_err(error::ErrorInternalServerError)?;
+                    },
+                    "tag" => {  // hope never use, to optimaze
+                        use db::schema::tagitems::dsl::{tagitems, tname, item_id};
+                        let ids = tagitems.filter(&tname.eq(&i))
+                            .select(item_id).load::<String>(conn)
+                            .map_err(error::ErrorInternalServerError)?;
+                        item_list = items.filter(&title.ilike(&k))
+                            .filter(&id.eq(any(&ids)))
+                            .order(rut_count.desc()).limit(PER_PAGE.into())
+                            .load::<Item>(conn)
+                            .map_err(error::ErrorInternalServerError)?;
+                    },
+                    _ => { // just query per keyword, hope never use 
+                        item_list = items.filter(&title.ilike(&k))
+                            .order(rut_count.desc()).limit(PER_PAGE.into())
+                            .load::<Item>(conn)
+                            .map_err(error::ErrorInternalServerError)?;
+                    },
+                }
+            },
         };
         
         if item_id_vec.len() > 0 {
@@ -263,7 +297,7 @@ impl Handler<CollectItem> for Dba {
             id: &uuid,
             rut_id: &rutID,
             item_id: &item_q.id, // ok?
-            item_order: item_num + 1,
+            item_order: item_num + 1, // OK to gen order per item count 
             content: &collect.content,
             uname: &collect.uname,
             collect_at: Utc::now().naive_utc(),
@@ -472,7 +506,7 @@ impl Handler<UpdateCollect> for Dba {
 
 // handle msg from api::item.star_item
 impl Handler<NewStarItem> for Dba {
-    type Result = Result<Msg, Error>;
+    type Result = Result<StarItemMsg, Error>;
 
     fn handle(&mut self, act: NewStarItem, _: &mut Self::Context) -> Self::Result {
         use db::schema::staritems::dsl::*;
@@ -487,17 +521,23 @@ impl Handler<NewStarItem> for Dba {
 
         if let Some(s) = check_star {
             // if stared, todo -> done
-            diesel::update(&s)
+            let si = diesel::update(&s)
                 .set(flag.eq("done".to_string()))
-                .execute(conn)
+                .get_result::<StarItem>(conn)
                 .map_err(error::ErrorInternalServerError)?;
             // update item done_count + 1
             use db::schema::items::dsl::{items, id as itemid, done_count};
             diesel::update(items.filter(&itemid.eq(&act.item_id)))
-                .set(done_count.eq(done_count + 1)).execute(conn)
+                .set(done_count.eq(done_count + 1))
+                .execute(conn)
                 .map_err(error::ErrorInternalServerError)?;
 
-            Ok( Msg { status: 200, message: "done".to_string() })
+            Ok( StarItemMsg { 
+                status: 200, 
+                message: si.flag, 
+                note: si.note, 
+                when: si.star_at.to_string() 
+            })
         } else {
             // otherwise not star, so no -> todo
             let uuid = format!("{}", uuid::Uuid::new_v4());
@@ -509,17 +549,23 @@ impl Handler<NewStarItem> for Dba {
                 note: &act.note,
                 flag: "todo",
             };
-            diesel::insert_into(staritems).values(&new_star)
-                .execute(conn).map_err(error::ErrorInternalServerError)?;
+            let si = diesel::insert_into(staritems).values(&new_star)
+                .get_result::<StarItem>(conn)
+                .map_err(error::ErrorInternalServerError)?;
             
-            Ok( Msg { status: 200, message: "todo".to_string() })
+            Ok( StarItemMsg { 
+                status: 200, 
+                message: si.flag, 
+                note: si.note, 
+                when: si.star_at.to_string() 
+            })
         }
     }
 }
 
 // handle msg from api::item.star_item_status
 impl Handler<StarItemStatus> for Dba {
-    type Result = Result<Msg, Error>;
+    type Result = Result<StarItemMsg, Error>;
 
     fn handle(&mut self, status: StarItemStatus, _: &mut Self::Context) -> Self::Result {
         use db::schema::staritems::dsl::*;
@@ -532,8 +578,22 @@ impl Handler<StarItemStatus> for Dba {
             .map_err(error::ErrorInternalServerError)?.pop();
         
         match check_status {
-            Some(s) => { Ok( Msg {status: 200, message: s.flag }) },
-            None => { Ok( Msg { status: 200, message: "no".to_string() }) },
+            Some(s) => { 
+                Ok( StarItemMsg { 
+                    status: 200, 
+                    message: s.flag, 
+                    note: s.note, 
+                    when: s.star_at.to_string() 
+                }) 
+            },
+            None => { 
+                Ok( StarItemMsg { 
+                    status: 200, 
+                    message: "Options".to_string(),  // as not star
+                    note: "".to_string(), 
+                    when: "".to_string() 
+                }) 
+            },
         }
     }
 }

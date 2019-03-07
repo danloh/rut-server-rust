@@ -66,6 +66,12 @@ pub fn get_rut_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> 
             req.query().get("flag").unwrap().clone(),
             paging
         ),
+        "key" => RutsPerID::KeyID(
+            req.query().get("keyword").unwrap().clone(), // keyword
+            req.query().get("from").unwrap().clone(),  // ?keyword= &from=tag|user|item
+            perid,  // from id
+            paging
+        ),
         _ => RutsPerID::Index(String::from("index")),
     };
 

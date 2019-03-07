@@ -65,8 +65,6 @@ impl Handler<EtcsPerID> for Dba {
         use db::schema::etcs::dsl::*;
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
         
-        let per_id = &per.per_id;
-        let per_to = &per.per;
         let p = per.paging;
         if p < 1 {
             return Ok( EtcListMsg { 
@@ -76,29 +74,38 @@ impl Handler<EtcsPerID> for Dba {
                 count: 0,
             })
         }
-        
-        let etc_list = if per_to == "rut" {
-            etcs.filter(&rut_id.eq(per_id))
-                .order(post_at.desc())
-                .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
-                .load::<Etc>(conn).map_err(error::ErrorInternalServerError)?
-        } else if per_to == "item" {
-            etcs.filter(&item_id.eq(per_id)).order(post_at.desc())
-                .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
-                .load::<Etc>(conn).map_err(error::ErrorInternalServerError)?
-        } else if per_to == "tag" {
-            etcs.filter(&tname.eq(per_id)).order(post_at.desc())
-                .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
-                .load::<Etc>(conn).map_err(error::ErrorInternalServerError)?
-        } else if per_to == "petc" {
-            etcs.filter(&petc_id.eq(per_id)).order(post_at.desc())
-                .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
-                .load::<Etc>(conn).map_err(error::ErrorInternalServerError)?
-        } else {
-            etcs.filter(&uname.eq(per_id)).order(post_at.desc())
-                .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
-                .load::<Etc>(conn).map_err(error::ErrorInternalServerError)?
-        };  // why cannot match?
+
+        let per_id = &per.per_id;
+        let per_to = per.per.trim();
+
+        let etc_list = match per_to {
+            "rut" => {
+                etcs.filter(&rut_id.eq(per_id))
+                    .order(post_at.desc())
+                    .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
+                    .load::<Etc>(conn).map_err(error::ErrorInternalServerError)?
+            },
+            "item" => {
+                etcs.filter(&item_id.eq(per_id)).order(post_at.desc())
+                    .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
+                    .load::<Etc>(conn).map_err(error::ErrorInternalServerError)?
+            },
+            "tag" => {
+                etcs.filter(&tname.eq(per_id)).order(post_at.desc())
+                    .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
+                    .load::<Etc>(conn).map_err(error::ErrorInternalServerError)?
+            },
+            "petc" => {
+                etcs.filter(&petc_id.eq(per_id)).order(post_at.desc())
+                    .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
+                    .load::<Etc>(conn).map_err(error::ErrorInternalServerError)?
+            },
+            _ => {
+                etcs.filter(&uname.eq(per_id)).order(post_at.desc())
+                    .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
+                    .load::<Etc>(conn).map_err(error::ErrorInternalServerError)?
+            },
+        };
         
         Ok( EtcListMsg { 
             status: 200, 

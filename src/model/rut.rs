@@ -89,9 +89,10 @@ impl Message for RutID {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum RutsPerID {
     Index(String),
-    UserID(String, String, i32), // id, create/star, paging
+    UserID(String, String, i32), // uname, create/star, paging
     ItemID(String, i32),
     TagID(String, i32),
+    KeyID(String, String, String, i32), // keyword, per, perid(uname|item|tname), paging
 }
 
 impl Message for RutsPerID {

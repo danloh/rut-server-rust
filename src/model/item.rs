@@ -3,7 +3,7 @@
 use db::schema::{items, collects, staritems};
 use actix_web::{ Error, actix::Message };
 use chrono::{Utc, NaiveDateTime};
-use model::msg::{ Msg, ItemMsg, ItemListMsg, CollectMsg, CollectsMsg };
+use model::msg::{ Msg, ItemMsg, ItemListMsg, StarItemMsg, CollectMsg, CollectsMsg };
 
 // use to build select query
 #[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
@@ -107,6 +107,7 @@ pub enum ItemsPerID {
     RutID(String),
     TagID(String),
     UserID(String, String, i32),  // (uname, flag, paging)
+    KeyID(String, String, String, i32) // keyword, per, perid(uname|tname), paging
 }
 
 impl Message for ItemsPerID {
@@ -274,7 +275,7 @@ pub struct NewStarItem {
 }
 
 impl Message for NewStarItem {
-    type Result = Result<Msg, Error>;
+    type Result = Result<StarItemMsg, Error>;
 }
 
 // as msg to check if star a rut
@@ -285,5 +286,5 @@ pub struct StarItemStatus {
 }
 
 impl Message for StarItemStatus {
-    type Result = Result<Msg, Error>;
+    type Result = Result<StarItemMsg, Error>;
 }

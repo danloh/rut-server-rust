@@ -2,7 +2,7 @@
 
 use db::dba::Dba;
 use actix_web::{ actix::Handler, error, Error };
-use diesel::{ self, QueryDsl, ExpressionMethods, dsl::any, RunQueryDsl };
+use diesel::{ self, QueryDsl, ExpressionMethods, dsl::any, PgTextExpressionMethods, RunQueryDsl };
 use chrono::Utc;
 use uuid;
 
@@ -110,7 +110,7 @@ impl Handler<RutsPerID> for Dba {
                     let query = ruts.filter(uname.eq(u));
                     rut_num = query.clone().count().get_result(conn)
                         .map_err(error::ErrorInternalServerError)?;
-                    rut_list = if p < 1 { 
+                    rut_list = if p < 1 {  // hope never use
                         query.order(create_at.desc())
                         .load::<Rut>(conn)
                         .map_err(error::ErrorInternalServerError)?
@@ -125,7 +125,7 @@ impl Handler<RutsPerID> for Dba {
                     let query = starruts.filter(uname.eq(u));
                     rut_num = query.clone().count().get_result(conn)
                         .map_err(error::ErrorInternalServerError)?;
-                    id_list = if p < 1 {
+                    id_list = if p < 1 { // hope never use
                         query.order(star_at.desc())
                         .select(rut_id).load::<String>(conn)
                         .map_err(error::ErrorInternalServerError)?
@@ -142,7 +142,7 @@ impl Handler<RutsPerID> for Dba {
                 let query = collects.filter(item_id.eq(i));
                 rut_num = query.clone().count().get_result(conn)
                     .map_err(error::ErrorInternalServerError)?;
-                id_list = if p < 1 { 
+                id_list = if p < 1 { // hope never use
                     query.order(collect_at.desc())
                     .select(rut_id).load::<String>(conn)
                     .map_err(error::ErrorInternalServerError)?
@@ -158,7 +158,7 @@ impl Handler<RutsPerID> for Dba {
                 let query = tagruts.filter(tname.eq(t));
                 rut_num = query.clone().count().get_result(conn)
                     .map_err(error::ErrorInternalServerError)?;
-                id_list = if p < 1 {
+                id_list = if p < 1 { // hope never use
                     query.order(count.desc())
                     .select(rut_id).load::<String>(conn)
                     .map_err(error::ErrorInternalServerError)?
@@ -168,6 +168,37 @@ impl Handler<RutsPerID> for Dba {
                     .select(rut_id).load::<String>(conn)
                     .map_err(error::ErrorInternalServerError)?
                 };
+            },
+            RutsPerID::KeyID(k,f,i,p) => { // per keyword from taged, created, collected
+                let fr = f.trim();
+                match fr {
+                    "user" => {  // just use this arm
+                        rut_list = ruts.filter(&uname.eq(&i)).filter(&title.ilike(&k))
+                            .order(create_at.desc()).limit(PER_PAGE.into())
+                            .load::<Rut>(conn).map_err(error::ErrorInternalServerError)?;
+                    },
+                    "tag" => {  // hope never use, to optimaze
+                        use db::schema::tagruts::dsl::{tagruts, tname, rut_id};
+                        let ids = tagruts.filter(&tname.eq(&i)).select(rut_id)
+                            .load::<String>(conn).map_err(error::ErrorInternalServerError)?;
+                        rut_list = ruts.filter(&title.ilike(&k)).filter(&id.eq(any(&ids)))
+                            .order(create_at.desc()).limit(PER_PAGE.into())
+                            .load::<Rut>(conn).map_err(error::ErrorInternalServerError)?;
+                    },
+                    "item" => { // hope never use, to optimaze
+                        use db::schema::collects::dsl::{collects, item_id, rut_id};
+                        let ids = collects.filter(&item_id.eq(&i)).select(rut_id)
+                            .load::<String>(conn).map_err(error::ErrorInternalServerError)?;
+                        rut_list = ruts.filter(&title.ilike(&k)).filter(&id.eq(any(&ids)))
+                            .order(create_at.desc()).limit(PER_PAGE.into())
+                            .load::<Rut>(conn).map_err(error::ErrorInternalServerError)?;
+                    },
+                    _ => { // just query per keyword, hope never use 
+                        rut_list = ruts.filter(&title.ilike(&k))
+                            .order(create_at.desc()).limit(PER_PAGE.into())
+                            .load::<Rut>(conn).map_err(error::ErrorInternalServerError)?;
+                    },
+                }
             },
         }
         // build rut_list

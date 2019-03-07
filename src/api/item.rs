@@ -59,7 +59,6 @@ pub fn get_item_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse>
     use base64::decode;
     
     let itemsPerID = match per {
-        "id" => ItemsPerID::ItemID(perid),
         // hope can fuzzy query per uiid..url, contains
         "uiid" => ItemsPerID::Uiid(perid),
         "title" => ItemsPerID::Title(perid),
@@ -72,6 +71,12 @@ pub fn get_item_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse>
         "user" => ItemsPerID::UserID(
             perid, 
             req.query().get("flag").unwrap().clone(),  // flag 
+            req.query().get("page").unwrap().parse::<i32>().unwrap() // paging
+        ),
+        "key" => ItemsPerID::KeyID(  // hope never use
+            req.query().get("keyword").unwrap().clone(), // keyword
+            req.query().get("from").unwrap().clone(),  // ?keyword= &from=tag|user
+            perid,  // from id
             req.query().get("page").unwrap().parse::<i32>().unwrap() // paging
         ),
         _ => ItemsPerID::ItemID(perid),
@@ -126,7 +131,7 @@ pub fn collect_item((item, req, user): (Json<CollectItem>, HttpRequest<AppState>
     req.state().db.send( CollectItem {
         rut_id: item.rut_id.clone(),
         item_id: item.item_id.clone(),
-        item_order: item.item_order.clone(),
+        item_order: item.item_order.clone(), // just reserve, no use in msg handler
         content: item.content.clone(),
         uname: user.uname,
     })

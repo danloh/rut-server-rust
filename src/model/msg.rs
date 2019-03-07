@@ -57,6 +57,15 @@ pub struct ItemListMsg {
     pub count: usize,
 }
 
+// result struct in respon the status of star item
+#[derive(Deserialize,Serialize,Debug)]
+pub struct StarItemMsg {
+    pub status: i32,
+    pub message: String,
+    pub note: String,
+    pub when: String,
+}
+
 // result struct in response collect in a rut 
 #[derive(Deserialize,Serialize,Debug)]
 pub struct CollectMsg {
@@ -73,7 +82,7 @@ pub struct CollectsMsg {
     pub collects: Vec<Collect>,
 }
 
-// result struct in response tag list
+// result struct in response tag
 #[derive(Deserialize,Serialize,Debug)]
 pub struct TagMsg {
     pub status: i32,
