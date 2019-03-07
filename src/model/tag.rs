@@ -84,16 +84,6 @@ pub struct TagEtc {
     pub etc_id: String,
 }
 
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
-#[table_name="startags"]
-pub struct StarTag {
-    pub id: String,
-    pub uname: String,
-    pub tname: String,
-    pub star_at: NaiveDateTime,
-    pub note: String,
-}
-
 // as msg in create new tag, get tag
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CheckTag {
@@ -130,4 +120,49 @@ pub enum TagsPerID {
 
 impl Message for TagsPerID {
     type Result = Result<TagListMsg, Error>;
+}
+
+#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
+#[table_name="startags"]
+pub struct StarTag {
+    pub id: String,
+    pub uname: String,
+    pub tname: String,
+    pub star_at: NaiveDateTime,
+    pub note: String,
+}
+
+// use to build insert query
+#[derive(Debug,Clone,Serialize,Deserialize,Insertable)]
+#[table_name="startags"]
+pub struct TagStar<'a> {
+    pub id: &'a str,
+    pub uname: &'a str,
+    pub tname: &'a str,
+    pub star_at: NaiveDateTime,
+    pub note: &'a str,
+}
+
+// as msg in star or unstar tag
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct StarOrTag {
+    pub uname: String,
+    pub tname: String,
+    pub note: String,
+    pub action: u8,  // 0- unstar, 1- star
+}
+
+impl Message for StarOrTag {
+    type Result = Result<Msg, Error>;
+}
+
+// as msg to check if star a tag
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct StarTagStatus {
+    pub uname: String,
+    pub tname: String,
+}
+
+impl Message for StarTagStatus {
+    type Result = Result<Msg, Error>;
 }

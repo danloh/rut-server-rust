@@ -6,7 +6,10 @@ use actix_web::{
 };
 use futures::Future;
 use router::AppState;
-use model::tag::{ Tag, CheckTag, UpdateTag, TagsPerID, NewTagRut, RutTag };
+use model::tag::{ 
+    Tag, CheckTag, UpdateTag, TagsPerID, NewTagRut, RutTag, 
+    StarOrTag, StarTagStatus 
+};
 use model::user::{ CheckUser };
 
 pub fn new_tag((req, user): (HttpRequest<AppState>, CheckUser))
@@ -102,6 +105,38 @@ pub fn tag_rut((tags, req, user): (Json<RutTag>, HttpRequest<AppState>, CheckUse
     })
     .from_err().and_then(|res| match res {
         Ok(rut) => Ok(HttpResponse::Ok().json(rut)),
+        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+    })
+    .responder()
+}
+
+pub fn star_unstar_tag(req: HttpRequest<AppState>, user: CheckUser)
+ -> FutureResponse<HttpResponse> {
+    let action: u8 = req.match_info().get("action").unwrap().parse().unwrap();
+    let tname = String::from(req.match_info().get("tname").unwrap());
+    let note = String::from(req.match_info().get("note").unwrap());
+    
+    req.state().db.send( StarOrTag {
+        uname: user.uname.clone(),
+        tname: tname.clone(),
+        note: note.clone(),
+        action: action,
+    })
+    .from_err().and_then(|res| match res {
+        Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
+        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+    })
+    .responder()
+}
+
+pub fn star_tag_status(req: HttpRequest<AppState>, user: CheckUser)
+ -> FutureResponse<HttpResponse> {
+    let uname = user.uname;
+    let tname = String::from(req.match_info().get("rutid").unwrap());
+    
+    req.state().db.send( StarTagStatus { uname, tname })
+    .from_err().and_then(|res| match res {
+        Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
         Err(_) => Ok(HttpResponse::InternalServerError().into()),
     })
     .responder()

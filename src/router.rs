@@ -17,7 +17,9 @@ use api::item::{
     get_collect_list, update_collect, get_collect, del_collect, 
     star_item, star_item_status
 };
-use api::tag::{ new_tag, get_tag, get_tag_list, update_tag, tag_rut };
+use api::tag::{ 
+    new_tag, get_tag, get_tag_list, update_tag, tag_rut, star_unstar_tag, star_tag_status 
+};
 use api::etc::{ post_etc, get_etc_list };
 
 pub struct AppState {
@@ -101,6 +103,12 @@ pub fn app_with_state() -> App<AppState> {
         })
         .resource("/tagr/{action:[0|1]}/{rutid}", |r| { // 0-untag,1-tag
             r.post().with(tag_rut);
+        })
+        .resource("/startag/{tname}/{action:[0|1]}/{note}", |r| { // 0- unstar, 1- star
+            r.get().with(star_unstar_tag);
+        })
+        .resource("/ifstartag/{tname}", |r| {
+            r.get().with(star_tag_status);
         })
         .resource("/etcs", |r| {
             r.post().with(post_etc);

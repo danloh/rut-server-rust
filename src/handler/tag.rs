@@ -7,7 +7,8 @@ use chrono::Utc;
 use uuid;
 
 use model::tag::{ 
-    Tag, NewTag, CheckTag, UpdateTag, TagsPerID, TagRut, NewTagRut, RutTag 
+    Tag, NewTag, CheckTag, UpdateTag, TagsPerID, TagRut, NewTagRut, RutTag,
+    StarTag, StarOrTag, TagStar, StarTagStatus 
 };
 use model::msg::{ Msg, TagMsg, TagListMsg };
 
@@ -87,7 +88,13 @@ impl Handler<TagsPerID> for Dba {
                     .load::<String>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
-            TagsPerID::UserID(_u) => { tag_list = Vec::new(); }, // to do, limit to 42
+            TagsPerID::UserID(u) => { 
+                use db::schema::startags::dsl::*;
+                tag_list = startags.filter(&uname.eq(&u)).select(tname)
+                    .order(star_at.desc()).limit(42) 
+                    .load::<String>(conn)
+                    .map_err(error::ErrorInternalServerError)?;; 
+            },
         }
 
         Ok( TagListMsg { 
@@ -200,5 +207,81 @@ impl Handler<RutTag> for Dba {
             status: 200, 
             message: "Done".to_string(),
         })
+    }
+}
+
+// handle msg from api::tag.star_unstar_tag
+impl Handler<StarOrTag> for Dba {
+    type Result = Result<Msg, Error>;
+
+    fn handle(&mut self, act: StarOrTag, _: &mut Self::Context) -> Self::Result {
+        use db::schema::startags::dsl::*;
+        let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
+        
+        match act.action {
+            1  => {  // star
+                // limit star tag to 42
+                let tag_star_num = startags.filter(&uname.eq(&act.uname)).count()
+                    .execute(conn).map_err(error::ErrorInternalServerError)?;
+                if tag_star_num > 42 {
+                    return Ok( Msg { status: 418, message: "unstar".to_string(),})
+                }
+                
+                let uuid = format!("{}", uuid::Uuid::new_v4());
+                let new_star = TagStar {
+                    id: &uuid,
+                    uname: &act.uname,
+                    tname: &act.tname,
+                    star_at: Utc::now().naive_utc(),
+                    note: &act.note,
+                };
+                diesel::insert_into(startags).values(&new_star)
+                        .execute(conn).map_err(error::ErrorInternalServerError)?;
+                // to update star_count + 1 in tag
+                use db::schema::tags::dsl::{tags, tname, star_count};
+                diesel::update(tags.filter(&tname.eq(&act.tname)))
+                    .set(star_count.eq(star_count + 1)).execute(conn)
+                    .map_err(error::ErrorInternalServerError)?;
+
+                Ok( Msg { status: 200, message: "star".to_string(),})
+            },
+            0 => { // unsatr
+                diesel::delete(
+                    startags.filter(&tname.eq(&act.tname))
+                            .filter(&uname.eq(&act.uname))
+                )
+                .execute(conn).map_err(error::ErrorInternalServerError)?;
+
+                // to update the star_count - 1 in tag
+                use db::schema::tags::dsl::{tags, tname as t_name, star_count};
+                diesel::update(tags.filter(&t_name.eq(&act.tname)))
+                    .set(star_count.eq(star_count - 1)).execute(conn)
+                    .map_err(error::ErrorInternalServerError)?;
+
+                Ok( Msg { status: 200, message: "unstar".to_string(),})
+            },
+            _ =>  { Ok( Msg { status: 400, message: "unstar".to_string(),}) },
+        }
+    }
+}
+
+// handle msg from api::tag.star_tag_status
+impl Handler<StarTagStatus> for Dba {
+    type Result = Result<Msg, Error>;
+
+    fn handle(&mut self, status: StarTagStatus, _: &mut Self::Context) -> Self::Result {
+        use db::schema::startags::dsl::*;
+        let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
+
+        let check_status = startags
+            .filter(&uname.eq(&status.uname))
+            .filter(&tname.eq(&status.tname))
+            .load::<StarTag>(conn)
+            .map_err(error::ErrorInternalServerError)?.pop();
+        
+        match check_status {
+            Some(_) => { Ok( Msg {status: 200, message: "star".to_string() }) },
+            None => { Ok( Msg { status: 200, message: "unstar".to_string() }) },
+        }
     }
 }
