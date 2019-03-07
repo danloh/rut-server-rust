@@ -7,8 +7,8 @@ use actix_web::{
 use futures::Future;
 use router::AppState;
 use model::item::{ 
-    SubmitItem, UpdateItem, ItemID, ItemsPerID, CollectItem,
-    CollectID, CollectIDs, UpdateCollect, DelCollect 
+    SubmitItem, UpdateItem, ItemID, ItemsPerID, CollectItem, CollectIDs, 
+    CollectID, UpdateCollect, DelCollect, StarItem, NewStarItem, StarItemStatus
 };
 use model::user::{ CheckUser };
 
@@ -55,7 +55,6 @@ pub fn get_item(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
 pub fn get_item_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
     let per = req.match_info().get("per").unwrap();  // per tag, user, rut
     let perid = String::from(req.match_info().get("id").unwrap());
-    let flag = String::from(req.match_info().get("flag").unwrap());
 
     use base64::decode;
     
@@ -70,7 +69,11 @@ pub fn get_item_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse>
         // query per relations with  rut, tag, user
         "rut" => ItemsPerID::RutID(perid),
         "tag" => ItemsPerID::TagID(perid),
-        // "user" => ItemsPerID::UserID(perid, flag),
+        "user" => ItemsPerID::UserID(
+            perid, 
+            req.query().get("flag").unwrap().clone(),  // flag 
+            req.query().get("page").unwrap().parse::<i32>().unwrap() // paging
+        ),
         _ => ItemsPerID::ItemID(perid),
     };
 
@@ -138,10 +141,14 @@ pub fn get_collect_list(req: HttpRequest<AppState>) -> FutureResponse<HttpRespon
     let per = req.match_info().get("per").unwrap();
     let id = String::from(req.match_info().get("id").unwrap());
 
+    let paging = if let Some(i) = req.query().get("page") {
+        i.parse::<i32>().unwrap()
+    } else { 1 };  // if 0, query all
+
     let collectIDs = match per {
-        "item" => CollectIDs::ItemID(id),
+        "item" => CollectIDs::ItemID(id, paging),
         "rut" => CollectIDs::RutID(id),
-        "user" => CollectIDs::UserID(id),
+        "user" => CollectIDs::UserID(id, paging),
         _ => CollectIDs::RutID(id),
     };
 
@@ -204,6 +211,40 @@ pub fn update_collect((c, req, user): (Json<UpdateCollect>, HttpRequest<AppState
     })
     .from_err().and_then(|res| match res {
         Ok(item) => Ok(HttpResponse::Ok().json(item)),
+        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+    })
+    .responder()
+}
+
+pub fn star_item(req: HttpRequest<AppState>, user: CheckUser)
+ -> FutureResponse<HttpResponse> {
+    let flag = String::from(req.match_info().get("flag").unwrap()); // no need?
+    let itemid = String::from(req.match_info().get("itemid").unwrap());
+    let note = String::from(req.match_info().get("note").unwrap());
+    
+    req.state().db.send( NewStarItem {
+        uname: user.uname.clone(),
+        item_id: itemid.clone(),
+        note: note.clone(),
+        flag: flag.clone(), // not use in msg handler, just reserve
+    })
+    .from_err().and_then(|res| match res {
+        Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
+        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+    })
+    .responder()
+}
+
+pub fn star_item_status(req: HttpRequest<AppState>, user: CheckUser)
+ -> FutureResponse<HttpResponse> {
+    let uname = user.uname;
+    let item_id = String::from(req.match_info().get("itemid").unwrap());
+    
+    req.state().db.send( 
+        StarItemStatus { uname, item_id }
+    )
+    .from_err().and_then(|res| match res {
+        Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
         Err(_) => Ok(HttpResponse::InternalServerError().into()),
     })
     .responder()

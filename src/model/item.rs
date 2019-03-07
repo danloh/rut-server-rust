@@ -106,7 +106,7 @@ pub enum ItemsPerID {
     ItemUrl(String),
     RutID(String),
     TagID(String),
-    // UserID(String, String, i32),  // (user, flag, paging)
+    UserID(String, String, i32),  // (uname, flag, paging)
 }
 
 impl Message for ItemsPerID {
@@ -233,8 +233,8 @@ impl Message for DelCollect {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum CollectIDs {
     RutID(String),
-    ItemID(String),
-    UserID(String),
+    ItemID(String, i32),  // id, paging
+    UserID(String, i32),  // id, paging
 }
 
 impl Message for CollectIDs {
@@ -246,8 +246,44 @@ impl Message for CollectIDs {
 pub struct StarItem {
     pub id: String,
     pub uname: String,
-    pub rut_id: String,
+    pub item_id: String,
     pub star_at: NaiveDateTime,
     pub note: String,
-    pub flag: String,    // 0->to do,1->doing,2->done
+    pub flag: String,    // 0->to do,1->done, 2->doing
+}
+
+// use to build insert query
+#[derive(Debug,Clone,Serialize,Deserialize,Insertable)]
+#[table_name="staritems"]
+pub struct ItemStar<'a> {
+    pub id: &'a str,
+    pub uname: &'a str,
+    pub item_id: &'a str,
+    pub star_at: NaiveDateTime,
+    pub note: &'a str,
+    pub flag: &'a str,
+}
+
+// as msg in star item: todo, done
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct NewStarItem {
+    pub uname: String,
+    pub item_id: String,
+    pub note: String,
+    pub flag: String,
+}
+
+impl Message for NewStarItem {
+    type Result = Result<Msg, Error>;
+}
+
+// as msg to check if star a rut
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct StarItemStatus {
+    pub uname: String,
+    pub item_id: String,
+}
+
+impl Message for StarItemStatus {
+    type Result = Result<Msg, Error>;
 }

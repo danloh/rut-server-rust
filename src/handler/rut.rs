@@ -2,7 +2,7 @@
 
 use db::dba::Dba;
 use actix_web::{ actix::Handler, error, Error };
-use diesel::{ self, QueryDsl, ExpressionMethods, RunQueryDsl };
+use diesel::{ self, QueryDsl, ExpressionMethods, dsl::any, RunQueryDsl };
 use chrono::Utc;
 use uuid;
 
@@ -110,21 +110,31 @@ impl Handler<RutsPerID> for Dba {
                     let query = ruts.filter(uname.eq(u));
                     rut_num = query.clone().count().get_result(conn)
                         .map_err(error::ErrorInternalServerError)?;
-                    rut_list = query
-                        .order(create_at.desc())
+                    rut_list = if p < 1 { 
+                        query.order(create_at.desc())
+                        .load::<Rut>(conn)
+                        .map_err(error::ErrorInternalServerError)?
+                    } else {
+                        query.order(create_at.desc())
                         .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
                         .load::<Rut>(conn)
-                        .map_err(error::ErrorInternalServerError)?;
+                        .map_err(error::ErrorInternalServerError)?
+                    };
                 } else {
                     use db::schema::starruts::dsl::*;
                     let query = starruts.filter(uname.eq(u));
                     rut_num = query.clone().count().get_result(conn)
                         .map_err(error::ErrorInternalServerError)?;
-                    id_list = query
-                        .order(star_at.desc())
+                    id_list = if p < 1 {
+                        query.order(star_at.desc())
+                        .select(rut_id).load::<String>(conn)
+                        .map_err(error::ErrorInternalServerError)?
+                    } else {
+                        query.order(star_at.desc())
                         .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
                         .select(rut_id).load::<String>(conn)
-                        .map_err(error::ErrorInternalServerError)?;
+                        .map_err(error::ErrorInternalServerError)?
+                    };
                 }
             },
             RutsPerID::ItemID(i,p) => {
@@ -132,36 +142,39 @@ impl Handler<RutsPerID> for Dba {
                 let query = collects.filter(item_id.eq(i));
                 rut_num = query.clone().count().get_result(conn)
                     .map_err(error::ErrorInternalServerError)?;
-                id_list = query
-                    .order(collect_at.desc())
+                id_list = if p < 1 { 
+                    query.order(collect_at.desc())
+                    .select(rut_id).load::<String>(conn)
+                    .map_err(error::ErrorInternalServerError)?
+                } else {
+                    query.order(collect_at.desc())
                     .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
                     .select(rut_id).load::<String>(conn)
-                    .map_err(error::ErrorInternalServerError)?;
+                    .map_err(error::ErrorInternalServerError)?
+                };
             },
             RutsPerID::TagID(t,p) => {
                 use db::schema::tagruts::dsl::*;
                 let query = tagruts.filter(tname.eq(t));
                 rut_num = query.clone().count().get_result(conn)
                     .map_err(error::ErrorInternalServerError)?;
-                id_list = query
-                    .order(count.desc())
+                id_list = if p < 1 {
+                    query.order(count.desc())
+                    .select(rut_id).load::<String>(conn)
+                    .map_err(error::ErrorInternalServerError)?
+                } else {
+                    query.order(count.desc())
                     .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
                     .select(rut_id).load::<String>(conn)
-                    .map_err(error::ErrorInternalServerError)?;
+                    .map_err(error::ErrorInternalServerError)?
+                };
             },
         }
         // build rut_list
-        for rid in id_list {
-            let rut_query = ruts.filter(&id.eq(&rid)).load::<Rut>(conn)
-                .map_err(error::ErrorInternalServerError)?.pop();
-            let mut rut = Rut::new(); 
-            match rut_query {
-                Some(r_q) => {
-                    rut = r_q.clone();
-                    rut_list.push(rut);
-                },
-                None => (),
-            }
+        if id_list.len() > 0  {
+            let mut rut_query = ruts.filter(&id.eq(any(&id_list)))
+                .load::<Rut>(conn).map_err(error::ErrorInternalServerError)?;
+            rut_list.append(&mut rut_query);
         }
 
         Ok( RutListMsg { 
@@ -206,7 +219,6 @@ impl Handler<StarOrRut> for Dba {
     type Result = Result<Msg, Error>;
 
     fn handle(&mut self, act: StarOrRut, _: &mut Self::Context) -> Self::Result {
-        // use db::schema::ruts::dsl::*;
         use db::schema::starruts::dsl::*;
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
         
@@ -249,7 +261,7 @@ impl Handler<StarOrRut> for Dba {
     }
 }
 
-// handle msg from api::rut.star_unstar_rut
+// handle msg from api::rut.star_rut_status
 impl Handler<StarRutStatus> for Dba {
     type Result = Result<Msg, Error>;
 

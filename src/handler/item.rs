@@ -2,16 +2,18 @@
 
 use db::dba::Dba;
 use actix_web::{ actix::Handler, error, Error };
-use diesel::{ self, QueryDsl, ExpressionMethods, PgTextExpressionMethods, RunQueryDsl };
+use diesel::{ self, dsl::any, QueryDsl, ExpressionMethods, PgTextExpressionMethods, RunQueryDsl };
 use chrono::Utc;
 use uuid;
 
 use model::item::{
     Item, NewItem, SubmitItem, UpdateItem, ItemID, ItemsPerID, Collect, NewCollect, 
-    CollectItem, CollectID, CollectIDs, UpdateCollect, DelCollect  
+    CollectItem, CollectID, CollectIDs, UpdateCollect, DelCollect, 
+    StarItem, NewStarItem, ItemStar, StarItemStatus  
 };
 use model::msg::{ Msg, ItemMsg, ItemListMsg, CollectMsg, CollectsMsg };
 use model::rut::Rut;
+use PER_PAGE;
 
 // handle msg from api::item.submit_item
 impl Handler<SubmitItem> for Dba {
@@ -113,7 +115,8 @@ impl Handler<ItemsPerID> for Dba {
         
         let mut item_id_vec: Vec<String> = Vec::new();
         let mut item_list: Vec<Item> = Vec::new();
-
+        
+        // better do some limit
         match perid {
             ItemsPerID::ItemID(i) => {
                 item_list = items
@@ -124,27 +127,27 @@ impl Handler<ItemsPerID> for Dba {
             ItemsPerID::Title(t) => {
                 item_list = items
                     .filter(&title.ilike(&t)) // ilike: %k%, %k, k%
-                    .or_filter(&uiid.ilike(&t))
+                    .or_filter(&uiid.ilike(&t)).limit(10)
                     .load::<Item>(conn) 
                     .map_err(error::ErrorInternalServerError)?;
             },
             ItemsPerID::Uiid(d) => {
                 item_list = items
                     .filter(&uiid.ilike(&d))
-                    .or_filter(&title.ilike(&d))
+                    .or_filter(&title.ilike(&d)).limit(10)
                     .load::<Item>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
             ItemsPerID::ItemUrl(u) => {
                 item_list = items
-                    .filter(&url.ilike(&u))
+                    .filter(&url.ilike(&u)).limit(10)
                     .load::<Item>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
             ItemsPerID::RutID(pid) => {
                 use db::schema::collects::dsl::*;
                 item_id_vec = collects
-                    .filter(&rut_id.eq(&pid))
+                    .filter(&rut_id.eq(&pid))  // limit to 42 inserts, no need paging
                     .select(item_id).load::<String>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
@@ -152,19 +155,32 @@ impl Handler<ItemsPerID> for Dba {
                 use db::schema::tagitems::dsl::*;
                 item_id_vec = tagitems
                     .filter(&tname.eq(&pid))
+                    .order(count.desc()).limit(PER_PAGE.into()) // just limit most 
                     .select(item_id).load::<String>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
-            // ItemsPerID::UserID(pid, flag) => {},
+            ItemsPerID::UserID(pid, f, p) => {
+                use db::schema::staritems::dsl::*;
+                item_id_vec = if p < 1 { 
+                    staritems.filter(&uname.eq(&pid))
+                    .filter(&flag.eq(&f))  
+                    .order(star_at.desc()).limit(10)
+                    .select(item_id).load::<String>(conn)
+                    .map_err(error::ErrorInternalServerError)?
+                } else {
+                    staritems.filter(&uname.eq(&pid))
+                    .filter(&flag.eq(&f))  // f = todo or done
+                    .order(star_at.desc())
+                    .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
+                    .select(item_id).load::<String>(conn)
+                    .map_err(error::ErrorInternalServerError)?
+                };
+            },
         };
-
-        // let item_id_vec = item_id_q.map_err(error::ErrorInternalServerError)?;
         
-        for i in item_id_vec {
-            let mut items_query = items
-                .filter(&id.eq(&i))
-                .load::<Item>(conn)
-                .map_err(error::ErrorInternalServerError)?;
+        if item_id_vec.len() > 0 {
+            let mut items_query = items.filter(&id.eq(any(&item_id_vec)))
+                .load::<Item>(conn).map_err(error::ErrorInternalServerError)?;
             item_list.append(&mut items_query);
         }
     
@@ -293,15 +309,31 @@ impl Handler<CollectIDs> for Dba {
                     .load::<Collect>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
-            CollectIDs::ItemID(i) => {
-                collect_list = collects.filter(&item_id.eq(&i))
+            CollectIDs::ItemID(i,p) => {
+                collect_list = if p < 1 {
+                    collects.filter(&item_id.eq(&i))
                     .load::<Collect>(conn)
-                    .map_err(error::ErrorInternalServerError)?;
+                    .map_err(error::ErrorInternalServerError)?
+                } else {
+                    collects.filter(&item_id.eq(&i))
+                    .order(collect_at.desc())
+                    .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
+                    .load::<Collect>(conn)
+                    .map_err(error::ErrorInternalServerError)?
+                };
             },
-            CollectIDs::UserID(u) => {
-                collect_list = collects.filter(&uname.eq(&u))
+            CollectIDs::UserID(u,p) => {
+                collect_list = if p < 1 {
+                    collects.filter(&uname.eq(&u))
                     .load::<Collect>(conn)
-                    .map_err(error::ErrorInternalServerError)?;
+                    .map_err(error::ErrorInternalServerError)?
+                } else {
+                    collects.filter(&uname.eq(&u))
+                    .order(collect_at.desc())
+                    .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
+                    .load::<Collect>(conn)
+                    .map_err(error::ErrorInternalServerError)?
+                };
             },
         }
         
@@ -435,5 +467,73 @@ impl Handler<UpdateCollect> for Dba {
             message: "Updated".to_string(),
             collect: collect_update.clone(),
         })
+    }
+}
+
+// handle msg from api::item.star_item
+impl Handler<NewStarItem> for Dba {
+    type Result = Result<Msg, Error>;
+
+    fn handle(&mut self, act: NewStarItem, _: &mut Self::Context) -> Self::Result {
+        use db::schema::staritems::dsl::*;
+        let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
+        
+        // check if star no -> todo -> done
+        let check_star = staritems
+            .filter(&uname.eq(&act.uname))
+            .filter(&item_id.eq(&act.item_id))
+            .load::<StarItem>(conn)
+            .map_err(error::ErrorInternalServerError)?.pop();
+
+        if let Some(s) = check_star {
+            // if stared, todo -> done
+            diesel::update(&s)
+                .set(flag.eq("done".to_string()))
+                .execute(conn)
+                .map_err(error::ErrorInternalServerError)?;
+            // update item done_count + 1
+            use db::schema::items::dsl::{items, id as itemid, done_count};
+            diesel::update(items.filter(&itemid.eq(&act.item_id)))
+                .set(done_count.eq(done_count + 1)).execute(conn)
+                .map_err(error::ErrorInternalServerError)?;
+
+            Ok( Msg { status: 200, message: "done".to_string() })
+        } else {
+            // otherwise not star, so no -> todo
+            let uuid = format!("{}", uuid::Uuid::new_v4());
+            let new_star = ItemStar {
+                id: &uuid,
+                uname: &act.uname,
+                item_id: &act.item_id,
+                star_at: Utc::now().naive_utc(),
+                note: &act.note,
+                flag: "todo",
+            };
+            diesel::insert_into(staritems).values(&new_star)
+                .execute(conn).map_err(error::ErrorInternalServerError)?;
+            
+            Ok( Msg { status: 200, message: "todo".to_string() })
+        }
+    }
+}
+
+// handle msg from api::item.star_item_status
+impl Handler<StarItemStatus> for Dba {
+    type Result = Result<Msg, Error>;
+
+    fn handle(&mut self, status: StarItemStatus, _: &mut Self::Context) -> Self::Result {
+        use db::schema::staritems::dsl::*;
+        let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
+
+        let check_status = staritems
+            .filter(&uname.eq(&status.uname))
+            .filter(&item_id.eq(&status.item_id))
+            .load::<StarItem>(conn)
+            .map_err(error::ErrorInternalServerError)?.pop();
+        
+        match check_status {
+            Some(s) => { Ok( Msg {status: 200, message: s.flag }) },
+            None => { Ok( Msg { status: 200, message: "no".to_string() }) },
+        }
     }
 }

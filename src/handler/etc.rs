@@ -68,6 +68,15 @@ impl Handler<EtcsPerID> for Dba {
         let per_id = &per.per_id;
         let per_to = &per.per;
         let p = per.paging;
+        if p < 1 {
+            return Ok( EtcListMsg { 
+                status: 400, 
+                message: "Nothing".to_string(),
+                etcs: Vec::new(),
+                count: 0,
+            })
+        }
+        
         let etc_list = if per_to == "rut" {
             etcs.filter(&rut_id.eq(per_id))
                 .order(post_at.desc())

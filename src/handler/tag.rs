@@ -87,7 +87,7 @@ impl Handler<TagsPerID> for Dba {
                     .load::<String>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
-            TagsPerID::UserID(_u) => { tag_list = Vec::new(); },
+            TagsPerID::UserID(_u) => { tag_list = Vec::new(); }, // to do, limit to 42
         }
 
         Ok( TagListMsg { 

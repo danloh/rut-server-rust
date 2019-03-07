@@ -14,7 +14,8 @@ use api::rut::{
 };
 use api::item::{ 
     submit_item, get_item, get_item_list, update_item, collect_item, 
-    get_collect_list, update_collect, get_collect, del_collect
+    get_collect_list, update_collect, get_collect, del_collect, 
+    star_item, star_item_status
 };
 use api::tag::{ new_tag, get_tag, get_tag_list, update_tag, tag_rut };
 use api::etc::{ post_etc, get_etc_list };
@@ -54,8 +55,11 @@ pub fn app_with_state() -> App<AppState> {
             r.get().with(get_rut);
             r.post().with(update_rut);
         })
-        .resource("/ruts/{per}/{tid}/{paging}/{flag}", |r| { // Per: user,item,tag,index
-            r.get().with(get_rut_list);                     // flag: create, star
+        .resource("/ruts/{per}/{perid}", |r| { // ?page=paging&flag=create|star
+            r.get().with(get_rut_list);     // Per:user,item,tag,index
+        })
+        .resource("/collectitem/{rid}", |r| {
+            r.post().with(collect_item);
         })
         .resource("/starrut/{rid}/{action:[0|1]}/{note}", |r| { // 0- unstar, 1- star
             r.get().with(star_unstar_rut);
@@ -70,13 +74,16 @@ pub fn app_with_state() -> App<AppState> {
             r.get().with(get_item);
             r.post().with(update_item);
         })
-        .resource("/items/{per}/{id}/{flag:[0|1|2]}", |r| { // per: rut,tag,user,id,url,title
-            r.get().with(get_item_list);                    // flag: 0-to,1-ing,2-done
+        .resource("/items/{per}/{id}", |r| {  // ?page=paging&flag=todo|done, user only
+            r.get().with(get_item_list); // per:rut,tag,user,id,url,title
         })
-        .resource("/ruts/{rid}/collect", |r| {
-            r.post().with(collect_item);
+        .resource("/staritem/{itemid}/{flag}/{note}", |r| { // flag: todo|done
+            r.get().with(star_item);
         })
-        .resource("/collects/{per}/{id}", |r| {
+        .resource("/itemflag/{itemid}", |r| {
+            r.get().with(star_item_status);
+        })
+        .resource("/collects/{per}/{id}", |r| { // ?page=paging, no need for rut
             r.get().with(get_collect_list);
         })
         .resource("/collects/{cid}", |r| {
@@ -89,16 +96,16 @@ pub fn app_with_state() -> App<AppState> {
             r.post().with(new_tag);
             r.put().with(update_tag);
         })
-        .resource("/tags/{per}/{id}", |r| { // per: rut,tag,user,item
-            r.get().with(get_tag_list);
+        .resource("/tags/{per}/{id}", |r| {  // no need paging, limit
+            r.get().with(get_tag_list);   // per: rut,tag,user,item,
         })
-        .resource("/tag/{action:[0|1]}/{rutid}", |r| { // 0-untag,1-tag
+        .resource("/tagr/{action:[0|1]}/{rutid}", |r| { // 0-untag,1-tag
             r.post().with(tag_rut);
         })
         .resource("/etcs", |r| {
             r.post().with(post_etc);
         })
-        .resource("/etcs/{per}/{perid}/{paging}", |r| {
+        .resource("/etcs/{per}/{perid}", |r| { // ?page=paging
             r.get().with(get_etc_list);
         })
     })
