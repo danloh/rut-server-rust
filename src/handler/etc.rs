@@ -66,6 +66,7 @@ impl Handler<EtcsPerID> for Dba {
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
         
         let p = per.paging;
+        // eliminate no limit
         if p < 1 {
             return Ok( EtcListMsg { 
                 status: 400, 

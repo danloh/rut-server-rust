@@ -344,7 +344,7 @@ impl Handler<CollectIDs> for Dba {
                     .map_err(error::ErrorInternalServerError)?;
             },
             CollectIDs::ItemID(i,p) => {
-                collect_list = if p < 1 {
+                collect_list = if p < 1 { // no limit
                     collects.filter(&item_id.eq(&i))
                     .load::<Collect>(conn)
                     .map_err(error::ErrorInternalServerError)?
@@ -357,7 +357,7 @@ impl Handler<CollectIDs> for Dba {
                 };
             },
             CollectIDs::UserID(u,p) => {
-                collect_list = if p < 1 {
+                collect_list = if p < 1 { // no limit
                     collects.filter(&uname.eq(&u))
                     .load::<Collect>(conn)
                     .map_err(error::ErrorInternalServerError)?

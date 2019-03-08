@@ -132,7 +132,7 @@ pub fn star_unstar_tag(req: HttpRequest<AppState>, user: CheckUser)
 pub fn star_tag_status(req: HttpRequest<AppState>, user: CheckUser)
  -> FutureResponse<HttpResponse> {
     let uname = user.uname;
-    let tname = String::from(req.match_info().get("rutid").unwrap());
+    let tname = String::from(req.match_info().get("tname").unwrap());
     
     req.state().db.send( StarTagStatus { uname, tname })
     .from_err().and_then(|res| match res {

@@ -110,7 +110,7 @@ impl Handler<RutsPerID> for Dba {
                     let query = ruts.filter(uname.eq(u));
                     rut_num = query.clone().count().get_result(conn)
                         .map_err(error::ErrorInternalServerError)?;
-                    rut_list = if p < 1 {  // hope never use
+                    rut_list = if p < 1 {  // no limit, hope never use
                         query.order(create_at.desc())
                         .load::<Rut>(conn)
                         .map_err(error::ErrorInternalServerError)?
@@ -125,7 +125,7 @@ impl Handler<RutsPerID> for Dba {
                     let query = starruts.filter(uname.eq(u));
                     rut_num = query.clone().count().get_result(conn)
                         .map_err(error::ErrorInternalServerError)?;
-                    id_list = if p < 1 { // hope never use
+                    id_list = if p < 1 { // no limit, hope never use
                         query.order(star_at.desc())
                         .select(rut_id).load::<String>(conn)
                         .map_err(error::ErrorInternalServerError)?
@@ -142,7 +142,7 @@ impl Handler<RutsPerID> for Dba {
                 let query = collects.filter(item_id.eq(i));
                 rut_num = query.clone().count().get_result(conn)
                     .map_err(error::ErrorInternalServerError)?;
-                id_list = if p < 1 { // hope never use
+                id_list = if p < 1 { // no limit, hope never use
                     query.order(collect_at.desc())
                     .select(rut_id).load::<String>(conn)
                     .map_err(error::ErrorInternalServerError)?
@@ -158,7 +158,7 @@ impl Handler<RutsPerID> for Dba {
                 let query = tagruts.filter(tname.eq(t));
                 rut_num = query.clone().count().get_result(conn)
                     .map_err(error::ErrorInternalServerError)?;
-                id_list = if p < 1 { // hope never use
+                id_list = if p < 1 { // no limit, hope never use
                     query.order(count.desc())
                     .select(rut_id).load::<String>(conn)
                     .map_err(error::ErrorInternalServerError)?
