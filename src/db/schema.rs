@@ -25,6 +25,16 @@ table! {
 }
 
 table! {
+    follows (id) {
+        id -> Varchar,
+        uname -> Varchar,
+        fname -> Varchar,
+        fo_at -> Timestamp,
+        note -> Varchar,
+    }
+}
+
+table! {
     items (id) {
         id -> Varchar,
         title -> Varchar,
@@ -136,6 +146,17 @@ table! {
 }
 
 table! {
+    timelines (id) {
+        id -> Varchar,
+        uname -> Varchar,
+        action -> Varchar,
+        obj -> Varchar,
+        objid -> Varchar,
+        act_at -> Timestamp,
+    }
+}
+
+table! {
     users (id) {
         id -> Varchar,
         uname -> Varchar,
@@ -151,6 +172,7 @@ table! {
 allow_tables_to_appear_in_same_query!(
     collects,
     etcs,
+    follows,
     items,
     ruts,
     staritems,
@@ -160,5 +182,6 @@ allow_tables_to_appear_in_same_query!(
     tagitems,
     tagruts,
     tags,
+    timelines,
     users,
 );

@@ -13,7 +13,7 @@ pub struct Tag {
     pub tname: String,
     pub intro: String,
     pub logo: String,
-    pub pname: String,  // parent tag name
+    pub pname: String,  // parent tag name != tname. check constain
     pub item_count: i32,
     pub rut_count: i32,
     pub etc_count: i32,

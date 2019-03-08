@@ -1,6 +1,6 @@
 // user model
 
-use db::schema::users;
+use db::schema::{ users, follows, timelines };
 use actix_web::{ Error, actix::Message };
 use chrono::{Utc, NaiveDateTime, Duration, Local};
 use model::msg::{ Msg, LoginMsg };
@@ -151,6 +151,30 @@ impl Message for ChangePsw {
     type Result = Result<Msg, Error>;
 }
 
+// to do:
+// User follow 
+#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
+#[table_name="follows"]
+pub struct Follow {
+    pub id: String,
+    pub uname: String, // who follow
+    pub fname: String,  // who be followed, cannot be uname
+    pub fo_at: NaiveDateTime,
+    pub note: String,
+}
+
+// user's activity record
+#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
+#[table_name="timelines"]
+pub struct Timeline {
+    pub id: String,
+    pub uname: String, // who
+    pub action: String, // how: create, star, follow..
+    pub obj: String,   // what: rut, item, user, tag..
+    pub objid: String,   // what id
+    pub act_at: NaiveDateTime, // when
+}
+
 //////////////////////////
 // jwt util: Claim, token
 
@@ -177,7 +201,3 @@ impl Claims {
         }
     }
 }
-
-
-// per user to query rut, item, tag, to do
-// struct PerUser { userID: (String, String, String)} // e.g. id, rut, create

@@ -12,6 +12,25 @@ CREATE TABLE users (
   UNIQUE (uname)
 );
 
+CREATE TABLE follows (
+  id VARCHAR NOT NULL PRIMARY KEY,
+  uname VARCHAR NOT NULL,
+  fname VARCHAR NOT NULL,
+  fo_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  note VARCHAR NOT NULL DEFAULT '',
+  UNIQUE (uname, fname),
+  CHECK (uname != fname)
+);
+
+CREATE TABLE timelines (
+  id VARCHAR NOT NULL PRIMARY KEY,
+  uname VARCHAR NOT NULL,
+  action VARCHAR NOT NULL,
+  obj VARCHAR NOT NULL,
+  objid VARCHAR NOT NULL,
+  act_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE ruts (
   id VARCHAR NOT NULL PRIMARY KEY,
   title VARCHAR NOT NULL,
@@ -83,7 +102,8 @@ CREATE TABLE tags (
   etc_count INTEGER NOT NULL DEFAULT '0',
   star_count INTEGER NOT NULL DEFAULT '0',
   vote INTEGER NOT NULL DEFAULT '0',
-  UNIQUE (tname, pname)
+  UNIQUE (tname, pname),
+  CHECK (tname != pname)
 );
 
 CREATE TABLE tagruts (
