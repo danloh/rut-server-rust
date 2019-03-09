@@ -56,7 +56,11 @@ pub fn get_item_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse>
     let per = req.match_info().get("per").unwrap();  // per tag, user, rut
     let perid = String::from(req.match_info().get("id").unwrap());
 
-    use base64::decode;
+    use base64::decode;  // for decode url
+
+    let paging = if let Some(i) = req.query().get("page") {
+        i.parse::<i32>().unwrap()
+    } else { 1 };  // if 0, query all
     
     let itemsPerID = match per {
         // hope can fuzzy query per uiid..url, contains
@@ -71,13 +75,13 @@ pub fn get_item_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse>
         "user" => ItemsPerID::UserID(
             perid, 
             req.query().get("flag").unwrap().clone(),  // flag 
-            req.query().get("page").unwrap().parse::<i32>().unwrap() // paging
+            paging,
         ),
         "key" => ItemsPerID::KeyID(  // hope never use
             req.query().get("keyword").unwrap().clone(), // keyword
             req.query().get("from").unwrap().clone(),  // ?keyword= &from=tag|user
             perid,  // from id
-            req.query().get("page").unwrap().parse::<i32>().unwrap() // paging
+            paging,
         ),
         _ => ItemsPerID::ItemID(perid),
     };

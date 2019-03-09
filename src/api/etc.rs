@@ -34,6 +34,7 @@ pub fn post_etc((pe, req, user): (Json<PostEtc>, HttpRequest<AppState>, CheckUse
 pub fn get_etc_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
     let per = String::from(req.match_info().get("per").unwrap());
     let per_id = String::from(req.match_info().get("perid").unwrap());
+    
     // paging in query param
     let paging = if let Some(i) = req.query().get("page") {
         i.parse::<i32>().unwrap()

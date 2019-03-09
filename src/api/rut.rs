@@ -53,6 +53,7 @@ pub fn get_rut(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
 pub fn get_rut_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
     let per = req.match_info().get("per").unwrap();
     let perid = String::from(req.match_info().get("perid").unwrap());
+    
     // agreen on perPage=20 with frontend, first page=1
     let paging = if let Some(i) = req.query().get("page") {
         i.parse::<i32>().unwrap()

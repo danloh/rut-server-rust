@@ -67,6 +67,7 @@ impl Message for RutTag {
     type Result = Result<Msg, Error>;
 }
 
+// to do
 #[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
 #[table_name="tagitems"]
 pub struct TagItem {
@@ -76,6 +77,7 @@ pub struct TagItem {
     pub count: i32,
 }
 
+// to do
 #[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
 #[table_name="tagetcs"]
 pub struct TagEtc {

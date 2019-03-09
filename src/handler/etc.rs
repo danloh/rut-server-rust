@@ -101,11 +101,17 @@ impl Handler<EtcsPerID> for Dba {
                     .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
                     .load::<Etc>(conn).map_err(error::ErrorInternalServerError)?
             },
-            _ => {
+            "user" => {
                 etcs.filter(&uname.eq(per_id)).order(post_at.desc())
                     .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
                     .load::<Etc>(conn).map_err(error::ErrorInternalServerError)?
             },
+            _ => { // just get some newest
+                etcs.order(post_at.desc())
+                    .limit(PER_PAGE.into()).load::<Etc>(conn)
+                    .map_err(error::ErrorInternalServerError)?
+            },
+
         };
         
         Ok( EtcListMsg { 

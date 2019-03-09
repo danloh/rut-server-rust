@@ -58,7 +58,7 @@ pub fn app_with_state() -> App<AppState> {
             r.post().with(update_rut);
         })
         .resource("/ruts/{per}/{perid}", |r| { // ?page=paging&flag=create|star
-            r.get().with(get_rut_list);     // Per:user,item,tag,index
+            r.get().with(get_rut_list);     // Per: user|item|tag,index
         })
         .resource("/collectitem/{rid}", |r| {
             r.post().with(collect_item);
@@ -77,7 +77,7 @@ pub fn app_with_state() -> App<AppState> {
             r.post().with(update_item);
         })
         .resource("/items/{per}/{id}", |r| {  // ?page=paging&flag=todo|done, user only
-            r.get().with(get_item_list); // per:rut,tag,user,id,url,title
+            r.get().with(get_item_list); // per: rut|tag|user;id|url|title
         })
         .resource("/staritem/{itemid}/{flag}/{note}", |r| { // flag: todo|done
             r.get().with(star_item);
@@ -85,8 +85,8 @@ pub fn app_with_state() -> App<AppState> {
         .resource("/itemflag/{itemid}", |r| {
             r.get().with(star_item_status);
         })
-        .resource("/collects/{per}/{id}", |r| { // ?page=paging, no need for rut
-            r.get().with(get_collect_list);
+        .resource("/collects/{per}/{id}", |r| { // ?page=paging, no need paging for rut
+            r.get().with(get_collect_list);     // per: user|item|rut
         })
         .resource("/collects/{cid}", |r| {
             r.get().with(get_collect);
@@ -99,7 +99,7 @@ pub fn app_with_state() -> App<AppState> {
             r.put().with(update_tag);
         })
         .resource("/tags/{per}/{id}", |r| {  // no need paging, limit
-            r.get().with(get_tag_list);   // per: rut,tag,user,item,
+            r.get().with(get_tag_list);   // per: rut|tag|user|item,
         })
         .resource("/tagr/{action:[0|1]}/{rutid}", |r| { // 0-untag,1-tag
             r.post().with(tag_rut);
@@ -114,7 +114,7 @@ pub fn app_with_state() -> App<AppState> {
             r.post().with(post_etc);
         })
         .resource("/etcs/{per}/{perid}", |r| { // ?page=paging
-            r.get().with(get_etc_list);
+            r.get().with(get_etc_list);      // per: rut|item|user|tag|etc
         })
     })
     // or: /* .prefix("/api").configure( |app| { Cors::for_app(app).max_age(3600) }) */
