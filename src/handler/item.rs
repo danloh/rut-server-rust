@@ -520,17 +520,19 @@ impl Handler<NewStarItem> for Dba {
             .map_err(error::ErrorInternalServerError)?.pop();
 
         if let Some(s) = check_star {
-            // if stared, todo -> done
+            // if stared, todo -> doing or done
             let si = diesel::update(&s)
-                .set(flag.eq("done".to_string()))
+                .set(flag.eq(act.flag))
                 .get_result::<StarItem>(conn)
                 .map_err(error::ErrorInternalServerError)?;
-            // update item done_count + 1
-            use db::schema::items::dsl::{items, id as itemid, done_count};
-            diesel::update(items.filter(&itemid.eq(&act.item_id)))
-                .set(done_count.eq(done_count + 1))
-                .execute(conn)
-                .map_err(error::ErrorInternalServerError)?;
+            // update item done_count + 1 if done
+            if si.flag.trim() == "done" {
+                use db::schema::items::dsl::{items, id as itemid, done_count};
+                diesel::update(items.filter(&itemid.eq(&act.item_id)))
+                    .set(done_count.eq(done_count + 1))
+                    .execute(conn)
+                    .map_err(error::ErrorInternalServerError)?;
+            }
 
             Ok( StarItemMsg { 
                 status: 200, 
@@ -539,7 +541,7 @@ impl Handler<NewStarItem> for Dba {
                 when: si.star_at.to_string() 
             })
         } else {
-            // otherwise not star, so no -> todo
+            // otherwise new star
             let uuid = format!("{}", uuid::Uuid::new_v4());
             let new_star = ItemStar {
                 id: &uuid,
@@ -547,7 +549,7 @@ impl Handler<NewStarItem> for Dba {
                 item_id: &act.item_id,
                 star_at: Utc::now().naive_utc(),
                 note: &act.note,
-                flag: "todo",
+                flag: &act.flag,
             };
             let si = diesel::insert_into(staritems).values(&new_star)
                 .get_result::<StarItem>(conn)

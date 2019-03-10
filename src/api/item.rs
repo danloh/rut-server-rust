@@ -230,12 +230,19 @@ pub fn star_item(req: HttpRequest<AppState>, user: CheckUser)
     let flag = String::from(req.match_info().get("flag").unwrap()); // no need?
     let itemid = String::from(req.match_info().get("itemid").unwrap());
     let note = String::from(req.match_info().get("note").unwrap());
+
+    // flag only can be todo, doing, done
+    let flg = &flag[..];
+    if flg != "todo" && flg != "doing" && flg != "done" {
+        use api::gen_response;
+        return gen_response(req)
+    }
     
     req.state().db.send( NewStarItem {
         uname: user.uname.clone(),
         item_id: itemid.clone(),
         note: note.clone(),
-        flag: flag.clone(), // not use in msg handler, just reserve
+        flag: flag.clone(),
     })
     .from_err().and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),

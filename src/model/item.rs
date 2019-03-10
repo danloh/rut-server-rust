@@ -265,7 +265,7 @@ pub struct ItemStar<'a> {
     pub flag: &'a str,
 }
 
-// as msg in star item: todo, done
+// as msg in star item: todo, done, doing
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct NewStarItem {
     pub uname: String,
