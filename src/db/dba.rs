@@ -16,6 +16,10 @@ impl Actor for Dba {
 pub fn init() -> Addr<Dba> {
     let db_url = dotenv::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let manager = ConnectionManager::<PgConnection>::new(db_url);
-    let conn = Pool::builder().build(manager).expect("Failed to create pool.");
-    SyncArbiter::start( num_cpus::get() * 1, move || { Dba(conn.clone()) })
+    let c_num = num_cpus::get();
+    let p_num = (c_num) as u32;
+    // p_num subject to c_num?? 
+    let conn = Pool::builder().max_size(p_num)
+        .build(manager).expect("Failed to create pool.");
+    SyncArbiter::start( c_num * 2, move || { Dba(conn.clone()) })
 }

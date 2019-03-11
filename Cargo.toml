@@ -23,7 +23,7 @@ chrono = { version = "0.4.6", features = ["serde"] }
 bcrypt = "0.3.0"
 dotenv = "0.13.0"
 log = "0.4.6" 
-env_logger = "0.6.0"
+env_logger = "0.6.1"
 base64 = "0.10.1"
 
 # regex = "1.1.2"
