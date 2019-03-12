@@ -19,7 +19,8 @@ pub fn init() -> Addr<Dba> {
     let c_num = num_cpus::get();
     let p_num = (c_num) as u32;
     // p_num subject to c_num?? 
-    let conn = Pool::builder().max_size(p_num)
+    let conn = Pool::builder()
+        .max_size(p_num)
         .build(manager).expect("Failed to create pool.");
     SyncArbiter::start( c_num * 2, move || { Dba(conn.clone()) })
 }

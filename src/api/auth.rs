@@ -143,7 +143,7 @@ pub fn change_psw((psw, req, user): (Json<ChangePsw>, HttpRequest<AppState>, Che
         use api::gen_response;
         return gen_response(req)
     }
-    println!("{:?}",user.uname);
+    // println!("{:?}",user.uname);
     req.state().db.send( ChangePsw{
         old_psw: psw.old_psw.clone(),
         new_psw: psw.new_psw.clone(),
