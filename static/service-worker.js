@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/3.6.3/workbox-sw.js");
 
 importScripts(
-  "/precache-manifest.11161ae7375e3c77402f9459ca4b50c8.js"
+  "/precache-manifest.47564c09ef4d6646d566b0e9a25e6089.js"
 );
 
 workbox.core.setCacheNameDetails({prefix: "rut-frontend-new"});
