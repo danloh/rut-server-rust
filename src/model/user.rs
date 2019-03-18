@@ -16,6 +16,7 @@ pub struct User {
     pub email: String,
     pub intro: String,
     pub location: String,
+    pub nickname: String,
 }
 
 // User's constructor
@@ -29,6 +30,7 @@ impl User {
             email: "".to_owned(),
             intro: "".to_owned(),
             location: "".to_owned(),
+            nickname: "".to_owned(),
         }
     }
 }
@@ -44,6 +46,7 @@ pub struct NewUser<'a> {
     pub email: &'a str,
     pub intro: &'a str,
     pub location: &'a str,
+    pub nickname: &'a str,
 }
 
 // message to check username, or return as user info
@@ -57,6 +60,7 @@ pub struct CheckUser {
     pub email: String,
     pub intro: String,
     pub location: String,
+    pub nickname: String,
 }
 
 impl Message for CheckUser {
@@ -73,6 +77,7 @@ impl From<User> for CheckUser {
             email: user.email,
             intro: user.intro,
             location: user.location,
+            nickname: user.nickname,
         }
     }
 }
@@ -87,6 +92,7 @@ impl From<Claims> for CheckUser {
             email: "".to_owned(),
             intro: "".to_owned(),
             location: "".to_owned(),
+            nickname: "".to_owned(),
         }
     }
 }
@@ -133,6 +139,7 @@ pub struct UpdateUser {
     pub email: String,
     pub intro: String,
     pub location: String,
+    pub nickname: String,
 }
 
 impl Message for UpdateUser {

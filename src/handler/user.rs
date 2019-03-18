@@ -49,6 +49,7 @@ impl Handler<SignUser> for Dba {
                     email: "",
                     intro: "",
                     location: "",
+                    nickname: &msg.uname,
                 };
                 diesel::insert_into(users)
                     .values(&new_user).execute(conn)
@@ -176,6 +177,7 @@ impl Handler<UpdateUser> for Dba {
                 email: user.email.clone(),
                 intro: user.intro.clone(),
                 location: user.location.clone(),
+                nickname: user.nickname.clone(),
             })
             .get_result::<User>(conn)
             .map_err(error::ErrorInternalServerError)?;

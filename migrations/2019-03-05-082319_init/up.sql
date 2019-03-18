@@ -9,6 +9,7 @@ CREATE TABLE users (
   email VARCHAR NOT NULL DEFAULT '',
   intro TEXT NOT NULL DEFAULT '',
   location VARCHAR NOT NULL DEFAULT '',
+  nickname VARCHAR NOT NULL DEFAULT '',
   UNIQUE (uname)
 );
 

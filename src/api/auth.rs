@@ -112,20 +112,21 @@ pub fn get_user(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
 pub fn update_user((user, req, auth): (Json<UpdateUser>, HttpRequest<AppState>, CheckUser))
  -> FutureResponse<HttpResponse> {
     // do some check
-    let uname = user.uname.clone();
-    let l_u = uname.trim().len();
-    let check = auth.uname != uname || l_u > MAX_UNAME_LEN || l_u <= MIN_LEN || uname.contains(" ");
+    let nickname = user.nickname.clone();
+    let l_u = nickname.trim().len();
+    let check = auth.uname != user.uname || l_u > MAX_UNAME_LEN || l_u <= MIN_LEN;
     if check {
         use api::gen_response;
         return gen_response(req)
     }
 
     req.state().db.send( UpdateUser{
-        uname: uname,
+        uname: auth.uname,
         avatar: user.avatar.clone(),
         email: user.email.clone(),
         intro: user.intro.clone(),
         location: user.location.clone(),
+        nickname: user.nickname.clone(),
     })
     .from_err().and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),

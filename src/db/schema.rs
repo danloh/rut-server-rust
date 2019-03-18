@@ -166,6 +166,7 @@ table! {
         email -> Varchar,
         intro -> Text,
         location -> Varchar,
+        nickname -> Varchar,
     }
 }
 
