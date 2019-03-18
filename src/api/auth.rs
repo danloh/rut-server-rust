@@ -10,6 +10,7 @@ use router::AppState;
 use model::user::{ 
     User, UserID, SignUser, LogUser, CheckUser, UpdateUser, ChangePsw, Claims 
 };
+use ::{ MIN_LEN, MAX_UNAME_LEN, MIN_PSW_LEN, ANS_LIMIT };
 
 pub fn signup((sign, req): (Json<SignUser>, HttpRequest<AppState>))
  -> FutureResponse<HttpResponse> {
@@ -19,7 +20,7 @@ pub fn signup((sign, req): (Json<SignUser>, HttpRequest<AppState>))
     let psw = sign.password.clone();
     let repsw = sign.confirm_password.clone();
     let l_p = psw.trim().len();
-    let check = l_u == 0 || l_u > 16 || l_p < 8 || psw != repsw || uname.contains(" ");
+    let check = l_u <= MIN_LEN || l_u > MAX_UNAME_LEN || l_p < MIN_PSW_LEN || psw != repsw || uname.contains(" ");
     if check {
         use api::gen_response;
         return gen_response(req)
@@ -53,7 +54,7 @@ pub fn signin((login, req): (Json<LogUser>, HttpRequest<AppState>))
     let uname = login.uname.clone();
     let l_u = uname.trim().len();
     let l_p = login.password.trim().len();
-    let check = l_u == 0 || l_u > 16 || l_p < 8 || uname.contains(" ");
+    let check = l_u <= MIN_LEN || l_u > MAX_UNAME_LEN || l_p < MIN_PSW_LEN || uname.contains(" ");
     if check {
         use api::gen_response;
         return gen_response(req)
@@ -113,7 +114,7 @@ pub fn update_user((user, req, auth): (Json<UpdateUser>, HttpRequest<AppState>, 
     // do some check
     let uname = user.uname.clone();
     let l_u = uname.trim().len();
-    let check = auth.uname != uname || l_u > 16 || l_u == 0 || uname.contains(" ");
+    let check = auth.uname != uname || l_u > MAX_UNAME_LEN || l_u <= MIN_LEN || uname.contains(" ");
     if check {
         use api::gen_response;
         return gen_response(req)
@@ -138,7 +139,7 @@ pub fn change_psw((psw, req, user): (Json<ChangePsw>, HttpRequest<AppState>, Che
     // do some check
     let uname = String::from(req.match_info().get("uname").unwrap());
     let l_p = psw.new_psw.trim().len();
-    let check = user.uname != uname || l_p < 8;
+    let check = user.uname != uname || l_p < MIN_PSW_LEN;
     if check {
         use api::gen_response;
         return gen_response(req)

@@ -32,7 +32,13 @@ mod model;
 mod handler;
 mod util;
 
+// eliminate magic number
 const PER_PAGE: i32 = 20;   // for paging
+const ANS_LIMIT: usize = 42;  // limit tag len, fo tags, collect item
+const MAX_UNAME_LEN: usize = 16;
+const MIN_PSW_LEN: usize = 8;
+const MIN_LEN: usize = 1;
+
 
 fn main() {
     env::set_var("RUST_LOG", "rut-server-rust=debug");

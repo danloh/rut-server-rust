@@ -13,7 +13,7 @@ use model::item::{
 };
 use model::msg::{ Msg, ItemMsg, ItemListMsg, StarItemMsg, CollectMsg, CollectsMsg };
 use model::rut::Rut;
-use PER_PAGE;
+use ::{ PER_PAGE, ANS_LIMIT };
 
 // handle msg from api::item.submit_item
 impl Handler<SubmitItem> for Dba {
@@ -115,6 +115,7 @@ impl Handler<ItemsPerID> for Dba {
         
         let mut item_id_vec: Vec<String> = Vec::new();
         let mut item_list: Vec<Item> = Vec::new();
+        let mut item_num = 0;  // total
         
         // better do some limit
         match perid {
@@ -161,16 +162,15 @@ impl Handler<ItemsPerID> for Dba {
             },
             ItemsPerID::UserID(pid, f, p) => {
                 use db::schema::staritems::dsl::*;
+                let query = staritems.filter(uname.eq(pid)).filter(flag.eq(f));
+                item_num = query.clone().count().get_result(conn)
+                        .map_err(error::ErrorInternalServerError)?;
                 item_id_vec = if p < 1 { 
-                    staritems.filter(&uname.eq(&pid))
-                    .filter(&flag.eq(&f))  
-                    .order(star_at.desc()).limit(10)
+                    query.order(star_at.desc()).limit(10)
                     .select(item_id).load::<String>(conn)
                     .map_err(error::ErrorInternalServerError)?
                 } else {
-                    staritems.filter(&uname.eq(&pid))
-                    .filter(&flag.eq(&f))  // f = todo or done
-                    .order(star_at.desc())
+                    query.order(star_at.desc())
                     .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
                     .select(item_id).load::<String>(conn)
                     .map_err(error::ErrorInternalServerError)?
@@ -217,12 +217,18 @@ impl Handler<ItemsPerID> for Dba {
                 .load::<Item>(conn).map_err(error::ErrorInternalServerError)?;
             item_list.append(&mut items_query);
         }
+
+        let item_count = if item_num <= 0 { 
+            item_list.len() 
+        } else { 
+            item_num as usize
+        };
     
         Ok( ItemListMsg { 
             status: 200, 
             message: "Success".to_string(),
             items: item_list.clone(),
-            count: item_list.clone().len(),
+            count: item_count,
         })
     }
 }
