@@ -95,6 +95,11 @@ impl Handler<TagsPerID> for Dba {
                     .load::<String>(conn)
                     .map_err(error::ErrorInternalServerError)?;; 
             },
+            TagsPerID::Index(_) => {
+                tag_list = tags.select(tname).order(vote.desc()).limit(16)
+                    .load::<String>(conn)
+                    .map_err(error::ErrorInternalServerError)?;
+            },
         }
 
         Ok( TagListMsg { 
@@ -136,27 +141,32 @@ impl Handler<UpdateTag> for Dba {
 impl Handler<RutTag> for Dba {
     type Result = Result<Msg, Error>;
 
-    fn handle(&mut self, rtgs: RutTag, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, rutg: RutTag, _: &mut Self::Context) -> Self::Result {
         use db::schema::tagruts::dsl::*;
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
 
-        let action = rtgs.action;
+        let action = rutg.action;
+        let rutID = rutg.rut_id;
 
         if &action == "1" {  // tag
-            for rtg in rtgs.tname {
-                let tr = tagruts.filter(&tname.eq(&rtg)).load::<TagRut>(conn)
+            for rtg in rutg.tnames {
+                // to check if tagged with a same tag
+                let tr = tagruts.filter(&tname.eq(&rtg)).filter(&rut_id.eq(&rutID))
+                    .load::<TagRut>(conn)
                     .map_err(error::ErrorInternalServerError)?.pop();
                 match tr {
+                    // if tagged, update count + 1 in tagruts
                     Some(tgr) => {
                         diesel::update(&tgr)
                         .set(count.eq(count + 1))
                         .execute(conn).map_err(error::ErrorInternalServerError)?;
                     },
+                    // else new tag-rut
                     None => {
                         let new_tag_rut = NewTagRut {
-                            id: &rtg,
+                            id: &(rtg.clone() + "-" + &rutID),
                             tname: &rtg,
-                            rut_id: &rtgs.rut_id,
+                            rut_id: &rutID,
                             count: 1,
                         };
                         //  to check if tname in tags? otherwise, new_tag
@@ -164,7 +174,7 @@ impl Handler<RutTag> for Dba {
                         let tag_check = tags.filter(&tname.eq(&rtg)).load::<Tag>(conn)
                             .map_err(error::ErrorInternalServerError)?.pop();
                         match tag_check {
-                            // if existing, rut_count + 1
+                            // if existing, tag then rut_count + 1 in tags
                             Some(t) => {
                                 diesel::insert_into(tagruts).values(&new_tag_rut)
                                     .execute(conn).map_err(error::ErrorInternalServerError)?;
@@ -173,7 +183,7 @@ impl Handler<RutTag> for Dba {
                                 .set(rut_count.eq(rut_count + 1)).execute(conn)
                                 .map_err(error::ErrorInternalServerError)?;
                             },
-                            // if no existing, new_tag
+                            // if no existing tname, new_tag
                             None => {
                                 let newtag = NewTag {
                                     id: &rtg,
@@ -186,9 +196,10 @@ impl Handler<RutTag> for Dba {
                                     etc_count: 0,
                                     star_count: 0,
                                 };
-                                // new_tag then tag_rut
+                                // new_tag 
                                 diesel::insert_into(tags).values(&newtag).execute(conn)
                                     .map_err(error::ErrorInternalServerError)?;
+                                // then tag_rut
                                 diesel::insert_into(tagruts).values(&new_tag_rut)
                                     .execute(conn).map_err(error::ErrorInternalServerError)?;
                             },
@@ -197,7 +208,7 @@ impl Handler<RutTag> for Dba {
                 }
             }
         } else { // untag
-            for rtg in rtgs.tname {
+            for rtg in rutg.tnames {
                 diesel::delete(tagruts.filter(&tname.eq(&rtg))) 
                 .execute(conn).map_err(error::ErrorInternalServerError)?;
             }
@@ -238,9 +249,13 @@ impl Handler<StarOrTag> for Dba {
                 diesel::insert_into(startags).values(&new_star)
                         .execute(conn).map_err(error::ErrorInternalServerError)?;
                 // to update star_count + 1 in tag
-                use db::schema::tags::dsl::{tags, tname, star_count};
+                use db::schema::tags::dsl::{tags, tname, star_count, rut_count, vote};
                 diesel::update(tags.filter(&tname.eq(&act.tname)))
-                    .set(star_count.eq(star_count + 1)).execute(conn)
+                    .set((
+                        star_count.eq(star_count + 1),
+                        vote.eq(rut_count * 2 + star_count)  // cal vote, to be task
+                    ))
+                    .execute(conn)
                     .map_err(error::ErrorInternalServerError)?;
 
                 Ok( Msg { status: 200, message: "star".to_string(),})

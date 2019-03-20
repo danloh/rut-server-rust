@@ -251,6 +251,7 @@ pub struct StarItem {
     pub star_at: NaiveDateTime,
     pub note: String,
     pub flag: String,    // 0->to do,1->done, 2->doing
+    // pub rating: u8,  // todo
 }
 
 // use to build insert query

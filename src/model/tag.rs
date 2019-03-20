@@ -58,7 +58,7 @@ pub struct NewTagRut<'a> {
 // as msg in tag or untag rut
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct RutTag {
-    pub tname: Vec<String>,
+    pub tnames: Vec<String>,
     pub rut_id: String,
     pub action: String, // tag or untag
 }
@@ -118,6 +118,7 @@ pub enum TagsPerID {
     ItemID(String),
     TagID(String),
     UserID(String),
+    Index(String),
 }
 
 impl Message for TagsPerID {

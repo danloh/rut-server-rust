@@ -101,7 +101,9 @@ impl Handler<RutsPerID> for Dba {
         // build id_list per query type
         match per {
             RutsPerID::Index(_) => {
-                id_list = ruts.select(id).order(create_at.desc()).limit(20)
+                id_list = ruts.select(id)
+                    .order(renew_at.desc())
+                    .order(vote.desc()).limit(20)
                     .load::<String>(conn)
                     .map_err(error::ErrorInternalServerError)?;
             },
@@ -266,9 +268,16 @@ impl Handler<StarOrRut> for Dba {
                 diesel::insert_into(starruts).values(&new_star)
                         .execute(conn).map_err(error::ErrorInternalServerError)?;
                 // to update star_count + 1 in rut
-                use db::schema::ruts::dsl::{ruts, id as rid, star_count};
+                use db::schema::ruts::dsl::{
+                    ruts, id as rid, star_count, item_count, vote, comment_count
+                };
                 diesel::update(ruts.filter(&rid.eq(&act.rut_id)))
-                    .set(star_count.eq(star_count + 1)).execute(conn)
+                    .set((
+                        star_count.eq(star_count + 1),
+                        // cal vote, to be task
+                        vote.eq(item_count * 2 + comment_count + star_count)
+                    ))
+                    .execute(conn)
                     .map_err(error::ErrorInternalServerError)?;
 
                 Ok( Msg { status: 200, message: "star".to_string(),})

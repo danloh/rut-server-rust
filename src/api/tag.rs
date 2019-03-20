@@ -58,7 +58,7 @@ pub fn get_tag_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> 
         "item" => TagsPerID::ItemID(perid),
         "tag" => TagsPerID::TagID(perid),
         "user" => TagsPerID::UserID(perid),
-        _ => TagsPerID::RutID(perid),
+        _ => TagsPerID::Index(perid),
     };
 
     req.state().db.send(q_per).from_err().and_then(|res| match res {
@@ -90,7 +90,7 @@ pub fn tag_rut((tags, req, user): (Json<RutTag>, HttpRequest<AppState>, CheckUse
     // println!("{:?}", tags);
 
     // filter per length, no inner space; to do: regex to test tag name
-    let tnames: Vec<String> = tags.tname.clone().into_iter().filter(
+    let tnames: Vec<String> = tags.tnames.clone().into_iter().filter(
         |t| t.trim().len() < ANS_LIMIT && t.trim().len() > MIN_LEN && !(t.contains(" "))
     ).collect();
     // check if any
@@ -100,7 +100,7 @@ pub fn tag_rut((tags, req, user): (Json<RutTag>, HttpRequest<AppState>, CheckUse
     }
 
     req.state().db.send( RutTag { 
-        tname: tnames.clone(),
+        tnames: tnames.clone(),
         rut_id: tags.rut_id.clone(),
         action: action.clone(), 
     })
