@@ -18,7 +18,7 @@ pub fn signup((sign, req): (Json<SignUser>, HttpRequest<AppState>))
     let uname = sign.uname.clone();
     let l_u = uname.trim().len();
     let psw = sign.password.clone();
-    let repsw = sign.confirm_password.clone();
+    let repsw = sign.confirm.clone();
     let l_p = psw.trim().len();
     let check = l_u <= MIN_LEN || l_u > MAX_UNAME_LEN || l_p < MIN_PSW_LEN || psw != repsw || uname.contains(" ");
     if check {
@@ -29,7 +29,7 @@ pub fn signup((sign, req): (Json<SignUser>, HttpRequest<AppState>))
     req.state().db.send(SignUser{
         uname: uname,
         password: psw,
-        confirm_password: repsw,
+        confirm: repsw,
     })
     .from_err().and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),

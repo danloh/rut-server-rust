@@ -556,6 +556,7 @@ impl Handler<NewStarItem> for Dba {
                 star_at: Utc::now().naive_utc(),
                 note: &act.note,
                 flag: &act.flag,
+                rate: act.rate,
             };
             let si = diesel::insert_into(staritems).values(&new_star)
                 .get_result::<StarItem>(conn)
@@ -599,7 +600,7 @@ impl Handler<StarItemStatus> for Dba {
                     status: 200, 
                     message: "Options".to_string(),  // as not star
                     note: "".to_string(), 
-                    when: "".to_string() 
+                    when: "".to_string()
                 }) 
             },
         }

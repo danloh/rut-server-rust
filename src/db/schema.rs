@@ -81,6 +81,7 @@ table! {
         star_at -> Timestamp,
         note -> Varchar,
         flag -> Varchar,
+        rate -> Int4,
     }
 }
 

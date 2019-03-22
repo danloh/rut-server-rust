@@ -229,6 +229,7 @@ pub fn star_item(req: HttpRequest<AppState>, user: CheckUser)
  -> FutureResponse<HttpResponse> {
     let flag = String::from(req.match_info().get("flag").unwrap()); // no need?
     let itemid = String::from(req.match_info().get("itemid").unwrap());
+    let rate: i32 = req.match_info().get("rate").unwrap().parse().unwrap();
     let note = String::from(req.match_info().get("note").unwrap());
 
     // flag only can be todo, doing, done
@@ -243,6 +244,7 @@ pub fn star_item(req: HttpRequest<AppState>, user: CheckUser)
         item_id: itemid.clone(),
         note: note.clone(),
         flag: flag.clone(),
+        rate: rate.clone(),
     })
     .from_err().and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),

@@ -76,10 +76,10 @@ pub fn app_with_state() -> App<AppState> {
             r.get().with(get_item);
             r.post().with(update_item);
         })
-        .resource("/items/{per}/{id}", |r| {  // ?page=paging&flag=todo|done, user only
+        .resource("/items/{per}/{id}", |r| {  // ?page=paging&flag=todo|doing|done, user only
             r.get().with(get_item_list); // per: rut|tag|user;id|url|title
         })
-        .resource("/staritem/{itemid}/{flag}/{note}", |r| { // flag: todo|done
+        .resource("/staritem/{itemid}/{flag}/{rate}/{note}", |r| { // flag: todo|doing|done
             r.get().with(star_item);
         })
         .resource("/itemflag/{itemid}", |r| {

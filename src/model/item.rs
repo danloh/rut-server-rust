@@ -251,7 +251,7 @@ pub struct StarItem {
     pub star_at: NaiveDateTime,
     pub note: String,
     pub flag: String,    // 0->to do,1->done, 2->doing
-    // pub rating: u8,  // todo
+    pub rate: i32,
 }
 
 // use to build insert query
@@ -264,6 +264,7 @@ pub struct ItemStar<'a> {
     pub star_at: NaiveDateTime,
     pub note: &'a str,
     pub flag: &'a str,
+    pub rate: i32,
 }
 
 // as msg in star item: todo, done, doing
@@ -273,6 +274,7 @@ pub struct NewStarItem {
     pub item_id: String,
     pub note: String,
     pub flag: String,
+    pub rate: i32,
 }
 
 impl Message for NewStarItem {

@@ -102,7 +102,7 @@ impl From<Claims> for CheckUser {
 pub struct SignUser {
     pub uname: String,
     pub password: String,
-    pub confirm_password: String,
+    pub confirm: String,
 }
 
 impl Message for SignUser {
