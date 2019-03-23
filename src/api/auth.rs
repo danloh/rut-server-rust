@@ -10,24 +10,25 @@ use router::AppState;
 use model::user::{ 
     User, UserID, SignUser, LogUser, CheckUser, UpdateUser, ChangePsw, Claims 
 };
+use api::{ re_test_uname };
 use ::{ MIN_LEN, MAX_UNAME_LEN, MIN_PSW_LEN, ANS_LIMIT };
+
 
 pub fn signup((sign, req): (Json<SignUser>, HttpRequest<AppState>))
  -> FutureResponse<HttpResponse> {
     // do some check
-    let uname = sign.uname.clone();
-    let l_u = uname.trim().len();
+    let uname = sign.uname.trim();
     let psw = sign.password.clone();
     let repsw = sign.confirm.clone();
     let l_p = psw.trim().len();
-    let check = l_u <= MIN_LEN || l_u > MAX_UNAME_LEN || l_p < MIN_PSW_LEN || psw != repsw || uname.contains(" ");
-    if check {
+    let check = l_p >= MIN_PSW_LEN && psw == repsw && re_test_uname(uname);
+    if !check {
         use api::gen_response;
         return gen_response(req)
     }
 
     req.state().db.send(SignUser{
-        uname: uname,
+        uname: uname.to_string(),
         password: psw,
         confirm: repsw,
     })
@@ -52,10 +53,9 @@ pub fn signin((login, req): (Json<LogUser>, HttpRequest<AppState>))
  -> FutureResponse<HttpResponse> {
     // do some check
     let uname = login.uname.clone();
-    let l_u = uname.trim().len();
     let l_p = login.password.trim().len();
-    let check = l_u <= MIN_LEN || l_u > MAX_UNAME_LEN || l_p < MIN_PSW_LEN || uname.contains(" ");
-    if check {
+    let check = l_p >= MIN_PSW_LEN && re_test_uname(&uname);
+    if !check {
         use api::gen_response;
         return gen_response(req)
     }

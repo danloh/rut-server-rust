@@ -8,27 +8,35 @@ use futures::Future;
 use router::AppState;
 use model::rut::{ CreateRut, RutID, RutsPerID, UpdateRut, StarOrRut, StarRutStatus };
 use model::user::{ CheckUser };
+use api::{ re_test_url };
+use ::INPUT_LIMIT;
 
 pub fn new_rut((rut, req, user): (Json<CreateRut>, HttpRequest<AppState>, CheckUser))
  -> FutureResponse<HttpResponse> {
     // check authed via user:FromRequest
 
     // do some check, length of input
-    let l_t = rut.title.trim().len();
-    let l_u = rut.url.trim().len();
-    let l_a = rut.author_id.trim().len();
-    let check: bool = l_t > 0 && l_t <=120 && l_u <=120 && l_a <=120;
+    let url = rut.url.trim();
+    let url_test = if url.len() == 0 { true } else { re_test_url(url) };
+    let title = rut.title.trim();
+    let l_t = title.len();
+    let author = rut.author_id.trim();
+    let l_a = author.len();
+    let check = l_t > 0 && l_t <= INPUT_LIMIT 
+        && l_a <= INPUT_LIMIT 
+        && url_test;
+    
     if !check {
         use api::gen_response;
         return gen_response(req)
     }
 
     req.state().db.send( CreateRut {
-        title: rut.title.clone(),
-        url: rut.url.clone(),
+        title: title.to_string(),
+        url: url.to_string(),
         content: rut.content.clone(),
         uname: user.uname.clone(),     // extracted from request as user
-        author_id: rut.author_id.clone(),
+        author_id: author.to_string(),
         credential: rut.credential.clone(),
     })
     .from_err().and_then(|res| match res {
@@ -83,14 +91,33 @@ pub fn get_rut_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> 
     .responder()
 }
 
-pub fn update_rut((rut, state, user): (Json<UpdateRut>, State<AppState>, CheckUser))
+pub fn update_rut((req, rut, user): (HttpRequest<AppState>, Json<UpdateRut>, CheckUser))
  -> FutureResponse<HttpResponse> {
-     state.db.send( UpdateRut {
-        id: rut.id.clone(),
-        title: rut.title.clone(),
-        url: rut.url.clone(),
+    // do some check
+    let rutid = rut.id.trim();
+    let len_id = rutid.len();
+    let url = rut.url.trim();
+    let url_test = if url.len() == 0 { true } else { re_test_url(url) };
+    let title = rut.title.trim();
+    let l_t = title.len();
+    let author = rut.author_id.trim();
+    let l_a = author.len();
+    let check = len_id > 0 
+        && l_t > 0 && l_t <= INPUT_LIMIT 
+        && l_a <= INPUT_LIMIT 
+        && url_test;
+    
+    if !check {
+        use api::gen_response;
+        return gen_response(req)
+    }
+
+    req.state().db.send( UpdateRut {
+        id: rutid.to_string(),
+        title: title.to_string(),
+        url: url.to_string(),
         content: rut.content.clone(),
-        author_id: rut.author_id.clone(),
+        author_id: author.to_string(),
         credential: rut.credential.clone(),
     })
     .from_err().and_then(|res| match res {

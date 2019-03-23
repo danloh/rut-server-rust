@@ -19,6 +19,7 @@ pub mod etc;
 
 use actix_web::{HttpResponse,HttpRequest,HttpMessage,FutureResponse,AsyncResponder};
 use futures::Future;
+use regex::Regex;
 use router::AppState;
 use model::msg::Msg;
 
@@ -34,6 +35,19 @@ pub fn gen_response(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> 
     .responder()
 }
 
+// re test
+// for re test uname
+pub fn re_test_uname(text: &str) -> bool {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"^[\w-]{3,42}$").unwrap();
+    }
+    RE.is_match(text)
+}
 
-// Note: new, update, post, need to auth the identity, i.e. who can update
-// auth in frontend or backend or both ?? -- to do
+// for re test url
+pub fn re_test_url(text: &str) -> bool {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"^(https?):\/\/([^/:]+)(:[0-9]+)?(\/.*)?$").unwrap();
+    }
+    RE.is_match(text)
+}

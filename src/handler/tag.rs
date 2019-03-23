@@ -124,7 +124,7 @@ impl Handler<UpdateTag> for Dba {
                 tname: tg.tname.clone(),
                 intro: tg.intro.clone(),
                 logo: tg.logo.clone(),
-                pname: tg.pname.clone(), 
+                pname: tg.pname.clone(),  // to check if pname existing?
             })
             .get_result::<Tag>(conn)
             .map_err(error::ErrorInternalServerError)?;

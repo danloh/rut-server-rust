@@ -11,7 +11,9 @@ use model::tag::{
     StarOrTag, StarTagStatus 
 };
 use model::user::{ CheckUser };
+use api::{ re_test_url, re_test_uname };
 use ::{ MIN_LEN, ANS_LIMIT };
+
 
 pub fn new_tag((req, user): (HttpRequest<AppState>, CheckUser))
  -> FutureResponse<HttpResponse> {
@@ -70,11 +72,25 @@ pub fn get_tag_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> 
 
 pub fn update_tag((tag, req, user): (Json<UpdateTag>, HttpRequest<AppState>, CheckUser))
  -> FutureResponse<HttpResponse> {
+    // do some check
+    let url = tag.logo.trim();
+    let url_test = if url.len() == 0 { true } else { re_test_url(url) };
+    let tname = tag.tname.trim();
+    let tname_test = re_test_uname(tname);
+    let pname = tag.pname.trim();
+    let pname_test = if pname.len() == 0 { true } else { re_test_uname(pname) };
+
+    let check = url_test && tname_test && pname_test;
+    if !check {
+        use api::gen_response;
+        return gen_response(req)
+    }
+
     req.state().db.send( UpdateTag {
-        tname: tag.tname.clone(),
+        tname: tname.to_string(),
         intro: tag.intro.clone(),
-        logo: tag.logo.clone(),
-        pname: tag.pname.clone(), 
+        logo: url.to_string(),
+        pname: pname.to_string(),
     })
     .from_err().and_then(|res| match res {
         Ok(item) => Ok(HttpResponse::Ok().json(item)),

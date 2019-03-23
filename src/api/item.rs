@@ -11,26 +11,51 @@ use model::item::{
     CollectID, UpdateCollect, DelCollect, StarItem, NewStarItem, StarItemStatus
 };
 use model::user::{ CheckUser };
+use api::{ re_test_url };
+use ::INPUT_LIMIT;
 
 pub fn submit_item((item, req, user): (Json<SubmitItem>, HttpRequest<AppState>, CheckUser))
  -> FutureResponse<HttpResponse> {
     // do some check of input
-    let l_t = item.title.trim().len();
-    if l_t == 0 || l_t > 120 {
+    // check url and cover img url
+    // required: title, author
+    let url = item.url.trim();
+    let cover = item.cover.trim();
+    let url_test = if url.len() == 0 { true } else { re_test_url(url) };
+    let cover_test = if cover.len() == 0 { true } else { re_test_url(cover) };
+    let title = item.title.trim();
+    let l_t = title.len();
+    let uiid = item.uiid.trim();
+    let authors = item.authors.trim();
+    let pub_at = item.pub_at.trim();
+    let publisher = item.publisher.trim();
+    let category = item.category.trim();
+    let edition = item.edition.trim();
+    let l_id = uiid.len();
+    let l_a = authors.len();
+    let l_pa = pub_at.len();
+    let l_p = publisher.len();
+    let l_cat = category.len();
+    let l_e = edition.len();
+    let check = l_t == 0 || l_t > INPUT_LIMIT 
+        || l_id > 32 || l_a > 64 || l_a == 0 || l_pa > 32 
+        || l_p > 64 || l_cat > 32 || l_e > 64;
+
+    if check || !url_test || !cover_test {
         use api::gen_response;
         return gen_response(req)
     }
     
     req.state().db.send( SubmitItem {
-        title: item.title.clone(),
-        uiid: item.uiid.clone(),
-        authors: item.authors.clone(),
-        pub_at: item.pub_at.clone(), 
-        publisher: item.publisher.clone(),
-        category: item.category.clone(),
-        url: item.url.clone(),
-        cover: item.cover.clone(), 
-        edition: item.edition.clone(),
+        title: title.to_string(),
+        uiid: uiid.to_string(),
+        authors: authors.to_string(),
+        pub_at: pub_at.to_string(), 
+        publisher: publisher.to_string(),
+        category: category.to_string(),
+        url: url.to_string(),
+        cover: cover.to_string(),
+        edition: edition.to_string(),
         detail: item.detail.clone(),
     })
     .from_err().and_then(|res| match res {
@@ -97,22 +122,48 @@ pub fn get_item_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse>
 pub fn update_item((item, req, user): (Json<UpdateItem>, HttpRequest<AppState>, CheckUser))
  -> FutureResponse<HttpResponse> {
     // do some check of input
-    let l_t = item.title.trim().len();
-    if l_t == 0 || l_t > 120 {
+    // check url and cover img url
+    // required: id, title, author
+    let itemid = item.id.trim();
+    let len_id = itemid.len();
+    let url = item.url.trim();
+    let cover = item.cover.trim();
+    let url_test = if url.len() == 0 { true } else { re_test_url(url) };
+    let cover_test = if cover.len() == 0 { true } else { re_test_url(cover) };
+    let title = item.title.trim();
+    let l_t = title.len();
+    let uiid = item.uiid.trim();
+    let authors = item.authors.trim();
+    let pub_at = item.pub_at.trim();
+    let publisher = item.publisher.trim();
+    let category = item.category.trim();
+    let edition = item.edition.trim();
+    let l_id = uiid.len();
+    let l_a = authors.len();
+    let l_pa = pub_at.len();
+    let l_p = publisher.len();
+    let l_cat = category.len();
+    let l_e = edition.len();
+    let check = len_id == 0 || l_t == 0 || l_t > INPUT_LIMIT 
+        || l_id > 32 || l_a > 64 || l_a == 0 || l_pa > 32 
+        || l_p > 64 || l_cat > 32 || l_e > 64;
+
+    if check || !url_test || !cover_test {
         use api::gen_response;
         return gen_response(req)
     }
+
     req.state().db.send( UpdateItem {
-        id: item.id.clone(),
-        title: item.title.clone(),
-        uiid: item.uiid.clone(),
-        authors: item.authors.clone(),
-        pub_at: item.pub_at.clone(),
-        publisher: item.publisher.clone(),
-        category: item.category.clone(),
-        url: item.url.clone(),
-        cover: item.cover.clone(),  
-        edition: item.edition.clone(),
+        id: itemid.to_string(),
+        title: title.to_string(),
+        uiid: uiid.to_string(),
+        authors: authors.to_string(),
+        pub_at: pub_at.to_string(), 
+        publisher: publisher.to_string(),
+        category: category.to_string(),
+        url: url.to_string(),
+        cover: cover.to_string(),
+        edition: edition.to_string(),
         detail: item.detail.clone(),
     })
     .from_err().and_then(|res| match res {

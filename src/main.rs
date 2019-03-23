@@ -7,20 +7,19 @@ extern crate actix;
 extern crate actix_web;
 extern crate serde;
 extern crate serde_json;
-#[macro_use] 
-extern crate serde_derive;
-#[macro_use] 
-extern crate diesel;
+#[macro_use] extern crate serde_derive;
+#[macro_use] extern crate diesel;
 extern crate uuid;
 extern crate chrono;
 extern crate num_cpus;
 extern crate bcrypt;
 extern crate jsonwebtoken as jwt;
 extern crate dotenv;
-#[macro_use]
-extern crate log;
+#[macro_use] extern crate log;
 extern crate env_logger;
 extern crate base64;
+#[macro_use] extern crate lazy_static;
+extern crate regex;
 
 use actix_web::{ server, actix::System };
 use std::{ env };
@@ -38,6 +37,7 @@ const ANS_LIMIT: usize = 42;  // limit tag len, fo tags, collect item
 const MAX_UNAME_LEN: usize = 16;
 const MIN_PSW_LEN: usize = 8;
 const MIN_LEN: usize = 1;
+const INPUT_LIMIT: usize = 512;  // limit input title, url
 
 
 fn main() {
