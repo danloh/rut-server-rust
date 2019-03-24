@@ -11,7 +11,7 @@ use model::item::{
     CollectID, UpdateCollect, DelCollect, StarItem, NewStarItem, StarItemStatus
 };
 use model::user::{ CheckUser };
-use api::{ re_test_url };
+use api::{ re_test_url, len_limit };
 use ::INPUT_LIMIT;
 
 pub fn submit_item((item, req, user): (Json<SubmitItem>, HttpRequest<AppState>, CheckUser))
@@ -24,24 +24,18 @@ pub fn submit_item((item, req, user): (Json<SubmitItem>, HttpRequest<AppState>, 
     let url_test = if url.len() == 0 { true } else { re_test_url(url) };
     let cover_test = if cover.len() == 0 { true } else { re_test_url(cover) };
     let title = item.title.trim();
-    let l_t = title.len();
     let uiid = item.uiid.trim();
     let authors = item.authors.trim();
     let pub_at = item.pub_at.trim();
     let publisher = item.publisher.trim();
     let category = item.category.trim();
     let edition = item.edition.trim();
-    let l_id = uiid.len();
-    let l_a = authors.len();
-    let l_pa = pub_at.len();
-    let l_p = publisher.len();
-    let l_cat = category.len();
-    let l_e = edition.len();
-    let check = l_t == 0 || l_t > INPUT_LIMIT 
-        || l_id > 32 || l_a > 64 || l_a == 0 || l_pa > 32 
-        || l_p > 64 || l_cat > 32 || l_e > 64;
+    let check_len = len_limit(title, 1, INPUT_LIMIT)
+        && len_limit(uiid, 0, 32) && len_limit(authors, 1, 64) 
+        && len_limit(pub_at, 0, 32) && len_limit(publisher, 0, 64) 
+        && len_limit(category, 0, 32) && len_limit(edition, 0, 64);
 
-    if check || !url_test || !cover_test {
+    if !check_len || !url_test || !cover_test {
         use api::gen_response;
         return gen_response(req)
     }
@@ -125,30 +119,24 @@ pub fn update_item((item, req, user): (Json<UpdateItem>, HttpRequest<AppState>, 
     // check url and cover img url
     // required: id, title, author
     let itemid = item.id.trim();
-    let len_id = itemid.len();
     let url = item.url.trim();
     let cover = item.cover.trim();
     let url_test = if url.len() == 0 { true } else { re_test_url(url) };
     let cover_test = if cover.len() == 0 { true } else { re_test_url(cover) };
     let title = item.title.trim();
-    let l_t = title.len();
     let uiid = item.uiid.trim();
     let authors = item.authors.trim();
     let pub_at = item.pub_at.trim();
     let publisher = item.publisher.trim();
     let category = item.category.trim();
     let edition = item.edition.trim();
-    let l_id = uiid.len();
-    let l_a = authors.len();
-    let l_pa = pub_at.len();
-    let l_p = publisher.len();
-    let l_cat = category.len();
-    let l_e = edition.len();
-    let check = len_id == 0 || l_t == 0 || l_t > INPUT_LIMIT 
-        || l_id > 32 || l_a > 64 || l_a == 0 || l_pa > 32 
-        || l_p > 64 || l_cat > 32 || l_e > 64;
+    let check_len = len_limit(itemid, 8, INPUT_LIMIT)
+        && len_limit(title, 1, INPUT_LIMIT)
+        && len_limit(uiid, 0, 32) && len_limit(authors, 1, 64) 
+        && len_limit(pub_at, 0, 32) && len_limit(publisher, 0, 64) 
+        && len_limit(category, 0, 32) && len_limit(edition, 0, 64);
 
-    if check || !url_test || !cover_test {
+    if !check_len || !url_test || !cover_test {
         use api::gen_response;
         return gen_response(req)
     }

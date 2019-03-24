@@ -51,3 +51,8 @@ pub fn re_test_url(text: &str) -> bool {
     }
     RE.is_match(text)
 }
+
+pub fn len_limit(text: &str, min: usize, max: usize) -> bool {
+    let l = text.len();
+    l >= min && l <= max
+}

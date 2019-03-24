@@ -8,7 +8,7 @@ use futures::Future;
 use router::AppState;
 use model::rut::{ CreateRut, RutID, RutsPerID, UpdateRut, StarOrRut, StarRutStatus };
 use model::user::{ CheckUser };
-use api::{ re_test_url };
+use api::{ re_test_url, len_limit };
 use ::INPUT_LIMIT;
 
 pub fn new_rut((rut, req, user): (Json<CreateRut>, HttpRequest<AppState>, CheckUser))
@@ -19,12 +19,9 @@ pub fn new_rut((rut, req, user): (Json<CreateRut>, HttpRequest<AppState>, CheckU
     let url = rut.url.trim();
     let url_test = if url.len() == 0 { true } else { re_test_url(url) };
     let title = rut.title.trim();
-    let l_t = title.len();
     let author = rut.author_id.trim();
-    let l_a = author.len();
-    let check = l_t > 0 && l_t <= INPUT_LIMIT 
-        && l_a <= INPUT_LIMIT 
-        && url_test;
+    let check = len_limit(title, 1, INPUT_LIMIT) 
+        && len_limit(author, 0, INPUT_LIMIT) && url_test;
     
     if !check {
         use api::gen_response;
@@ -95,17 +92,13 @@ pub fn update_rut((req, rut, user): (HttpRequest<AppState>, Json<UpdateRut>, Che
  -> FutureResponse<HttpResponse> {
     // do some check
     let rutid = rut.id.trim();
-    let len_id = rutid.len();
     let url = rut.url.trim();
     let url_test = if url.len() == 0 { true } else { re_test_url(url) };
     let title = rut.title.trim();
-    let l_t = title.len();
     let author = rut.author_id.trim();
-    let l_a = author.len();
-    let check = len_id > 0 
-        && l_t > 0 && l_t <= INPUT_LIMIT 
-        && l_a <= INPUT_LIMIT 
-        && url_test;
+    let check = len_limit(rutid, 8, INPUT_LIMIT)
+        && len_limit(title, 1, INPUT_LIMIT) 
+        && len_limit(author, 0, INPUT_LIMIT) && url_test;
     
     if !check {
         use api::gen_response;
