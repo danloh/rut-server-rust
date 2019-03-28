@@ -121,7 +121,7 @@ pub fn update_user((user, req, auth): (Json<UpdateUser>, HttpRequest<AppState>, 
     }
 
     req.state().db.send( UpdateUser{
-        uname: auth.uname,
+        uname: auth.uname, // !!, cannot change uname
         avatar: user.avatar.clone(),
         email: user.email.clone(),
         intro: user.intro.clone(),

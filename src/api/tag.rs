@@ -75,19 +75,18 @@ pub fn update_tag((tag, req, user): (Json<UpdateTag>, HttpRequest<AppState>, Che
     // do some check
     let url = tag.logo.trim();
     let url_test = if url.len() == 0 { true } else { re_test_url(url) };
-    let tname = tag.tname.trim();
-    let tname_test = re_test_uname(tname);
     let pname = tag.pname.trim();
     let pname_test = if pname.len() == 0 { true } else { re_test_uname(pname) };
+    let tname = String::from(req.match_info().get("tname").unwrap());
 
-    let check = url_test && tname_test && pname_test;
+    let check = url_test && pname_test && tname == tag.tname;
     if !check {
         use api::gen_response;
         return gen_response(req)
     }
 
     req.state().db.send( UpdateTag {
-        tname: tname.to_string(),
+        tname: tname.to_string(),  // just as id, not change
         intro: tag.intro.clone(),
         logo: url.to_string(),
         pname: pname.to_string(),

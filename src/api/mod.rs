@@ -47,7 +47,7 @@ pub fn re_test_uname(text: &str) -> bool {
 // for re test url
 pub fn re_test_url(text: &str) -> bool {
     lazy_static! {
-        static ref RE: Regex = Regex::new(r"^(https?):\/\/([^/:]+)(:[0-9]+)?(\/.*)?$").unwrap();
+        static ref RE: Regex = Regex::new(r"^(https?)://([^/:]+)(:[0-9]+)?(/.*)?$").unwrap();
     }
     RE.is_match(text)
 }

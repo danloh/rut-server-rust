@@ -37,9 +37,9 @@ impl Handler<CreateRut> for Dba {
             }
         }
 
-        let uuid = format!("{}", uuid::Uuid::new_v4());
+        let uid = format!("{}", uuid::Uuid::new_v4());
         let newrut = NewRut {
-            id: &uuid,
+            id: &uid,
             title: &new_rut.title,
             url: &new_rut.url,
             content: &new_rut.content,
@@ -257,9 +257,9 @@ impl Handler<StarOrRut> for Dba {
         
         match act.action {
             1  => {
-                let uuid = format!("{}", uuid::Uuid::new_v4());
+                let uid = format!("{}", uuid::Uuid::new_v4());
                 let new_star = RutStar {
-                    id: &uuid,
+                    id: &uid,
                     uname: &act.uname,
                     rut_id: &act.rut_id,
                     star_at: Utc::now().naive_utc(),

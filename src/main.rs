@@ -21,7 +21,7 @@ extern crate base64;
 #[macro_use] extern crate lazy_static;
 extern crate regex;
 
-use actix_web::{ server, actix::System };
+use actix_web::server;
 use std::{ env };
 
 mod router;
@@ -46,12 +46,14 @@ fn main() {
     env_logger::init();
 
     let sys = actix::System::new("rut-server-rust");
+    let bind_addr = dotenv::var("BIND_ADDRESS").expect("BIND_ADDRESS must be set");
 
     server::new( move || router::app_with_state())
-        .bind("127.0.0.1:8083").expect("Can not bind to 127.0.0.1:8083")
+        .bind(&bind_addr).expect("Can not bind to address")
         .shutdown_timeout(0)    // <- Set shutdown timeout to 0 seconds (default 60s)
         .start();
-    println!("Starting http server: 127.0.0.1:8083");
+        
+    println!("Starting http server: {}", bind_addr);
     
     let _ = sys.run();
 }

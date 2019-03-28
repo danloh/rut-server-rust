@@ -134,7 +134,7 @@ impl Message for UserID {
 #[derive(Deserialize,Serialize,Debug,Clone,AsChangeset)]
 #[table_name="users"]
 pub struct UpdateUser {
-    pub uname: String,
+    pub uname: String,  // cannot change, just as id
     pub avatar: String,
     pub email: String,
     pub intro: String,

@@ -120,12 +120,11 @@ impl Handler<UpdateTag> for Dba {
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
 
         let tag_update = diesel::update(tags.filter(&tname.eq(&tg.tname)))
-            .set( &UpdateTag{
-                tname: tg.tname.clone(),
-                intro: tg.intro.clone(),
-                logo: tg.logo.clone(),
-                pname: tg.pname.clone(),  // to check if pname existing?
-            })
+            .set((
+                intro.eq(tg.intro.clone()),
+                logo.eq(tg.logo.clone()),
+                pname.eq(tg.pname.clone()),  // to check if pname existing?
+            ))
             .get_result::<Tag>(conn)
             .map_err(error::ErrorInternalServerError)?;
 
@@ -238,9 +237,9 @@ impl Handler<StarOrTag> for Dba {
                     return Ok( Msg { status: 418, message: "unstar".to_string(),})
                 }
                 
-                let uuid = format!("{}", uuid::Uuid::new_v4());
+                let uid = format!("{}", uuid::Uuid::new_v4());
                 let new_star = TagStar {
-                    id: &uuid,
+                    id: &uid,
                     uname: &act.uname,
                     tname: &act.tname,
                     star_at: Utc::now().naive_utc(),

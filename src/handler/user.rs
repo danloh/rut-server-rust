@@ -38,10 +38,10 @@ impl Handler<SignUser> for Dba {
                 let hash_password = hash(&msg.password, DEFAULT_COST)
                         .map_err(error::ErrorInternalServerError)?;
                 // generae uuid as user.id
-                let uuid = format!("{}", uuid::Uuid::new_v4());
+                let uid = format!("{}", uuid::Uuid::new_v4());
                 // prepare insertable data struct as insert_into.value
                 let new_user = NewUser {
-                    id: &uuid,
+                    id: &uid,
                     uname: &msg.uname,
                     password: &hash_password,
                     join_at: Utc::now().naive_utc(),
@@ -172,7 +172,7 @@ impl Handler<UpdateUser> for Dba {
 
         let update_user = diesel::update(users.filter(&uname.eq(&user.uname)))
             .set( UpdateUser{
-                uname: user.uname.clone(),  // unique
+                uname: user.uname.clone(),  // unique, no change
                 avatar: user.avatar.clone(),
                 email: user.email.clone(),
                 intro: user.intro.clone(),

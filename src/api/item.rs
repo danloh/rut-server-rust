@@ -74,7 +74,7 @@ pub fn get_item(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
 pub fn get_item_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
     let per = req.match_info().get("per").unwrap();  // per tag, user, rut
     let perid = String::from(req.match_info().get("id").unwrap());
-
+    
     use base64::decode;  // for decode url
 
     let paging = if let Some(i) = req.query().get("page") {
@@ -83,6 +83,7 @@ pub fn get_item_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse>
     
     let itemsPerID = match per {
         // hope can fuzzy query per uiid..url, contains
+        // here are some issue, 400 or no result, % trimed
         "uiid" => ItemsPerID::Uiid(perid),
         "title" => ItemsPerID::Title(perid),
         "url" => ItemsPerID::ItemUrl(

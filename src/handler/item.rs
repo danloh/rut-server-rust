@@ -49,9 +49,9 @@ impl Handler<SubmitItem> for Dba {
             }
         }
 
-        let uuid = format!("{}", uuid::Uuid::new_v4());
+        let uid = format!("{}", uuid::Uuid::new_v4());
         let new_item = NewItem {
-            id: &uuid,
+            id: &uid,
             title: &submit.title,
             uiid: &submit.uiid,
             authors: &submit.authors,  
@@ -298,9 +298,9 @@ impl Handler<CollectItem> for Dba {
                     })
         }
 
-        let uuid = format!("{}", uuid::Uuid::new_v4());
+        let uid = format!("{}", uuid::Uuid::new_v4());
         let new_collect = NewCollect {
-            id: &uuid,
+            id: &uid,
             rut_id: &rutID,
             item_id: &item_q.id, // ok?
             item_order: item_num + 1, // OK to gen order per item count 
@@ -548,9 +548,9 @@ impl Handler<NewStarItem> for Dba {
             })
         } else {
             // otherwise new star
-            let uuid = format!("{}", uuid::Uuid::new_v4());
+            let uid = format!("{}", uuid::Uuid::new_v4());
             let new_star = ItemStar {
-                id: &uuid,
+                id: &uid,
                 uname: &act.uname,
                 item_id: &act.item_id,
                 star_at: Utc::now().naive_utc(),

@@ -14,7 +14,7 @@ use ::INPUT_LIMIT;
 pub fn new_rut((rut, req, user): (Json<CreateRut>, HttpRequest<AppState>, CheckUser))
  -> FutureResponse<HttpResponse> {
     // check authed via user:FromRequest
-
+    //println!("req: {:?} and user: {:?}", req, user);
     // do some check, length of input
     let url = rut.url.trim();
     let url_test = if url.len() == 0 { true } else { re_test_url(url) };

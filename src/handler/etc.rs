@@ -25,9 +25,9 @@ impl Handler<PostEtc> for Dba {
         let mut id_map = HashMap::new();
         id_map.insert(new_e.post_to.clone(), new_e.to_id.clone());
         
-        let uuid = format!("{}", uuid::Uuid::new_v4());
+        let uid = format!("{}", uuid::Uuid::new_v4());
         let newetc = NewEtc {
-            id: &uuid,
+            id: &uid,
             content: &new_e.content,
             post_at: Utc::now().naive_utc(),
             petc_id: &get_v(&id_map, "petc"),
