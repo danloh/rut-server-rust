@@ -222,20 +222,15 @@ pub fn get_collect(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
     .responder()
 }
 
-pub fn del_collect((dc, req, user): (Json<DelCollect>, HttpRequest<AppState>, CheckUser))
+pub fn del_collect((req, user): (HttpRequest<AppState>, CheckUser))
  -> FutureResponse<HttpResponse> {
-    // do some check
+    // should do some check in frontend
+
     let c_id = String::from(req.match_info().get("cid").unwrap());
-    if c_id != dc.collect_id  || dc.uname != user.uname {
-        use api::gen_response;
-        return gen_response(req)
-    }
 
     req.state().db.send( DelCollect{
-        collect_id: dc.collect_id.clone(),
-        rut_id: dc.rut_id.clone(),
-        item_id: dc.item_id.clone(),
-        uname: user.uname.clone(),   // pass to handler to check permission
+        collect_id: c_id,
+        uname: user.uname,   // pass to handler to check permission
     })
     .from_err().and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),

@@ -221,8 +221,6 @@ impl Message for CollectID {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct DelCollect {
     pub collect_id: String,
-    pub rut_id: String,   // to update rut after del
-    pub item_id: String,  // to update item after del
     pub uname: String,  // to check permission
 }
 

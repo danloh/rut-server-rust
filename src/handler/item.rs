@@ -421,60 +421,63 @@ impl Handler<DelCollect> for Dba {
         use db::schema::collects::dsl::*;
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
         
-        let q_c = collects.filter(&id.eq(&dc.collect_id))
+        let q_collect = collects.filter(&id.eq(&dc.collect_id))
             .get_result::<Collect>(conn)
             .map_err(error::ErrorInternalServerError)?;
         
-        // to use in re-order
-        let q_c_c = q_c.clone();
-        let order_del = q_c_c.item_order;
-        let rutid = q_c_c.rut_id;
+        let query_c = q_collect.clone();
         
-        if dc.uname == q_c.uname {
-            diesel::delete(&q_c).execute(conn)
-                .map_err(error::ErrorInternalServerError)?;
-
-            // to update the item_count - 1 and renew_at in rut
-            use db::schema::ruts::dsl::{ruts, id as rid, item_count, renew_at};
-            let r_q = ruts.filter(&rid.eq(&dc.rut_id))
-                .get_result::<Rut>(conn).map_err(error::ErrorInternalServerError)?;
-            
-            let item_num = r_q.item_count;  // to use in re-order
-
-            diesel::update(&r_q)
-                .set((
-                    item_count.eq(item_count - 1),
-                    renew_at.eq(Utc::now().naive_utc()),
-                ))
-                .execute(conn)
-                .map_err(error::ErrorInternalServerError)?;
-            // to update the rut_count - 1 in item
-            use db::schema::items::dsl::{items, id as itemid, rut_count};
-            diesel::update(items.filter(&itemid.eq(&dc.item_id)))
-                .set(rut_count.eq(rut_count - 1)).execute(conn)
-                .map_err(error::ErrorInternalServerError)?;
-            // to update the item order of collect
-            if item_num > order_del {
-                let lower = order_del + 1;
-                let upper = item_num;
-                diesel::update(
-                    collects.filter(rut_id.eq(rutid))
-                        .filter(item_order.between(lower, upper)) // betw, inclusive
-                )
-                .set(item_order.eq(item_order - 1)).execute(conn)
-                .map_err(error::ErrorInternalServerError)?;
-            }
-
-            Ok( Msg { 
-                status: 200, 
-                message: "Deleted".to_string(),
-            })
-        } else {
-            Ok( Msg { 
+        // check permission
+        if dc.uname != query_c.uname {
+            return Ok( Msg { 
                 status: 401, 
                 message: "No Permission".to_string(),
             })
         }
+        // some var to use in re-order
+        let order_del = query_c.item_order;
+        let rutID = query_c.rut_id;
+        let itemID = query_c.item_id;
+        
+        // perform deletion
+        diesel::delete(&q_collect).execute(conn)
+            .map_err(error::ErrorInternalServerError)?;
+
+        // to update the item_count - 1 and renew_at in rut
+        use db::schema::ruts::dsl::{ruts, id as rid, item_count, renew_at};
+        let rut_q = ruts.filter(&rid.eq(&rutID))
+            .get_result::<Rut>(conn).map_err(error::ErrorInternalServerError)?;
+        
+        let item_num = rut_q.item_count;  // to use in re-order
+
+        diesel::update(&rut_q)
+            .set((
+                item_count.eq(item_count - 1),
+                renew_at.eq(Utc::now().naive_utc()),
+            ))
+            .execute(conn)
+            .map_err(error::ErrorInternalServerError)?;
+        // to update the rut_count - 1 in item
+        use db::schema::items::dsl::{items, id as itemid, rut_count};
+        diesel::update(items.filter(&itemid.eq(&itemID)))
+            .set(rut_count.eq(rut_count - 1)).execute(conn)
+            .map_err(error::ErrorInternalServerError)?;
+        // to update the item order of collect IF not del last one
+        if item_num > order_del {
+            let lower = order_del + 1;
+            let upper = item_num;
+            diesel::update(
+                collects.filter(rut_id.eq(rutID))
+                        .filter(item_order.between(lower, upper)) // betw, inclusive
+            )
+            .set(item_order.eq(item_order - 1)).execute(conn)
+            .map_err(error::ErrorInternalServerError)?;
+        }
+
+        Ok( Msg { 
+            status: 200, 
+            message: "Deleted".to_string(),
+        })
     }
 }
 
