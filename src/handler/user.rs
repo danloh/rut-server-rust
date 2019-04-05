@@ -171,14 +171,7 @@ impl Handler<UpdateUser> for Dba {
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
 
         let update_user = diesel::update(users.filter(&uname.eq(&user.uname)))
-            .set( UpdateUser{
-                uname: user.uname.clone(),  // unique, no change
-                avatar: user.avatar.clone(),
-                email: user.email.clone(),
-                intro: user.intro.clone(),
-                location: user.location.clone(),
-                nickname: user.nickname.clone(),
-            })
+            .set(&user)
             .get_result::<User>(conn)
             .map_err(error::ErrorInternalServerError)?;
 

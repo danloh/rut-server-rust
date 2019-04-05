@@ -242,19 +242,7 @@ impl Handler<UpdateItem> for Dba {
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
 
         let item_update = diesel::update(items.filter(&id.eq(&item.id)))
-            .set( &UpdateItem{
-                id: item.id.clone(),
-                title: item.title.clone(),
-                uiid: item.uiid.clone(),
-                authors: item.authors.clone(),
-                pub_at: item.pub_at.clone(),
-                publisher: item.publisher.clone(),
-                category: item.category.clone(),
-                url: item.url.clone(),
-                cover: item.cover.clone(),
-                edition: item.edition.clone(), 
-                detail: item.detail.clone(),
-            })
+            .set(&item)
             .get_result::<Item>(conn)
             .map_err(error::ErrorInternalServerError)?;
 
