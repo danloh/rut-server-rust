@@ -3,8 +3,6 @@
 ALTER TABLE staritems ADD COLUMN rate SMALLINT NOT NULL DEFAULT '0';
 ALTER TABLE users ADD COLUMN nickname VARCHAR NOT NULL DEFAULT '';
 
-UPDATE users SET nickname = 'nick';
-
 DROP TABLE staritems;
 
 CREATE TABLE staritems (
