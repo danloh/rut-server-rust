@@ -119,7 +119,7 @@ pub fn app_with_state() -> App<AppState> {
     })
     // or: /* .prefix("/api").configure( |app| { Cors::for_app(app).max_age(3600) }) */
     // handle static files
-    .handler("/static", fs::StaticFiles::new("./static/").unwrap().index_file("index.html"))
+    //.handler("/static", fs::StaticFiles::new("./static/").unwrap().index_file("index.html"))
     // redirect
     .resource("/", |r| { /* to do: redirect */ })
     // default
