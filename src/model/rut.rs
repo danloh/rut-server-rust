@@ -23,6 +23,7 @@ pub struct Rut {
     pub comment_count: i32,
     pub star_count: i32,
     pub vote: i32,       // cal per star, comment
+    // pub slug: String,  // to do
 }
 
 // use to build insert query

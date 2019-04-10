@@ -10,6 +10,7 @@ extern crate serde_json;
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate diesel;
 extern crate uuid;
+extern crate deunicode;
 extern crate chrono;
 extern crate num_cpus;
 extern crate bcrypt;
