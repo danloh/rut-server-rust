@@ -129,7 +129,7 @@ impl Handler<UpdateTag> for Dba {
             .map_err(error::ErrorInternalServerError)?;
 
         Ok( TagMsg { 
-            status: 200, 
+            status: 201, 
             message: "Updated".to_string(),
             tag: tag_update.clone(),
         })
@@ -214,7 +214,7 @@ impl Handler<RutTag> for Dba {
         }
 
         Ok( Msg { 
-            status: 200, 
+            status: 201, 
             message: "Done".to_string(),
         })
     }

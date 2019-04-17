@@ -202,7 +202,7 @@ impl Claims {
             iss: "ruthub".into(),
             sub: "auth".into(),
             iat: Local::now().timestamp(),
-            exp: (Local::now() + Duration::hours(24)).timestamp(),
+            exp: (Local::now() + Duration::hours(24*5)).timestamp(),
             uid: uid.to_owned(),
             uname: uname.to_owned(),
         }

@@ -72,7 +72,7 @@ impl Handler<SubmitItem> for Dba {
             .map_err(error::ErrorInternalServerError)?;
 
         Ok( ItemMsg { 
-            status: 200, 
+            status: 201, 
             message: "Submitted".to_string(),
             item: item_new.clone(),
         })
@@ -247,7 +247,7 @@ impl Handler<UpdateItem> for Dba {
             .map_err(error::ErrorInternalServerError)?;
 
         Ok( ItemMsg { 
-            status: 200,
+            status: 201,
             message: "Updated".to_string(),
             item: item_update.clone(),
         })
@@ -315,7 +315,7 @@ impl Handler<CollectItem> for Dba {
             .map_err(error::ErrorInternalServerError)?;
     
         Ok( CollectMsg { 
-            status: 200, 
+            status: 201, 
             message: "Collected".to_string(),
             collect: collect_new,
         })
@@ -463,7 +463,7 @@ impl Handler<DelCollect> for Dba {
         }
 
         Ok( Msg { 
-            status: 200, 
+            status: 204, 
             message: "Deleted".to_string(),
         })
     }
@@ -494,7 +494,7 @@ impl Handler<UpdateCollect> for Dba {
             .map_err(error::ErrorInternalServerError)?;
 
         Ok( CollectMsg { 
-            status: 200,
+            status: 201,
             message: "Updated".to_string(),
             collect: collect_update.clone(),
         })
@@ -523,7 +523,8 @@ impl Handler<NewStarItem> for Dba {
                 .get_result::<StarItem>(conn)
                 .map_err(error::ErrorInternalServerError)?;
             // update item done_count + 1 if done
-            if si.flag.trim() == "done" {
+            let flg = si.flag.trim();
+            if flg == "Done" || flg == "done" {
                 use db::schema::items::dsl::{items, id as itemid, done_count};
                 diesel::update(items.filter(&itemid.eq(&act.item_id)))
                     .set(done_count.eq(done_count + 1))
@@ -531,11 +532,11 @@ impl Handler<NewStarItem> for Dba {
                     .map_err(error::ErrorInternalServerError)?;
             }
 
-            Ok( StarItemMsg { 
+            Ok( StarItemMsg {
                 status: 200, 
-                message: si.flag, 
+                message: flg.to_string(),
                 note: si.note, 
-                when: si.star_at.to_string() 
+                when: si.star_at.to_string(),
             })
         } else {
             // otherwise new star

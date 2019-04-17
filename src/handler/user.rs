@@ -56,7 +56,7 @@ impl Handler<SignUser> for Dba {
                     .map_err(error::ErrorInternalServerError)?;
 
                 Ok(Msg { 
-                    status: 200,
+                    status: 201,
                     message : "Success".to_string(),
                 })
             },
@@ -176,7 +176,7 @@ impl Handler<UpdateUser> for Dba {
             .map_err(error::ErrorInternalServerError)?;
 
         Ok(LoginMsg {
-            status: 200,
+            status: 201,
             message: "Updated".to_string(),
             token: "".to_string(),
             exp: 0,

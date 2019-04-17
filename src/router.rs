@@ -57,7 +57,8 @@ pub fn app_with_state() -> App<AppState> {
             r.get().with(get_rut);
             r.post().with(update_rut);
         })
-        .resource("/ruts/{per}/{perid}", |r| { // ?page=paging&flag=create|star
+        // ?page=paging&flag=create|star[&keyword= &from=]
+        .resource("/ruts/{per}/{perid}", |r| { 
             r.get().with(get_rut_list);     // Per: user|item|tag,index
         })
         .resource("/collectitem/{rid}", |r| {

@@ -50,7 +50,7 @@ impl Handler<PostEtc> for Dba {
         }
 
         Ok( EtcMsg { 
-            status: 200, 
+            status: 201, 
             message: "Posted".to_string(),
             etc: etc_new.clone(),
         })

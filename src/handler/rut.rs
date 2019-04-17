@@ -59,7 +59,7 @@ impl Handler<CreateRut> for Dba {
             .map_err(error::ErrorInternalServerError)?;
 
         Ok( RutMsg { 
-            status: 200, 
+            status: 201, 
             message: "Created".to_string(),
             rut: rut_new.clone(),
         })
@@ -240,7 +240,7 @@ impl Handler<UpdateRut> for Dba {
             .map_err(error::ErrorInternalServerError)?;
 
         Ok( RutMsg { 
-            status: 200, 
+            status: 201, 
             message: "Updated".to_string(),
             rut: rut_update.clone(),
         })

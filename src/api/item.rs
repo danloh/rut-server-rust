@@ -268,7 +268,7 @@ pub fn star_item(req: HttpRequest<AppState>, user: CheckUser)
     let note = String::from(req.match_info().get("note").unwrap());
 
     // flag only can be todo, doing, done
-    let flg = &flag[..];
+    let flg = flag.to_lowercase();
     if flg != "todo" && flg != "doing" && flg != "done" {
         use api::gen_response;
         return gen_response(req)
