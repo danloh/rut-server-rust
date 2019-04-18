@@ -3,8 +3,8 @@
 use crate::db::rut::Rut;
 use crate::db::item::{ Item, Collect };
 use crate::db::user::{ User, CheckUser };
-//use crate::db::tag::{ Tag };
-//use crate::db::etc::{ Etc };
+use crate::db::tag::{ Tag };
+use crate::db::etc::{ Etc };
 
 // general response msg struct
 #[derive(Deserialize,Serialize,Debug)]
@@ -90,36 +90,36 @@ pub struct CollectsMsg {
     pub collects: Vec<Collect>,
 }
 
-// // result struct in response tag
-// #[derive(Deserialize,Serialize,Debug)]
-// pub struct TagMsg {
-//     pub status: i32,
-//     pub message: String,
-//     pub tag: Tag,
-// }
+// result struct in response tag
+#[derive(Deserialize,Serialize,Debug)]
+pub struct TagMsg {
+    pub status: i32,
+    pub message: String,
+    pub tag: Tag,
+}
 
-// // result struct in response tag list
-// #[derive(Deserialize,Serialize,Debug)]
-// pub struct TagListMsg {
-//     pub status: i32,
-//     pub message: String,
-//     pub tags: Vec<String>, // tag name
-//     pub count: usize,
-// }
+// result struct in response tag list
+#[derive(Deserialize,Serialize,Debug)]
+pub struct TagListMsg {
+    pub status: i32,
+    pub message: String,
+    pub tags: Vec<String>, // tag name
+    pub count: usize,
+}
 
-// // result struct in response etc
-// #[derive(Deserialize,Serialize,Debug)]
-// pub struct EtcMsg {
-//     pub status: i32,
-//     pub message: String,
-//     pub etc: Etc,
-// }
+// result struct in response etc
+#[derive(Deserialize,Serialize,Debug)]
+pub struct EtcMsg {
+    pub status: i32,
+    pub message: String,
+    pub etc: Etc,
+}
 
-// // result struct in response etc list
-// #[derive(Deserialize,Serialize,Debug)]
-// pub struct EtcListMsg {
-//     pub status: i32,
-//     pub message: String,
-//     pub etcs: Vec<Etc>,
-//     pub count: usize,
-// }
+// result struct in response etc list
+#[derive(Deserialize,Serialize,Debug)]
+pub struct EtcListMsg {
+    pub status: i32,
+    pub message: String,
+    pub etcs: Vec<Etc>,
+    pub count: usize,
+}

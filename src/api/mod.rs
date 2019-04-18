@@ -4,17 +4,14 @@
 // to be simply, 
 // send msg to Db Actor, then handled by msg-handler of Actor
 // recv the result msg from msg-handler, response to request
-
-// model: build msg and traited-table struct;  
-// view handler: handle request - send msg - response;  
-// msg handler: handle msg, comm with db, send back result;  
-// actor: db, s-r-h;
+ 
+// actor: db, typed model,  msg handler
 
 pub mod auth;
 pub mod rut;
 pub mod item;
-// pub mod tag;
-// pub mod etc;
+pub mod tag;
+pub mod etc;
 
 
 use regex::Regex;
@@ -29,8 +26,6 @@ pub struct ReqQuery {
 }
 
 // build response if anything wrong in checking req before send msg, 
-// need to optmize, alert: some issue, no real resp, just bad request error
-// how to new a Future directly?
 pub fn gen_response() {}
 
 // re test

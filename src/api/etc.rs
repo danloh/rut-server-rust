@@ -1,49 +1,51 @@
 // api.etc, view handler: comment, excerpt, etc.
 
-use actix_web::{ 
-    HttpResponse, HttpRequest, FutureResponse, AsyncResponder,
-    Error, Json, State
-};
 use futures::Future;
-use router::AppState;
-use model::etc::{ Etc, PostEtc, EtcsPerID };
-use model::user::{ CheckUser };
+use actix_web::{
+    Error, HttpRequest, HttpResponse, Responder, ResponseError,
+    web::{ self, Path, Json, Data, Query }
+};
 
-pub fn post_etc((pe, req, user): (Json<PostEtc>, HttpRequest<AppState>, CheckUser))
- -> FutureResponse<HttpResponse> {
+use crate::DbAddr;
+use crate::INPUT_LIMIT;
+use crate::api::{ ReqQuery, re_test_url, len_limit };
+use crate::db::user::{ CheckUser };
+use crate::db::etc::{ Etc, PostEtc, EtcsPerID };
 
-    let l_pe = pe.content.trim().len();
-    if l_pe == 0 {
-        use api::gen_response;
-        return gen_response(req)
-    }
+pub fn new(
+    db: Data<DbAddr>,
+    petc: Json<PostEtc>, 
+    auth: CheckUser
+) -> impl Future<Item = HttpResponse, Error = Error> {
 
-    req.state().db.send( PostEtc {
-        content: pe.content.clone(),
-        post_to: pe.post_to.clone(),
-        to_id: pe.to_id.clone(),
-        uname: user.uname.clone(),
+    db.send( PostEtc {
+        content: petc.content.clone(),
+        post_to: petc.post_to.clone(),
+        to_id: petc.to_id.clone(),
+        uname: auth.uname,
     })
     .from_err().and_then(|res| match res {
         Ok(rut) => Ok(HttpResponse::Ok().json(rut)),
-        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+        Err(err) => Ok(err.error_response()),
     })
-    .responder()
 }
 
-pub fn get_etc_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
-    let per = String::from(req.match_info().get("per").unwrap());
-    let per_id = String::from(req.match_info().get("perid").unwrap());
+pub fn get_list(
+    db: Data<DbAddr>,
+    pq: Query<ReqQuery>,
+    per_info: Path<(String, String)>,
+) -> impl Future<Item = HttpResponse, Error = Error> {
+
+    // extract Path
+    let per = per_info.clone().0;
+    let perid = per_info.clone().1;
+    // extract Query
+    let page = pq.page;
     
-    // paging in query param
-    let paging = if let Some(i) = req.query().get("page") {
-        i.parse::<i32>().unwrap()
-    } else { 1 }; // if 0, query all
-    
-    req.state().db.send(EtcsPerID{ per, per_id, paging })
-    .from_err().and_then(|res| match res {
+    db.send( EtcsPerID{ per, perid, page })
+      .from_err()
+      .and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
-        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+        Err(err) => Ok(err.error_response()),
     })
-    .responder()
 }
