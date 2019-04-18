@@ -43,8 +43,7 @@ pub fn new(
 
 pub fn get(
     db: Data<DbAddr>,
-    tg: Path<String>, 
-    auth: CheckUser
+    tg: Path<String>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let tname = tg.into_inner();
     let action = String::from("GET");

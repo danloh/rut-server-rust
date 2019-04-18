@@ -1,4 +1,4 @@
-// Result msg struct in response
+// Result msg typed model
 
 use crate::db::rut::Rut;
 use crate::db::item::{ Item, Collect };

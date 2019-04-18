@@ -49,7 +49,7 @@ pub fn signin(
                 user: user,
             };
             Ok(HttpResponse::Ok().json(auth_msg))
-        }
+        },
         Err(err) => Ok(err.error_response()),
     })
 }
@@ -62,7 +62,14 @@ pub fn get(
     db.send(UserID{uname})
       .from_err()
       .and_then(|res| match res {
-        Ok(user) => Ok(HttpResponse::Ok().json(user)),
+        Ok(user) => {
+          let user_msg = UserMsg{
+              status: 200,
+              message: "Success".to_string(),
+              user: user,
+          };
+          Ok(HttpResponse::Ok().json(user_msg))
+        },
         Err(err) => Ok(err.error_response()),
     })
 }
@@ -77,7 +84,14 @@ pub fn update(
     db.send(user.into_inner())
       .from_err()
       .and_then(|res| match res {
-        Ok(user) => Ok(HttpResponse::Ok().json(user)),
+        Ok(user) => {
+          let user_msg = UserMsg{
+              status: 200,
+              message: "Updated".to_string(),
+              user: user,
+          };
+          Ok(HttpResponse::Ok().json(user_msg))
+        },
         Err(err) => Ok(err.error_response()),
     })
 }

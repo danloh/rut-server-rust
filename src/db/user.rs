@@ -1,7 +1,7 @@
-// handle user message
+// typed model and handle user message
 
 use actix::{ Handler, Message };
-use actix_web::{ dev::Payload, FromRequest, HttpRequest, Error };
+use actix_web::{ dev::Payload, FromRequest, HttpRequest };
 use diesel::prelude::*;
 use jsonwebtoken::{ decode, encode, Header, Validation };
 use bcrypt::{ hash, DEFAULT_COST, verify };
@@ -107,8 +107,8 @@ pub fn decode_token(token: &str) -> Result<CheckUser, ServiceError> {
 // auth via token
 impl FromRequest for CheckUser {
     type Config = ();
-    type Error = Error;
-    type Future = Result<CheckUser, Error>;
+    type Error = ServiceError;
+    type Future = Result<CheckUser, ServiceError>;
 
     fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
         if let Some(auth_token) = req.headers().get("authorization") {

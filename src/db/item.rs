@@ -1,11 +1,9 @@
-// item msg handler
+// item typed model and msg handler
 
 use actix::{ Handler, Message };
-use actix_web::{ FromRequest, HttpRequest, Error };
 use diesel::prelude::*;
 use diesel::{ self, QueryDsl, ExpressionMethods, dsl::any, PgTextExpressionMethods, RunQueryDsl };
 use chrono::{ Local, NaiveDateTime, Utc, Duration };
-use std::convert::From;
 use uuid::Uuid;
 
 use crate::Dba;
