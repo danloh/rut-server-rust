@@ -11,13 +11,22 @@
 // actor: db, s-r-h;
 
 pub mod auth;
-// pub mod rut;
+pub mod rut;
 // pub mod item;
 // pub mod tag;
 // pub mod etc;
 
 
 use regex::Regex;
+
+// for extract typed request Query info: /path?page=&flag=&kw=&fr=
+#[derive(Deserialize,Clone)]
+pub struct ReqQuery {
+   page: i32,
+   flag: String,
+   kw: String,  // keyword
+   fr: String,  // from user|tag..
+}
 
 // build response if anything wrong in checking req before send msg, 
 // need to optmize, alert: some issue, no real resp, just bad request error

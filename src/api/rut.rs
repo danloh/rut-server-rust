@@ -1,153 +1,129 @@
 // api.rut, view handler
 
-use actix_web::{ 
-    HttpResponse, HttpRequest, FutureResponse, AsyncResponder,
-    Error, Json, State
-};
+use actix::Addr;
 use futures::Future;
-use router::AppState;
-use model::rut::{ CreateRut, RutID, RutsPerID, UpdateRut, StarOrRut, StarRutStatus };
-use model::user::{ CheckUser };
-use api::{ re_test_url, len_limit };
-use ::INPUT_LIMIT;
+use actix_web::{
+    Error, HttpRequest, HttpResponse, Responder, ResponseError,
+    web::{ self, Path, Json, Data, Query }
+};
 
-pub fn new_rut((rut, req, user): (Json<CreateRut>, HttpRequest<AppState>, CheckUser))
- -> FutureResponse<HttpResponse> {
+use crate::Dba;
+use crate::db::rut::{ 
+    CreateRut, RutSlug, RutsPerID, UpdateRut, StarOrRut, StarRutStatus 
+};
+use crate::db::user::{ CheckUser };
+use crate::api::{ ReqQuery, re_test_url, len_limit };
+use crate::INPUT_LIMIT;
+
+pub fn new(
+    db: Data<Addr<Dba>>,
+    rut: Json<CreateRut>, 
+    auth: CheckUser
+) -> impl Future<Item = HttpResponse, Error = Error> {
     // check authed via user:FromRequest
     //println!("req: {:?} and user: {:?}", req, user);
-    // do some check, length of input
-    let url = rut.url.trim();
-    let url_test = if url.len() == 0 { true } else { re_test_url(url) };
-    let title = rut.title.trim();
-    let author = rut.author_id.trim();
-    let check = len_limit(title, 1, INPUT_LIMIT) 
-        && len_limit(author, 0, INPUT_LIMIT) && url_test;
-    
-    if !check {
-        use api::gen_response;
-        return gen_response(req)
-    }
+    // todo some check, length of input
 
-    req.state().db.send( CreateRut {
-        title: title.to_string(),
-        url: url.to_string(),
-        content: rut.content.clone(),
-        uname: user.uname.clone(),     // extracted from request as user
-        author_id: author.to_string(),
-        credential: rut.credential.clone(),
+    db.send(rut.into_inner())
+      .from_err()
+      .and_then(|res| match res {
+        Ok(r) => Ok(HttpResponse::Ok().json(r)),
+        Err(err) => Ok(err.error_response()),
     })
-    .from_err().and_then(|res| match res {
-        Ok(rut) => Ok(HttpResponse::Ok().json(rut)),
-        Err(_) => Ok(HttpResponse::InternalServerError().into()),
-    })
-    .responder()
 }
 
-pub fn get_rut(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
-    let rut_id = String::from(req.match_info().get("rid").unwrap());
-    req.state().db.send(
-        RutID{rut_id}
-    )
-    .from_err().and_then(|res| match res {
+pub fn get(
+    r_slug: Path<String>,
+    db: Data<Addr<Dba>>,
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    let rut_slug = r_slug.into_inner();
+    db.send(RutSlug{rut_slug})
+      .from_err()
+      .and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
-        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+        Err(err) => Ok(err.error_response()),
     })
-    .responder()
 }
 
-pub fn get_rut_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
-    let per = req.match_info().get("per").unwrap();
-    let perid = String::from(req.match_info().get("perid").unwrap());
+// query: 
+pub fn get_list(
+    per_info: Path<(String, String)>,
+    pq: Query<ReqQuery>,
+    db: Data<Addr<Dba>>
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    // extract Path
+    let per = per_info.0.trim();
+    let perid = per_info.clone().1;
+    // extract Query
+    let page = pq.page;
+    let flag = pq.clone().flag;
+    let kw = pq.clone().kw;
+    let fr = pq.clone().fr;
     
-    // agreen on perPage=20 with frontend, first page=1
-    let paging = if let Some(i) = req.query().get("page") {
-        i.parse::<i32>().unwrap()
-    } else { 1 };  // if 0, query all
-    
-    let q_per = match per {
-        "item" => RutsPerID::ItemID(perid, paging),
-        "tag" => RutsPerID::TagID(perid, paging),
-        "user" => RutsPerID::UserID(
-            perid, 
-            req.query().get("flag").unwrap().clone(),
-            paging
-        ),
-        "key" => RutsPerID::KeyID(
-            req.query().get("keyword").unwrap().clone(), // keyword
-            req.query().get("from").unwrap().clone(),  // ?keyword= &from=tag|user|item
-            perid,  // from id
-            paging
-        ),
+    let query_msg = match per {
+        "item" => RutsPerID::ItemID(perid, page),
+        "tag" => RutsPerID::TagID(perid, page),
+        "user" => RutsPerID::UserID(perid, flag, page),
+        "key" => RutsPerID::KeyID(kw, fr, perid, page), // &keyword=&from=tag|user|item
         _ => RutsPerID::Index(String::from("index")),
     };
 
-    req.state().db.send(q_per).from_err().and_then(|res| match res {
+    db.send(query_msg)
+      .from_err()
+      .and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
-        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+        Err(err) => Ok(err.error_response()),
     })
-    .responder()
 }
 
-pub fn update_rut((req, rut, user): (HttpRequest<AppState>, Json<UpdateRut>, CheckUser))
- -> FutureResponse<HttpResponse> {
-    // do some check
-    let rutid = rut.id.trim();
-    let url = rut.url.trim();
-    let url_test = if url.len() == 0 { true } else { re_test_url(url) };
-    let title = rut.title.trim();
-    let author = rut.author_id.trim();
-    let check = len_limit(rutid, 8, INPUT_LIMIT)
-        && len_limit(title, 1, INPUT_LIMIT) 
-        && len_limit(author, 0, INPUT_LIMIT) && url_test;
-    
-    if !check {
-        use api::gen_response;
-        return gen_response(req)
-    }
+pub fn update(
+    db: Data<Addr<Dba>>,
+    rut: Json<UpdateRut>, 
+    auth: CheckUser
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    // todo some check
 
-    req.state().db.send( UpdateRut {
-        id: rutid.to_string(),
-        title: title.to_string(),
-        url: url.to_string(),
-        content: rut.content.clone(),
-        author_id: author.to_string(),
-        credential: rut.credential.clone(),
-    })
-    .from_err().and_then(|res| match res {
+    db.send(rut.into_inner())
+      .from_err()
+      .and_then(|res| match res {
         Ok(rut) => Ok(HttpResponse::Ok().json(rut)),
-        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+        Err(err) => Ok(err.error_response()),
     })
-    .responder()
 }
 
-pub fn star_unstar_rut(req: HttpRequest<AppState>, user: CheckUser)
- -> FutureResponse<HttpResponse> {
-    let star_action: u8 = req.match_info().get("action").unwrap().parse().unwrap();
-    let rid = String::from(req.match_info().get("rid").unwrap());
-    let note = String::from(req.match_info().get("note").unwrap());
+pub fn star_or_unstar(
+    db: Data<Addr<Dba>>,
+    star_info: Path<(String, u8, String)>, 
+    auth: CheckUser
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    let rut_slug = star_info.clone().0;
+    let action= star_info.1;
+    let note = star_info.clone().2;
+    let uname = auth.uname;
     
-    req.state().db.send( StarOrRut {
-        rut_id: rid.clone(),
-        uname: user.uname.clone(),
-        note: note.clone(),
-        action: star_action,
-    })
-    .from_err().and_then(|res| match res {
+    db.send( StarOrRut{ rut_slug, uname, note, action })
+      .from_err()
+      .and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
-        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+        Err(err) => Ok(err.error_response()),
     })
-    .responder()
 }
 
-pub fn star_rut_status(req: HttpRequest<AppState>, user: CheckUser)
- -> FutureResponse<HttpResponse> {
-    let uname = user.uname;
-    let rut_id = String::from(req.match_info().get("rutid").unwrap());
+pub fn star_status(
+    db: Data<Addr<Dba>>,
+    r_info: Path<String>,
+    auth: CheckUser
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    let uname = auth.uname;
+    let rut_slug = r_info.into_inner();
     
-    req.state().db.send( StarRutStatus { uname, rut_id })
-    .from_err().and_then(|res| match res {
+    db.send( StarRutStatus { uname, rut_slug })
+      .from_err()
+      .and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
-        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+        Err(err) => Ok(err.error_response()),
     })
-    .responder()
 }
+
+// todo
+// pub fn delete() {}

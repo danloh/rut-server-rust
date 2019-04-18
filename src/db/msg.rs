@@ -1,6 +1,6 @@
 // Result msg struct in response
 
-//use crate::db::rut::Rut;
+use crate::db::rut::Rut;
 //use crate::db::item::{ Item, Collect };
 use crate::db::user::{ User, CheckUser };
 //use crate::db::tag::{ Tag };
@@ -31,22 +31,22 @@ pub struct UserMsg {
     pub user: CheckUser,
 }
 
-// // result struct in response a rut 
-// #[derive(Deserialize,Serialize,Debug)]
-// pub struct RutMsg {
-//     pub status: i32,
-//     pub message: String,
-//     pub rut: Rut,
-// }
+// result struct in response a rut 
+#[derive(Deserialize,Serialize,Debug)]
+pub struct RutMsg {
+    pub status: i32,
+    pub message: String,
+    pub rut: Rut,
+}
 
-// // result struct in response rut list
-// #[derive(Deserialize,Serialize,Debug)]
-// pub struct RutListMsg {
-//     pub status: i32,
-//     pub message: String,
-//     pub ruts: Vec<Rut>,
-//     pub count: usize,
-// }
+// result struct in response rut list
+#[derive(Deserialize,Serialize,Debug)]
+pub struct RutListMsg {
+    pub status: i32,
+    pub message: String,
+    pub ruts: Vec<Rut>,
+    pub count: usize,
+}
 
 // // result struct in response an item 
 // #[derive(Deserialize,Serialize,Debug)]

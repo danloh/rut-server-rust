@@ -6,7 +6,6 @@ use actix_web::{
     Error, HttpRequest, HttpResponse, Responder, ResponseError,
     web::{ self, Path, Json, Data }
 };
-use jsonwebtoken::{ decode, Validation };
 
 use crate::Dba;
 use crate::db::user::{ 
@@ -56,7 +55,7 @@ pub fn signin(
     })
 }
 
-pub fn get_user(
+pub fn get(
     path_uname: Path<String>,
     db: Data<Addr<Dba>>
 ) -> impl Future<Item = HttpResponse, Error = Error> {
@@ -69,7 +68,7 @@ pub fn get_user(
     })
 }
 
-pub fn update_user(
+pub fn update(
     db: Data<Addr<Dba>>,
     user: Json<UpdateUser>, 
     auth: CheckUser

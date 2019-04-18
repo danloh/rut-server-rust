@@ -1,11 +1,7 @@
 // handle user message
 
 use actix::{ Handler, Message };
-use actix_web::{
-    middleware::identity::Identity,
-    dev::Payload,
-    FromRequest, HttpRequest, Error
-};
+use actix_web::{ dev::Payload, FromRequest, HttpRequest, Error };
 use diesel::prelude::*;
 use jsonwebtoken::{ decode, encode, Header, Validation };
 use bcrypt::{ hash, DEFAULT_COST, verify };
@@ -14,8 +10,8 @@ use std::convert::From;
 use uuid::Uuid;
 
 use crate::Dba;
-use crate::db::msg::{ Msg, AuthMsg };
 use crate::errors::ServiceError;
+use crate::db::msg::{ Msg, AuthMsg };
 use crate::schema::{ users, follows, timelines };
 
 // ###### user model ################
