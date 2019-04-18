@@ -114,6 +114,7 @@ impl Handler<CreateRut> for Dba {
 #[derive(Deserialize,Serialize,Debug,Clone)]
 pub struct RutSlug {
     pub rut_slug: String,
+    // pub action: String, // get / delete, to do
 }
 
 impl Message for RutSlug {

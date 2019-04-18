@@ -40,7 +40,9 @@ impl Actor for Dba {
     type Context = SyncContext<Self>;
 }
 
-pub fn init_dba() -> Addr<Dba> {
+pub type DbAddr = Addr<Dba>;
+
+pub fn init_dba() -> DbAddr {
     let db_url = dotenv::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let manager = ConnectionManager::<PgConnection>::new(db_url);
     let cpu_num = num_cpus::get();
@@ -65,7 +67,7 @@ fn main() -> std::io::Result<()> {
     env_logger::init();
 
     let sys = actix::System::new("rut-server-rust");
-    let addr: Addr<Dba> = init_dba();
+    let addr: DbAddr = init_dba();
 
     let bind_host = dotenv::var("BIND_ADDRESS").expect("BIND_ADDRESS must be set");
 
@@ -105,6 +107,34 @@ fn main() -> std::io::Result<()> {
             )
             .service(resource("/ifstarrut/{rut_slug}")
                 .route(get().to_async(api::rut::star_status))
+            )
+            .service(resource("/items")
+                .route(post().to_async(api::item::new))
+                .route(put().to_async(api::item::update))
+            )
+            .service(resource("/items/{slug}")
+                .route(get().to_async(api::item::get))
+                // .route(delete().to_async(api::item::delete))
+            )
+            .service(resource("/items/{per}/{id}")
+                .route(get().to_async(api::item::get_list))
+            )
+            .service(resource("/staritem/{itemid}/{flag}/{rate}/{note}")
+                .route(get().to_async(api::item::star_item))
+            )
+            .service(resource("/itemflag/{itemid}")
+                .route(get().to_async(api::item::star_status))
+            )
+            .service(resource("/collectitem/{rid}")
+                .route(post().to_async(api::item::collect_item))
+            )
+            .service(resource("/collects/{per}/{id}")
+                .route(get().to_async(api::item::get_collect_list))
+            )
+            .service(resource("/collects/{cid}")
+                .route(get().to_async(api::item::get_collect))
+                .route(put().to_async(api::item::update_collect))
+                .route(delete().to_async(api::item::del_collect))
             )
         )
     })

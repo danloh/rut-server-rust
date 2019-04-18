@@ -1,7 +1,7 @@
 // Result msg struct in response
 
 use crate::db::rut::Rut;
-//use crate::db::item::{ Item, Collect };
+use crate::db::item::{ Item, Collect };
 use crate::db::user::{ User, CheckUser };
 //use crate::db::tag::{ Tag };
 //use crate::db::etc::{ Etc };
@@ -48,47 +48,47 @@ pub struct RutListMsg {
     pub count: usize,
 }
 
-// // result struct in response an item 
-// #[derive(Deserialize,Serialize,Debug)]
-// pub struct ItemMsg {
-//     pub status: i32,
-//     pub message: String,
-//     pub item: Item,
-// }
+// result struct in response an item 
+#[derive(Deserialize,Serialize,Debug)]
+pub struct ItemMsg {
+    pub status: i32,
+    pub message: String,
+    pub item: Item,
+}
 
-// // result struct in response item list
-// #[derive(Deserialize,Serialize,Debug)]
-// pub struct ItemListMsg {
-//     pub status: i32,
-//     pub message: String,
-//     pub items: Vec<Item>,
-//     pub count: usize,
-// }
+// result struct in response item list
+#[derive(Deserialize,Serialize,Debug)]
+pub struct ItemListMsg {
+    pub status: i32,
+    pub message: String,
+    pub items: Vec<Item>,
+    pub count: usize,
+}
 
-// // result struct in respon the status of star item
-// #[derive(Deserialize,Serialize,Debug)]
-// pub struct StarItemMsg {
-//     pub status: i32,
-//     pub message: String,
-//     pub note: String,
-//     pub when: String,
-// }
+// result struct in respon the status of star item
+#[derive(Deserialize,Serialize,Debug)]
+pub struct StarItemMsg {
+    pub status: i32,
+    pub message: String,
+    pub note: String,
+    pub when: String,
+}
 
-// // result struct in response collect in a rut 
-// #[derive(Deserialize,Serialize,Debug)]
-// pub struct CollectMsg {
-//     pub status: i32,
-//     pub message: String,
-//     pub collect: Collect,
-// }
+// result struct in response collect in a rut 
+#[derive(Deserialize,Serialize,Debug)]
+pub struct CollectMsg {
+    pub status: i32,
+    pub message: String,
+    pub collect: Collect,
+}
 
-// // result struct in response collects  
-// #[derive(Deserialize,Serialize,Debug)]
-// pub struct CollectsMsg {
-//     pub status: i32,
-//     pub message: String,
-//     pub collects: Vec<Collect>,
-// }
+// result struct in response collects  
+#[derive(Deserialize,Serialize,Debug)]
+pub struct CollectsMsg {
+    pub status: i32,
+    pub message: String,
+    pub collects: Vec<Collect>,
+}
 
 // // result struct in response tag
 // #[derive(Deserialize,Serialize,Debug)]

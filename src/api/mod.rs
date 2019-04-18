@@ -12,7 +12,7 @@
 
 pub mod auth;
 pub mod rut;
-// pub mod item;
+pub mod item;
 // pub mod tag;
 // pub mod etc;
 
@@ -24,7 +24,7 @@ use regex::Regex;
 pub struct ReqQuery {
    page: i32,
    flag: String,
-   kw: String,  // keyword
+   kw: String,  // keyword  Option<String>?
    fr: String,  // from user|tag..
 }
 

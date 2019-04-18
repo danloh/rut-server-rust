@@ -1,13 +1,12 @@
 // api.auth view handler
 
-use actix::Addr;
 use futures::Future;
 use actix_web::{
     Error, HttpRequest, HttpResponse, Responder, ResponseError,
     web::{ self, Path, Json, Data }
 };
 
-use crate::Dba;
+use crate::DbAddr;
 use crate::db::user::{ 
     RegUser, UserID, AuthUser, CheckUser, UpdateUser, ChangePsw,
     encode_token 
@@ -19,7 +18,7 @@ use crate::{ MIN_LEN, MAX_UNAME_LEN, MIN_PSW_LEN, ANS_LIMIT };
 
 pub fn signup(
     reg: Json<RegUser>,
-    db: Data<Addr<Dba>>
+    db: Data<DbAddr>
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     // todo some check
 
@@ -33,7 +32,7 @@ pub fn signup(
 
 pub fn signin(
     auth: Json<AuthUser>,
-    db: Data<Addr<Dba>>,
+    db: Data<DbAddr>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     // todo some check
 
@@ -57,7 +56,7 @@ pub fn signin(
 
 pub fn get(
     path_uname: Path<String>,
-    db: Data<Addr<Dba>>
+    db: Data<DbAddr>
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let uname = path_uname.into_inner();
     db.send(UserID{uname})
@@ -69,7 +68,7 @@ pub fn get(
 }
 
 pub fn update(
-    db: Data<Addr<Dba>>,
+    db: Data<DbAddr>,
     user: Json<UpdateUser>, 
     auth: CheckUser
 ) -> impl Future<Item = HttpResponse, Error = Error> {
@@ -84,7 +83,7 @@ pub fn update(
 }
 
 pub fn change_psw(
-    db: Data<Addr<Dba>>,
+    db: Data<DbAddr>,
     psw: Json<ChangePsw>, 
     auth: CheckUser
 ) -> impl Future<Item = HttpResponse, Error = Error> {

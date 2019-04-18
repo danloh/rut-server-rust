@@ -1,22 +1,21 @@
 // api.rut, view handler
 
-use actix::Addr;
 use futures::Future;
 use actix_web::{
     Error, HttpRequest, HttpResponse, Responder, ResponseError,
     web::{ self, Path, Json, Data, Query }
 };
 
-use crate::Dba;
+use crate::DbAddr;
+use crate::INPUT_LIMIT;
+use crate::api::{ ReqQuery, re_test_url, len_limit };
+use crate::db::user::{ CheckUser };
 use crate::db::rut::{ 
     CreateRut, RutSlug, RutsPerID, UpdateRut, StarOrRut, StarRutStatus 
 };
-use crate::db::user::{ CheckUser };
-use crate::api::{ ReqQuery, re_test_url, len_limit };
-use crate::INPUT_LIMIT;
 
 pub fn new(
-    db: Data<Addr<Dba>>,
+    db: Data<DbAddr>,
     rut: Json<CreateRut>, 
     auth: CheckUser
 ) -> impl Future<Item = HttpResponse, Error = Error> {
@@ -34,7 +33,7 @@ pub fn new(
 
 pub fn get(
     r_slug: Path<String>,
-    db: Data<Addr<Dba>>,
+    db: Data<DbAddr>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let rut_slug = r_slug.into_inner();
     db.send(RutSlug{rut_slug})
@@ -47,9 +46,9 @@ pub fn get(
 
 // query: 
 pub fn get_list(
-    per_info: Path<(String, String)>,
+    db: Data<DbAddr>,
     pq: Query<ReqQuery>,
-    db: Data<Addr<Dba>>
+    per_info: Path<(String, String)>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     // extract Path
     let per = per_info.0.trim();
@@ -77,7 +76,7 @@ pub fn get_list(
 }
 
 pub fn update(
-    db: Data<Addr<Dba>>,
+    db: Data<DbAddr>,
     rut: Json<UpdateRut>, 
     auth: CheckUser
 ) -> impl Future<Item = HttpResponse, Error = Error> {
@@ -92,7 +91,7 @@ pub fn update(
 }
 
 pub fn star_or_unstar(
-    db: Data<Addr<Dba>>,
+    db: Data<DbAddr>,
     star_info: Path<(String, u8, String)>, 
     auth: CheckUser
 ) -> impl Future<Item = HttpResponse, Error = Error> {
@@ -110,7 +109,7 @@ pub fn star_or_unstar(
 }
 
 pub fn star_status(
-    db: Data<Addr<Dba>>,
+    db: Data<DbAddr>,
     r_info: Path<String>,
     auth: CheckUser
 ) -> impl Future<Item = HttpResponse, Error = Error> {
