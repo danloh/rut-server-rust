@@ -2,35 +2,9 @@
 // #![allow(unused_variables)]
 #![cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 
-extern crate futures;
-extern crate actix;
-extern crate actix_web;
-extern crate serde;
-extern crate serde_json;
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate diesel;
-extern crate uuid;
-extern crate deunicode;
-extern crate chrono;
-extern crate num_cpus;
-extern crate bcrypt;
-extern crate jsonwebtoken as jwt;
-extern crate dotenv;
-#[macro_use] extern crate log;
-extern crate env_logger;
-extern crate base64;
 #[macro_use] extern crate lazy_static;
-extern crate regex;
-
-use actix_web::server;
-use std::{ env };
-
-mod router;
-mod db;
-mod api;
-mod model;
-mod handler;
-mod util;
 
 // eliminate magic number
 const PER_PAGE: i32 = 20;   // for paging
@@ -40,21 +14,82 @@ const MIN_PSW_LEN: usize = 8;
 const MIN_LEN: usize = 1;
 const INPUT_LIMIT: usize = 512;  // limit input title, url
 
+use actix::{ Actor, SyncContext };
+use actix::prelude::*;
+use actix_web::{
+    web::{ self, scope, resource, get, post, put, delete },
+    middleware::{ Logger, cors::Cors },
+    App, HttpServer
+};
 
-fn main() {
-    env::set_var("RUST_LOG", "rut-server-rust=debug");
-    env::set_var("RUST_BACKTRACE", "1");
+use chrono::Duration;
+use diesel::pg::PgConnection;
+use diesel::r2d2::{ ConnectionManager, Pool };
+use dotenv::dotenv;
+
+mod db;
+mod api;
+mod util;
+mod errors;
+mod schema;
+
+// This is db executor actor
+pub struct Dba(pub Pool<ConnectionManager<PgConnection>>);
+
+impl Actor for Dba {
+    type Context = SyncContext<Self>;
+}
+
+pub fn init_dba() -> Addr<Dba> {
+    let db_url = dotenv::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let manager = ConnectionManager::<PgConnection>::new(db_url);
+    let cpu_num = num_cpus::get();
+    let pool_num = (cpu_num) as u32;
+    // p_num subject to c_num?? 
+    let conn = Pool::builder()
+        .max_size(pool_num)
+        .build(manager)
+        .expect("Failed to create pool.");
+
+    SyncArbiter::start( 
+        cpu_num * 2, 
+        move || { Dba(conn.clone()) }
+    )
+}
+
+
+fn main() -> std::io::Result<()> {
+
+    std::env::set_var("RUST_LOG", "rut-server-rust=debug");
+    std::env::set_var("RUST_BACKTRACE", "1");
     env_logger::init();
 
     let sys = actix::System::new("rut-server-rust");
-    let bind_addr = dotenv::var("BIND_ADDRESS").expect("BIND_ADDRESS must be set");
+    let addr: Addr<Dba> = init_dba();
 
-    server::new( move || router::app_with_state())
-        .bind(&bind_addr).expect("Can not bind to address")
-        .shutdown_timeout(0)    // <- Set shutdown timeout to 0 seconds (default 60s)
-        .start();
-        
-    println!("Starting http server: {}", bind_addr);
+    let bind_host = dotenv::var("BIND_ADDRESS").expect("BIND_ADDRESS must be set");
+
+    HttpServer::new( move || { App::new()
+        .data(addr.clone())
+        .wrap(Logger::default())
+        .wrap(Cors::default())
+        // everything under '/api/' route
+        .service(scope("/api")
+            // to auth
+            .service(resource("/signin")
+                .route(post().to_async(api::auth::signin))
+            )
+            // to register 
+            .service(resource("/signup")
+                .route(post().to_async(api::auth::signup))
+            )
+        )
+    })
+    .bind(&bind_host).expect("Can not bind to host")
+    .start();
+
+    println!("Starting http server: {}", bind_host);
     
-    let _ = sys.run();
+    // start runtime
+    sys.run()
 }

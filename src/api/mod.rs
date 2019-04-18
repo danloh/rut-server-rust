@@ -10,30 +10,19 @@
 // msg handler: handle msg, comm with db, send back result;  
 // actor: db, s-r-h;
 
-pub mod index;
 pub mod auth;
-pub mod rut;
-pub mod item;
-pub mod tag;
-pub mod etc;
+// pub mod rut;
+// pub mod item;
+// pub mod tag;
+// pub mod etc;
 
-use actix_web::{HttpResponse,HttpRequest,HttpMessage,FutureResponse,AsyncResponder};
-use futures::Future;
+
 use regex::Regex;
-use router::AppState;
-use model::msg::Msg;
 
 // build response if anything wrong in checking req before send msg, 
 // need to optmize, alert: some issue, no real resp, just bad request error
 // how to new a Future directly?
-pub fn gen_response(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
-    req.json().from_err().and_then(|res: Msg| { // maybe Type notation the issue?
-        Ok(HttpResponse::Ok().json(
-            Msg {status: 422, message:"Unprocessable".to_string()}
-        ))
-    })
-    .responder()
-}
+pub fn gen_response() {}
 
 // re test
 // for re test uname
