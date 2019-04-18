@@ -24,7 +24,7 @@ pub struct Item {
     pub etc_count: i32,   // review, etc.
     pub done_count: i32,  // num of who done
     pub vote: i32,        //  cal per rut, done, etc
-    // pub slug: String, // to do
+    pub slug: String, 
 }
 
 // use to build insert query
@@ -45,6 +45,8 @@ pub struct NewItem<'a> {
     pub rut_count: i32,
     pub etc_count: i32,   // review, etc.
     pub done_count: i32,  // num of who done
+    pub vote: i32,        //  cal per rut, done, etc
+    pub slug: &'a str,
 }
 
 // as msg in submit new item
@@ -134,6 +136,7 @@ impl Item {
             etc_count: 0,   
             done_count: 0,
             vote: 0,
+            slug: "".to_owned(),
         }
     }
 }

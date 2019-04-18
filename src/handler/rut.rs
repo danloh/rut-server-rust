@@ -5,6 +5,7 @@ use actix_web::{ actix::Handler, error, Error };
 use diesel::{ self, QueryDsl, ExpressionMethods, dsl::any, PgTextExpressionMethods, RunQueryDsl };
 use chrono::Utc;
 use uuid;
+use util::share::gen_slug;
 
 use model::rut::{
     Rut, NewRut, CreateRut, RutID, RutsPerID, UpdateRut, 
@@ -37,7 +38,9 @@ impl Handler<CreateRut> for Dba {
             }
         }
 
-        let uid = format!("{}", uuid::Uuid::new_v4());
+        let uuid_v4 = uuid::Uuid::new_v4();
+        let uid = format!("{}", uuid_v4);
+        let r_slug = gen_slug("r", &new_rut.title, &uuid_v4);
         let newrut = NewRut {
             id: &uid,
             title: &new_rut.title,
@@ -52,6 +55,8 @@ impl Handler<CreateRut> for Dba {
             item_count: 0,
             comment_count: 0,
             star_count: 0,
+            vote: 0,
+            slug: &r_slug,
         };
         let rut_new = diesel::insert_into(ruts)
             .values(&newrut)

@@ -59,8 +59,8 @@ fn _slugify(s: &str) -> String {
     string
 }
 
-pub fn gen_slug(uid: &Uuid, text: &str) -> String {
-    format!("{}-{}", slugify(text), to_blob(uid))
+pub fn gen_slug(ty: &str, text: &str, uid: &Uuid) -> String {
+    format!("{}-{}-{}", ty, slugify(text), to_blob(uid))
 }
 
 // get the value per key

@@ -5,6 +5,7 @@ use actix_web::{ actix::Handler, error, Error };
 use diesel::{ self, dsl::any, QueryDsl, ExpressionMethods, PgTextExpressionMethods, RunQueryDsl };
 use chrono::Utc;
 use uuid;
+use util::share::gen_slug;
 
 use model::item::{
     Item, NewItem, SubmitItem, UpdateItem, ItemID, ItemsPerID, Collect, NewCollect, 
@@ -49,7 +50,9 @@ impl Handler<SubmitItem> for Dba {
             }
         }
 
-        let uid = format!("{}", uuid::Uuid::new_v4());
+        let uuid_v4 = uuid::Uuid::new_v4();
+        let uid = format!("{}", uuid_v4);
+        let i_slug = gen_slug("i", &submit.title, &uuid_v4);
         let new_item = NewItem {
             id: &uid,
             title: &submit.title,
@@ -64,7 +67,9 @@ impl Handler<SubmitItem> for Dba {
             detail: &submit.detail,
             rut_count: 0,
             etc_count: 0, 
-            done_count: 0, 
+            done_count: 0,
+            vote: 0,
+            slug: &i_slug,
         };
         let item_new = diesel::insert_into(items)
             .values(&new_item)

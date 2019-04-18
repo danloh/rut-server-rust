@@ -23,7 +23,7 @@ pub struct Rut {
     pub comment_count: i32,
     pub star_count: i32,
     pub vote: i32,       // cal per star, comment
-    // pub slug: String,  // to do
+    pub slug: String,
 }
 
 // use to build insert query
@@ -43,6 +43,8 @@ pub struct NewRut<'a> {
     pub item_count: i32,
     pub comment_count: i32,
     pub star_count: i32,
+    pub vote: i32,
+    pub slug: &'a str,
 }
 
 // as msg in create new
@@ -118,6 +120,7 @@ impl Rut {
             comment_count: 0,
             star_count: 0,
             vote: 0,
+            slug: "".to_owned(),
         }
     }
 }

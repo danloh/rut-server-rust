@@ -51,6 +51,7 @@ table! {
         etc_count -> Int4,
         done_count -> Int4,
         vote -> Int4,
+        slug -> Varchar,
     }
 }
 
@@ -70,6 +71,7 @@ table! {
         comment_count -> Int4,
         star_count -> Int4,
         vote -> Int4,
+        slug -> Varchar,
     }
 }
 
