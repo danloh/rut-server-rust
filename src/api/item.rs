@@ -196,8 +196,8 @@ pub fn star_item(
     auth: CheckUser,
     star_info: Path<(String, String, i32, String)>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    let flag = star_info.clone().0; // no need?
-    let item_slug = star_info.clone().1;
+    let item_slug = star_info.clone().0;
+    let flag = star_info.clone().1;
     let rate = star_info.2;
     let note = star_info.clone().3;
     let uname = auth.uname;
@@ -205,9 +205,9 @@ pub fn star_item(
     // flag only can be todo, doing, done
     let flg = flag.to_lowercase();
     if flg != "todo" && flg != "doing" && flg != "done" {
-        panic!("illegal flag ")
+        panic!("illegal flag ")  // temp, todo more
     }
-    
+
     db.send( NewStarItem{uname, item_slug, note, flag, rate} )
       .from_err()
       .and_then(|res| match res {

@@ -8,6 +8,7 @@ use uuid::Uuid;
 
 use crate::Dba;
 use crate::errors::ServiceError;
+use crate::util::share::{ gen_slug };
 use crate::db::msg::{ Msg, RutMsg, RutListMsg };
 use crate::schema::{ ruts, starruts };
 use crate::PER_PAGE;
@@ -31,12 +32,12 @@ pub struct Rut {
     pub comment_count: i32,
     pub star_count: i32,
     pub vote: i32,       // cal per star, comment
-    //pub slug: String,  // to do
+    pub slug: String,
 }
 
 // Rut's constructor
 impl Rut {
-    pub fn new(uid: String, rut: CreateRut) -> Self {
+    pub fn new(uid: String, slug: String, rut: CreateRut) -> Self {
         Rut {
             id: uid,
             title: rut.title,
@@ -52,6 +53,7 @@ impl Rut {
             comment_count: 0,
             star_count: 0,
             vote: 0,
+            slug,
         }
     }
 }
@@ -94,8 +96,11 @@ impl Handler<CreateRut> for Dba {
             }
         }
 
-        let uid = format!("{}", uuid::Uuid::new_v4());
-        let newrut = Rut::new(uid, new_rut);
+        // new rut
+        let uuid_v4 = uuid::Uuid::new_v4();
+        let uid = format!("{}", uuid_v4);
+        let r_slug = gen_slug("r", &new_rut.title, &uuid_v4);
+        let newrut = Rut::new(uid, r_slug, new_rut);
         let rut_new = diesel::insert_into(ruts)
             .values(&newrut).get_result::<Rut>(conn)?;
 
@@ -138,11 +143,11 @@ impl Message for RutsPerID {
 impl Handler<RutSlug> for Dba {
     type Result = Result<RutMsg, ServiceError>;
 
-    fn handle(&mut self, slug: RutSlug, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, rslug: RutSlug, _: &mut Self::Context) -> Self::Result {
         use crate::schema::ruts::dsl::*;
         let conn = &self.0.get().unwrap();
 
-        let rut_query = ruts.filter(&id.eq(&slug.rut_slug))  // todo , slug
+        let rut_query = ruts.filter(&id.eq(&rslug.rut_slug))  // todo , slug
             .get_result::<Rut>(conn)?;
     
         Ok( RutMsg { 

@@ -59,8 +59,9 @@ fn _slugify(s: &str) -> String {
     string
 }
 
-pub fn gen_slug(uid: &Uuid, text: &str) -> String {
-    format!("{}-{}", slugify(text), to_blob(uid))
+// slug, better to show url: ty as type, for rut|item|collect
+pub fn gen_slug(ty: &str, text: &str, uid: &Uuid) -> String {
+    format!("{}-{}-{}", ty, slugify(text), to_blob(uid))
 }
 
 // get the value per key

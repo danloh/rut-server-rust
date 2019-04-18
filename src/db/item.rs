@@ -9,6 +9,7 @@ use uuid::Uuid;
 use crate::Dba;
 use crate::{ PER_PAGE, ANS_LIMIT };
 use crate::errors::ServiceError;
+use crate::util::share::{ gen_slug };
 use crate::db::msg::{ Msg, ItemMsg, ItemListMsg, StarItemMsg, CollectMsg, CollectsMsg };
 use crate::db::rut::Rut;
 use crate::schema::{ items, collects, staritems };
@@ -32,12 +33,12 @@ pub struct Item {
     pub etc_count: i32,   // review, etc.
     pub done_count: i32,  // num of who done
     pub vote: i32,        //  cal per rut, done, etc
-    // pub slug: String, // to do
+    pub slug: String, // to do
 }
 
 // Item's constructor
 impl Item {
-    pub fn new(uid: String, item: NewItem) -> Self {
+    pub fn new(uid: String, slug: String, item: NewItem) -> Self {
         Item {
             id: uid,
             title: item.title,
@@ -54,6 +55,7 @@ impl Item {
             etc_count: 0,   
             done_count: 0,
             vote: 0,
+            slug,
         }
     }
 }
@@ -111,9 +113,11 @@ impl Handler<NewItem> for Dba {
                 })
             }
         }
-
-        let uid = format!("{}", uuid::Uuid::new_v4());
-        let new_item = Item::new(uid, submit);
+        
+        let uuid_v4 = uuid::Uuid::new_v4();
+        let uid = format!("{}", uuid_v4);
+        let i_slug = gen_slug("i", &submit.title, &uuid_v4);
+        let new_item = Item::new(uid, i_slug, submit);
         let item_new = diesel::insert_into(items)
             .values(&new_item)
             .get_result::<Item>(conn)?;
@@ -199,11 +203,11 @@ impl Message for ItemsPerID {
 impl Handler<ItemSlug> for Dba {
     type Result = Result<ItemMsg, ServiceError>;
 
-    fn handle(&mut self, slug: ItemSlug, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, islug: ItemSlug, _: &mut Self::Context) -> Self::Result {
         use crate::schema::items::dsl::*;
         let conn = &self.0.get().unwrap();
 
-        let item_query = items.filter(&id.eq(&slug.item_slug))
+        let item_query = items.filter(&id.eq(&islug.item_slug))
             .get_result::<Item>(conn)?;
 
         Ok( ItemMsg { 
@@ -395,8 +399,10 @@ impl Handler<CollectItem> for Dba {
                 "418: The answer to life the universe and everything".into()
             ))
         }
-
-        let uid = format!("{}", uuid::Uuid::new_v4());
+        
+        // new collect
+        let uuid_v4 = uuid::Uuid::new_v4();
+        let uid = format!("{}", uuid_v4);
         let new_collect = Collect::new(uid, collect);
         let collect_new = diesel::insert_into(collects)
             .values(&new_collect).get_result::<Collect>(conn)?;
@@ -630,7 +636,7 @@ pub struct StarItem {
     pub item_id: String,
     pub star_at: NaiveDateTime,
     pub note: String,
-    pub flag: String,    // 0->to do,1->done, 2->doing
+    pub flag: String,    // Todo|Done|Doing
     pub rate: i32,
 }
 
