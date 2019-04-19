@@ -6,7 +6,7 @@ use diesel::{ self, QueryDsl, ExpressionMethods, RunQueryDsl };
 use chrono::Utc;
 use uuid;
 
-use model::etc::{ Etc, NewEtc, PostEtc, DelEtc, EtcsPerID };
+use model::etc::{ Etc, PostEtc, DelEtc, EtcsPerID };
 use model::msg::{ Msg, EtcMsg, EtcListMsg };
 use PER_PAGE;
 
@@ -26,15 +26,15 @@ impl Handler<PostEtc> for Dba {
         id_map.insert(new_e.post_to.clone(), new_e.to_id.clone());
         
         let uid = format!("{}", uuid::Uuid::new_v4());
-        let newetc = NewEtc {
-            id: &uid,
-            content: &new_e.content,
+        let newetc = Etc {
+            id: uid,
+            content: new_e.content,
             post_at: Utc::now().naive_utc(),
-            petc_id: &get_v(&id_map, "petc"),
-            rut_id: &get_v(&id_map, "rut"),
-            item_id: &get_v(&id_map, "item"),
-            tname: &get_v(&id_map, "tag"),
-            uname: &new_e.uname,
+            petc_id: get_v(&id_map, "petc"),
+            rut_id: get_v(&id_map, "rut"),
+            item_id: get_v(&id_map, "item"),
+            tname: get_v(&id_map, "tag"),
+            uname: new_e.uname,
             vote: 1,
         };
         let etc_new = diesel::insert_into(etcs)

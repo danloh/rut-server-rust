@@ -8,8 +8,8 @@ use uuid;
 use util::share::gen_slug;
 
 use model::rut::{
-    Rut, NewRut, CreateRut, RutID, RutsPerID, UpdateRut, 
-    StarRut, RutStar, StarOrRut, StarRutStatus
+    Rut, CreateRut, RutID, RutsPerID, UpdateRut, 
+    StarRut, StarOrRut, StarRutStatus
 };
 use model::msg::{ Msg, RutMsg, RutListMsg };
 use PER_PAGE;
@@ -41,23 +41,7 @@ impl Handler<CreateRut> for Dba {
         let uuid_v4 = uuid::Uuid::new_v4();
         let uid = format!("{}", uuid_v4);
         let r_slug = gen_slug("r", &new_rut.title, &uuid_v4);
-        let newrut = NewRut {
-            id: &uid,
-            title: &new_rut.title,
-            url: &new_rut.url,
-            content: &new_rut.content,
-            uname: &new_rut.uname,
-            author_id: &new_rut.author_id,
-            credential: &new_rut.credential,
-            logo: "",
-            create_at: Utc::now().naive_utc(),
-            renew_at: Utc::now().naive_utc(),
-            item_count: 0,
-            comment_count: 0,
-            star_count: 0,
-            vote: 0,
-            slug: &r_slug,
-        };
+        let newrut = Rut::new(uid, r_slug, new_rut.clone());
         let rut_new = diesel::insert_into(ruts)
             .values(&newrut)
             .get_result::<Rut>(conn)
@@ -263,12 +247,12 @@ impl Handler<StarOrRut> for Dba {
         match act.action {
             1  => {
                 let uid = format!("{}", uuid::Uuid::new_v4());
-                let new_star = RutStar {
-                    id: &uid,
-                    uname: &act.uname,
-                    rut_id: &act.rut_id,
+                let new_star = StarRut {
+                    id: uid,
+                    uname: act.clone().uname,
+                    rut_id: act.clone().rut_id,
                     star_at: Utc::now().naive_utc(),
-                    note: &act.note,
+                    note: act.clone().note,
                 };
                 diesel::insert_into(starruts).values(&new_star)
                         .execute(conn).map_err(error::ErrorInternalServerError)?;

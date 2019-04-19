@@ -6,7 +6,7 @@ use chrono::{Utc, NaiveDateTime};
 use model::msg::{ Msg, ItemMsg, ItemListMsg, StarItemMsg, CollectMsg, CollectsMsg };
 
 // use to build select query
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
+#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
 #[table_name="items"]
 pub struct Item {
     pub id: String,
@@ -27,30 +27,32 @@ pub struct Item {
     pub slug: String, 
 }
 
-// use to build insert query
-#[derive(Debug,Clone,Serialize,Deserialize,Insertable)]
-#[table_name="items"]
-pub struct NewItem<'a> {
-    pub id: &'a str,
-    pub title: &'a str,
-    pub uiid: &'a str,  // unique item id, like isbn...
-    pub authors: &'a str,
-    pub pub_at: &'a str,  // "MM-DD-YYYY"
-    pub publisher: &'a str,
-    pub category: &'a str, // Book or Cource ...
-    pub url: &'a str,
-    pub cover: &'a str,    // img url
-    pub edition: &'a str,  // binding, version ...
-    pub detail: &'a str,
-    pub rut_count: i32,
-    pub etc_count: i32,   // review, etc.
-    pub done_count: i32,  // num of who done
-    pub vote: i32,        //  cal per rut, done, etc
-    pub slug: &'a str,
+// Item's constructor
+impl Item {
+    pub fn new(id: String, slug: String, item: SubmitItem) -> Self {
+        Item {
+            id,
+            title: item.title,
+            uiid: item.uiid,
+            authors: item.authors, 
+            pub_at: item.pub_at,   
+            publisher: item.publisher,
+            category: item.category, 
+            url: item.url,
+            cover: item.cover,    
+            edition: item.edition,  
+            detail: item.detail,
+            rut_count: 0,
+            etc_count: 0,   
+            done_count: 0,
+            vote: 0,
+            slug,
+        }
+    }
 }
 
 // as msg in submit new item
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize,Serialize,Debug,Clone)]
 pub struct SubmitItem {
     pub title: String,
     pub uiid: String,  // unique item id, like isbn...
@@ -117,31 +119,7 @@ impl Message for ItemsPerID {
     type Result = Result<ItemListMsg, Error>;
 }
 
-// Item's constructor
-impl Item {
-    pub fn new() -> Self {
-        Item {
-            id: "".to_owned(),
-            title: "".to_owned(),
-            uiid: "".to_owned(),
-            authors: "".to_owned(), 
-            pub_at: "".to_owned(),   
-            publisher: "".to_owned(),
-            category: "".to_owned(), 
-            url: "".to_owned(),
-            cover: "".to_owned(),    
-            edition: "".to_owned(),  
-            detail: "".to_owned(),
-            rut_count: 0,
-            etc_count: 0,   
-            done_count: 0,
-            vote: 0,
-            slug: "".to_owned(),
-        }
-    }
-}
-
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
+#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
 #[table_name="collects"]
 pub struct Collect {
     pub id: String,
@@ -156,29 +134,17 @@ pub struct Collect {
 
 // Collect's constructor
 impl Collect {
-    pub fn new() -> Self {
+    pub fn new(uid: String, c: CollectItem) -> Self {
         Collect {
-            id: "".to_owned(),
-            rut_id: "".to_owned(),
-            item_id: "".to_owned(),
-            item_order: 0,
-            content: "".to_owned(), 
-            uname: "".to_owned(),   
+            id: uid,
+            rut_id: c.rut_id,
+            item_id: c.item_id,
+            item_order: c.item_order,
+            content: c.content, 
+            uname: c.uname,   
             collect_at: Utc::now().naive_utc(),
         }
     }
-}
-
-#[derive(Debug,Clone,Serialize,Deserialize,Insertable)]
-#[table_name="collects"]
-pub struct NewCollect<'a> {
-    pub id: &'a str,
-    pub rut_id: &'a str,
-    pub item_id: &'a str,
-    pub item_order: i32,
-    pub content: &'a str,
-    pub uname: &'a str,
-    pub collect_at: NaiveDateTime,
 }
 
 // as msg in rut collect new item
@@ -244,7 +210,7 @@ impl Message for CollectIDs {
     type Result = Result<CollectsMsg, Error>;
 }
 
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
+#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
 #[table_name="staritems"]
 pub struct StarItem {
     pub id: String,
@@ -253,19 +219,6 @@ pub struct StarItem {
     pub star_at: NaiveDateTime,
     pub note: String,
     pub flag: String,    // 0->to do,1->done, 2->doing
-    pub rate: i32,
-}
-
-// use to build insert query
-#[derive(Debug,Clone,Serialize,Deserialize,Insertable)]
-#[table_name="staritems"]
-pub struct ItemStar<'a> {
-    pub id: &'a str,
-    pub uname: &'a str,
-    pub item_id: &'a str,
-    pub star_at: NaiveDateTime,
-    pub note: &'a str,
-    pub flag: &'a str,
     pub rate: i32,
 }
 

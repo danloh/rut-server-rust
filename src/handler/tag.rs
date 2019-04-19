@@ -7,8 +7,7 @@ use chrono::Utc;
 use uuid;
 
 use model::tag::{ 
-    Tag, NewTag, CheckTag, UpdateTag, TagsPerID, TagRut, NewTagRut, RutTag,
-    StarTag, StarOrTag, TagStar, StarTagStatus 
+    Tag, CheckTag, UpdateTag, TagsPerID, TagRut, RutTag, StarTag, StarOrTag, StarTagStatus 
 };
 use model::msg::{ Msg, TagMsg, TagListMsg };
 
@@ -20,18 +19,19 @@ impl Handler<CheckTag> for Dba {
         use db::schema::tags::dsl::*;
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
         
-        let action = tg.action;
-        if &action == "POST" {
-            let newtag = NewTag {
-                id: &tg.tname,
-                tname: &tg.tname,
-                intro: "",
-                logo: "",
-                pname: "",
+        let action = tg.action.trim();
+        if action == "POST" {
+            let newtag = Tag {
+                id: tg.clone().tname,
+                tname: tg.clone().tname,
+                intro: "".to_owned(),
+                logo: "".to_owned(),
+                pname: "".to_owned(),
                 item_count: 0,
                 rut_count: 0,
                 etc_count: 0,
                 star_count: 0,
+                vote: 0,
             };
             let tag_new = diesel::insert_into(tags)
                 .values(&newtag)
@@ -162,10 +162,10 @@ impl Handler<RutTag> for Dba {
                     },
                     // else new tag-rut
                     None => {
-                        let new_tag_rut = NewTagRut {
-                            id: &(rtg.clone() + "-" + &rutID),
-                            tname: &rtg,
-                            rut_id: &rutID,
+                        let new_tag_rut = TagRut {
+                            id: (rtg.clone() + "-" + &rutID),
+                            tname: rtg.clone(),
+                            rut_id: rutID.clone(),
                             count: 1,
                         };
                         //  to check if tname in tags? otherwise, new_tag
@@ -184,16 +184,17 @@ impl Handler<RutTag> for Dba {
                             },
                             // if no existing tname, new_tag
                             None => {
-                                let newtag = NewTag {
-                                    id: &rtg,
-                                    tname: &rtg,
-                                    intro: "",
-                                    logo: "",
-                                    pname: "",
+                                let newtag = Tag {
+                                    id: rtg.clone(),
+                                    tname: rtg.clone(),
+                                    intro: "".to_owned(),
+                                    logo: "".to_owned(),
+                                    pname: "".to_owned(),
                                     item_count: 0,
                                     rut_count: 1,
                                     etc_count: 0,
                                     star_count: 0,
+                                    vote: 0,
                                 };
                                 // new_tag 
                                 diesel::insert_into(tags).values(&newtag).execute(conn)
@@ -238,12 +239,12 @@ impl Handler<StarOrTag> for Dba {
                 }
                 
                 let uid = format!("{}", uuid::Uuid::new_v4());
-                let new_star = TagStar {
-                    id: &uid,
-                    uname: &act.uname,
-                    tname: &act.tname,
+                let new_star = StarTag {
+                    id: uid,
+                    uname: act.clone().uname,
+                    tname: act.clone().tname,
                     star_at: Utc::now().naive_utc(),
-                    note: &act.note,
+                    note: act.clone().note,
                 };
                 diesel::insert_into(startags).values(&new_star)
                         .execute(conn).map_err(error::ErrorInternalServerError)?;

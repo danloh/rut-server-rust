@@ -5,7 +5,7 @@ use actix_web::{ Error, actix::Message };
 use chrono::{Utc, NaiveDateTime, Duration, Local};
 use model::msg::{ Msg, LoginMsg };
 
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
+#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
 #[table_name="users"]
 pub struct User {
     pub id: String,
@@ -33,20 +33,6 @@ impl User {
             nickname: "".to_owned(),
         }
     }
-}
-
-#[derive(Debug, Serialize, Deserialize, Insertable)]
-#[table_name="users"]
-pub struct NewUser<'a> {
-    pub id: &'a str,
-    pub uname: &'a str,
-    pub password: &'a str,
-    pub join_at: NaiveDateTime,
-    pub avatar: &'a str,
-    pub email: &'a str,
-    pub intro: &'a str,
-    pub location: &'a str,
-    pub nickname: &'a str,
 }
 
 // message to check username, or return as user info

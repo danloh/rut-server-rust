@@ -6,7 +6,7 @@ use chrono::{Utc, NaiveDateTime};
 use model::msg::{ Msg, TagMsg, TagListMsg };
 
 // use to build select query
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
+#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
 #[table_name="tags"]
 pub struct Tag {
     pub id: String,
@@ -21,37 +21,12 @@ pub struct Tag {
     pub vote: i32,       //cal per star,rut,item,comment
 }
 
-// use to build insert query
-#[derive(Debug,Clone,Serialize,Deserialize,Insertable)]
-#[table_name="tags"]
-pub struct NewTag<'a> {
-    pub id: &'a str,
-    pub tname: &'a str,
-    pub intro:&'a str,
-    pub logo: &'a str,
-    pub pname: &'a str,  // parent tag name
-    pub item_count: i32,
-    pub rut_count: i32,
-    pub etc_count: i32,
-    pub star_count: i32,
-}
-
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
+#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
 #[table_name="tagruts"]
 pub struct TagRut {
     pub id: String,
     pub tname: String,
     pub rut_id: String,
-    pub count: i32,
-}
-
-// use to build insert query
-#[derive(Debug,Clone,Serialize,Deserialize,Insertable)]
-#[table_name="tagruts"]
-pub struct NewTagRut<'a> {
-    pub id: &'a str,
-    pub tname: &'a str,
-    pub rut_id: &'a str,
     pub count: i32,
 }
 
@@ -125,7 +100,7 @@ impl Message for TagsPerID {
     type Result = Result<TagListMsg, Error>;
 }
 
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
+#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
 #[table_name="startags"]
 pub struct StarTag {
     pub id: String,
@@ -133,17 +108,6 @@ pub struct StarTag {
     pub tname: String,
     pub star_at: NaiveDateTime,
     pub note: String,
-}
-
-// use to build insert query
-#[derive(Debug,Clone,Serialize,Deserialize,Insertable)]
-#[table_name="startags"]
-pub struct TagStar<'a> {
-    pub id: &'a str,
-    pub uname: &'a str,
-    pub tname: &'a str,
-    pub star_at: NaiveDateTime,
-    pub note: &'a str,
 }
 
 // as msg in star or unstar tag

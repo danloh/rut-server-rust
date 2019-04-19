@@ -7,8 +7,7 @@ use actix_web::{
 use futures::Future;
 use router::AppState;
 use model::tag::{ 
-    Tag, CheckTag, UpdateTag, TagsPerID, NewTagRut, RutTag, 
-    StarOrTag, StarTagStatus 
+    Tag, CheckTag, UpdateTag, TagsPerID, RutTag, StarOrTag, StarTagStatus 
 };
 use model::user::{ CheckUser };
 use api::{ re_test_url, re_test_uname };

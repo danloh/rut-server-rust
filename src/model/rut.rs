@@ -6,7 +6,7 @@ use chrono::{Utc, NaiveDateTime};
 use model::msg::{ Msg, RutMsg, RutListMsg };
 
 // use to build select query
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
+#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
 #[table_name="ruts"]
 pub struct Rut {
     pub id: String,
@@ -26,25 +26,27 @@ pub struct Rut {
     pub slug: String,
 }
 
-// use to build insert query
-#[derive(Debug,Clone,Serialize,Deserialize,Insertable)]
-#[table_name="ruts"]
-pub struct NewRut<'a> {
-    pub id: &'a str,
-    pub title: &'a str,
-    pub url: &'a str,
-    pub content: &'a str,
-    pub create_at: NaiveDateTime,
-    pub renew_at: NaiveDateTime,
-    pub author_id: &'a str,
-    pub uname: &'a str,
-    pub credential: &'a str,
-    pub logo: &'a str,
-    pub item_count: i32,
-    pub comment_count: i32,
-    pub star_count: i32,
-    pub vote: i32,
-    pub slug: &'a str,
+// Rut's constructor
+impl Rut {
+    pub fn new(uid: String, slug: String, rut: CreateRut) -> Self {
+        Rut {
+            id: uid,
+            title: rut.title,
+            url: rut.url,
+            content: rut.content,
+            create_at: Utc::now().naive_utc(),
+            renew_at: Utc::now().naive_utc(),
+            author_id: rut.author_id,
+            uname: rut.uname,
+            credential: rut.credential,
+            logo: "".to_owned(),
+            item_count: 0,
+            comment_count: 0,
+            star_count: 0,
+            vote: 0,
+            slug,
+        }
+    }
 }
 
 // as msg in create new
@@ -102,30 +104,7 @@ impl Message for RutsPerID {
     type Result = Result<RutListMsg, Error>;
 }
 
-// Rut's constructor
-impl Rut {
-    pub fn new() -> Rut {
-        Rut {
-            id: "".to_owned(),
-            title: "".to_owned(),
-            url: "".to_owned(),
-            content: "".to_owned(),
-            create_at: Utc::now().naive_utc(),
-            renew_at: Utc::now().naive_utc(),
-            uname: "".to_owned(),
-            author_id: "".to_owned(),
-            credential: "".to_owned(),
-            logo: "".to_owned(),
-            item_count: 0,
-            comment_count: 0,
-            star_count: 0,
-            vote: 0,
-            slug: "".to_owned(),
-        }
-    }
-}
-
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
+#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
 #[table_name="starruts"]
 pub struct StarRut {
     pub id: String,
@@ -133,17 +112,6 @@ pub struct StarRut {
     pub rut_id: String,
     pub star_at: NaiveDateTime,
     pub note: String,
-}
-
-// use to build insert query
-#[derive(Debug,Clone,Serialize,Deserialize,Insertable)]
-#[table_name="starruts"]
-pub struct RutStar<'a> {
-    pub id: &'a str,
-    pub uname: &'a str,
-    pub rut_id: &'a str,
-    pub star_at: NaiveDateTime,
-    pub note: &'a str,
 }
 
 // as msg in star or unstar rut

@@ -10,7 +10,7 @@ use uuid;
 use dotenv;
 
 use model::user::{ 
-    User, UserID, NewUser, SignUser, LogUser, CheckUser, UpdateUser, ChangePsw, Claims 
+    User, UserID, SignUser, LogUser, CheckUser, UpdateUser, ChangePsw, Claims 
 };
 use model::msg::{ Msg, LoginMsg };
 
@@ -39,17 +39,18 @@ impl Handler<SignUser> for Dba {
                         .map_err(error::ErrorInternalServerError)?;
                 // generae uuid as user.id
                 let uid = format!("{}", uuid::Uuid::new_v4());
+                let name = msg.uname;
                 // prepare insertable data struct as insert_into.value
-                let new_user = NewUser {
-                    id: &uid,
-                    uname: &msg.uname,
-                    password: &hash_password,
+                let new_user = User{
+                    id: uid,
+                    uname: name.clone(),
+                    password: hash_password,
                     join_at: Utc::now().naive_utc(),
-                    avatar: "",
-                    email: "",
-                    intro: "",
-                    location: "",
-                    nickname: &msg.uname,
+                    avatar: "".to_owned(),
+                    email: "".to_owned(),
+                    intro: "".to_owned(),
+                    location: "".to_owned(),
+                    nickname: name.clone(),
                 };
                 diesel::insert_into(users)
                     .values(&new_user).execute(conn)

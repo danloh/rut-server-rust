@@ -8,9 +8,9 @@ use uuid;
 use util::share::gen_slug;
 
 use model::item::{
-    Item, NewItem, SubmitItem, UpdateItem, ItemID, ItemsPerID, Collect, NewCollect, 
+    Item, SubmitItem, UpdateItem, ItemID, ItemsPerID, Collect, 
     CollectItem, CollectID, CollectIDs, UpdateCollect, DelCollect, 
-    StarItem, NewStarItem, ItemStar, StarItemStatus  
+    StarItem, NewStarItem, StarItemStatus  
 };
 use model::msg::{ Msg, ItemMsg, ItemListMsg, StarItemMsg, CollectMsg, CollectsMsg };
 use model::rut::Rut;
@@ -53,24 +53,7 @@ impl Handler<SubmitItem> for Dba {
         let uuid_v4 = uuid::Uuid::new_v4();
         let uid = format!("{}", uuid_v4);
         let i_slug = gen_slug("i", &submit.title, &uuid_v4);
-        let new_item = NewItem {
-            id: &uid,
-            title: &submit.title,
-            uiid: &submit.uiid,
-            authors: &submit.authors,  
-            pub_at: &submit.pub_at,   
-            publisher: &submit.publisher,
-            category: &submit.category, 
-            url: &submit.url,
-            cover: &submit.cover,
-            edition: &submit.edition,
-            detail: &submit.detail,
-            rut_count: 0,
-            etc_count: 0, 
-            done_count: 0,
-            vote: 0,
-            slug: &i_slug,
-        };
+        let new_item = Item::new(uid,i_slug,submit.clone());
         let item_new = diesel::insert_into(items)
             .values(&new_item)
             .get_result::<Item>(conn)
@@ -93,19 +76,12 @@ impl Handler<ItemID> for Dba {
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
 
         let item_query = items.filter(&id.eq(&itemid.item_id))
-            .load::<Item>(conn).map_err(error::ErrorInternalServerError)?.pop();
-        let mut item = Item::new(); 
-        match item_query {
-            Some(q) => {
-                item = q.clone();
-            },
-            None => (),
-        }
+            .get_result::<Item>(conn).map_err(error::ErrorInternalServerError)?;
     
         Ok( ItemMsg { 
             status: 200, 
             message: "Success".to_string(),
-            item: item,
+            item: item_query,
         })
     }
 }
@@ -276,7 +252,7 @@ impl Handler<CollectItem> for Dba {
             .map_err(error::ErrorInternalServerError)?;
         
         // to gen item order, curr_item_count + 1, or pass from frontend
-        let rutID = collect.rut_id;
+        let rutID = collect.clone().rut_id;
         let rut_q = ruts             //query once for select/update
             .filter(&rid.eq(&rutID)) 
             .get_result::<Rut>(conn)
@@ -284,23 +260,11 @@ impl Handler<CollectItem> for Dba {
         let item_num = (&rut_q).item_count;
         // limit the item_count to 42
         if item_num >= 42 {
-            return Ok( CollectMsg { 
-                        status: 418, 
-                        message: "The answer to life the universe and everything".to_string(),
-                        collect: Collect::new(),
-                    })
+            return Err(error::ErrorInternalServerError("42"))
         }
 
         let uid = format!("{}", uuid::Uuid::new_v4());
-        let new_collect = NewCollect {
-            id: &uid,
-            rut_id: &rutID,
-            item_id: &item_q.id, // ok?
-            item_order: item_num + 1, // OK to gen order per item count 
-            content: &collect.content,
-            uname: &collect.uname,
-            collect_at: Utc::now().naive_utc(),
-        };
+        let new_collect = Collect::new(uid, collect.clone());
         let collect_new = diesel::insert_into(collects)
             .values(&new_collect).get_result::<Collect>(conn)
             .map_err(error::ErrorInternalServerError)?;
@@ -387,22 +351,15 @@ impl Handler<CollectID> for Dba {
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
         
         let c_query = collects
-            .filter(&id.eq(&cid.collect_id)).load::<Collect>(conn)
-            .map_err(error::ErrorInternalServerError)?.pop();
+            .filter(&id.eq(&cid.collect_id)).get_result::<Collect>(conn)
+            .map_err(error::ErrorInternalServerError)?;
         
-        if let Some(c) = c_query {
-            Ok( CollectMsg { 
-                status: 200, 
-                message: "Get".to_string(),
-                collect: c,
-            })
-        } else {
-            Ok( CollectMsg { 
-                status: 404, 
-                message: "Nothing".to_string(),
-                collect: Collect::new(),
-            })
-        }    
+        Ok( CollectMsg { 
+            status: 200, 
+            message: "Get".to_string(),
+            collect: c_query,
+        })
+        
     }
 }
 
@@ -485,13 +442,6 @@ impl Handler<UpdateCollect> for Dba {
         let c_q = collects.filter(&id.eq(&c.id))
             .get_result::<Collect>(conn)
             .map_err(error::ErrorInternalServerError)?;
-        if c_q.uname != c.uname {
-            return Ok( CollectMsg { 
-                        status: 401,
-                        message: "No Permission ".to_string(),
-                        collect: Collect::new(),
-                    })
-        }
 
         let collect_update = diesel::update(&c_q)
             .set(content.eq(c.content))
@@ -546,13 +496,13 @@ impl Handler<NewStarItem> for Dba {
         } else {
             // otherwise new star
             let uid = format!("{}", uuid::Uuid::new_v4());
-            let new_star = ItemStar {
-                id: &uid,
-                uname: &act.uname,
-                item_id: &act.item_id,
+            let new_star = StarItem {
+                id: uid,
+                uname: act.uname,
+                item_id: act.item_id,
                 star_at: Utc::now().naive_utc(),
-                note: &act.note,
-                flag: &act.flag,
+                note: act.note,
+                flag: act.flag,
                 rate: act.rate,
             };
             let si = diesel::insert_into(staritems).values(&new_star)
