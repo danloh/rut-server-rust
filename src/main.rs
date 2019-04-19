@@ -17,12 +17,11 @@ const INPUT_LIMIT: usize = 512;  // limit input title, url
 use actix::{ Actor, SyncContext };
 use actix::prelude::*;
 use actix_web::{
-    web::{ self, scope, resource, get, post, put, delete },
+    web::{ self, scope, resource, route, get, post, put, delete },
     middleware::{ Logger, cors::Cors },
-    App, HttpServer
+    App, HttpServer, HttpResponse
 };
 
-use chrono::Duration;
 use diesel::pg::PgConnection;
 use diesel::r2d2::{ ConnectionManager, Pool };
 use dotenv::dotenv;
@@ -97,16 +96,16 @@ fn main() -> std::io::Result<()> {
             )
             .service(resource("/ruts/{slug}")
                 .route(get().to_async(api::rut::get))
-                .route(post().to_async(api::rut::update))  // per frontend, to be del
+                .route(post().to_async(api::rut::update))  // per frontend, can be del
                 //.route(delete().to_async(api::rut::delete))
             )
-            .service(resource("/ruts/{per}/{perid}")
+            .service(resource("/ruts/{per}/{perid}")  // ?page=p&flag=create|star&kw= fr=
                 .route(get().to_async(api::rut::get_list))
             )
-            .service(resource("/starrut/{rid}/{action:[0|1]}/{note}")
+            .service(resource("/starrut/{rutid}/{action:[0|1]}/{note}")
                 .route(get().to_async(api::rut::star_or_unstar))
             )
-            .service(resource("/ifstarrut/{rut_slug}")
+            .service(resource("/ifstarrut/{rutid}")
                 .route(get().to_async(api::rut::star_status))
             )
             .service(resource("/items")
@@ -115,7 +114,7 @@ fn main() -> std::io::Result<()> {
             )
             .service(resource("/items/{slug}")
                 .route(get().to_async(api::item::get))
-                .route(post().to_async(api::item::update))  // to be del, per frontend
+                .route(post().to_async(api::item::update))  // can be del, per frontend
                 // .route(delete().to_async(api::item::delete))
             )
             .service(resource("/items/{per}/{id}")
@@ -127,7 +126,7 @@ fn main() -> std::io::Result<()> {
             .service(resource("/itemflag/{itemid}")
                 .route(get().to_async(api::item::star_status))
             )
-            .service(resource("/collectitem/{rid}")
+            .service(resource("/collectitem/{rutid}")
                 .route(post().to_async(api::item::collect_item))
             )
             .service(resource("/collects/{per}/{id}")
@@ -160,6 +159,9 @@ fn main() -> std::io::Result<()> {
             )
             .service(resource("/etcs/{per}/{perid}")
                 .route(post().to_async(api::etc::get_list))
+            )
+            .default_service(
+                route().to(|| HttpResponse::NotFound())
             )
         )
     })

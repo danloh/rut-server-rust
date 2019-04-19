@@ -173,18 +173,18 @@ impl Handler<UpdateItem> for Dba {
 
 // as msg in query item by slug
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct ItemSlug {
+pub struct QueryItem {
     pub item_slug: String,
     // pub action: String, // get / delete, to do
 }
 
-impl Message for ItemSlug {
+impl Message for QueryItem {
     type Result = Result<ItemMsg, ServiceError>;
 }
 
 // as msg to query items per tag, rut, user; id,title,url,uiid
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub enum ItemsPerID {
+pub enum QueryItems {
     ItemID(String), // should be slug
     Uiid(String),
     Title(String),
@@ -195,19 +195,19 @@ pub enum ItemsPerID {
     KeyID(String, String, String, i32) // keyword, per, perid(uname|tname), paging
 }
 
-impl Message for ItemsPerID {
+impl Message for QueryItems {
     type Result = Result<ItemListMsg, ServiceError>;
 }
 
 // handle msg from api::item.get_item
-impl Handler<ItemSlug> for Dba {
+impl Handler<QueryItem> for Dba {
     type Result = Result<ItemMsg, ServiceError>;
 
-    fn handle(&mut self, islug: ItemSlug, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, islug: QueryItem, _: &mut Self::Context) -> Self::Result {
         use crate::schema::items::dsl::*;
         let conn = &self.0.get().unwrap();
 
-        let item_query = items.filter(&id.eq(&islug.item_slug))
+        let item_query = items.filter(&slug.eq(&islug.item_slug)) // slug here only
             .get_result::<Item>(conn)?;
 
         Ok( ItemMsg { 
@@ -219,10 +219,10 @@ impl Handler<ItemSlug> for Dba {
 }
 
 // handle msg from api::item.get_item_list
-impl Handler<ItemsPerID> for Dba {
+impl Handler<QueryItems> for Dba {
     type Result = Result<ItemListMsg, ServiceError>;
 
-    fn handle(&mut self, perid: ItemsPerID, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, perid: QueryItems, _: &mut Self::Context) -> Self::Result {
         use crate::schema::items::dsl::*;
         let conn = &self.0.get().unwrap();
         
@@ -232,40 +232,40 @@ impl Handler<ItemsPerID> for Dba {
         
         // better do some limit
         match perid {
-            ItemsPerID::ItemID(i) => {
+            QueryItems::ItemID(i) => {
                 item_list = items.filter(&id.eq(&i)).load::<Item>(conn)?;
             },
-            ItemsPerID::Title(t) => {
+            QueryItems::Title(t) => {
                 item_list = items
                     .filter(&title.ilike(&t)) // ilike: %k%, %k, k%
                     .or_filter(&uiid.ilike(&t)).limit(10)
                     .load::<Item>(conn)?;
             },
-            ItemsPerID::Uiid(d) => {
+            QueryItems::Uiid(d) => {
                 item_list = items
                     .filter(&uiid.ilike(&d))
                     .or_filter(&title.ilike(&d)).limit(10)
                     .load::<Item>(conn)?;
             },
-            ItemsPerID::ItemUrl(u) => {
+            QueryItems::ItemUrl(u) => {
                 item_list = items
                     .filter(&url.ilike(&u)).limit(10)
                     .load::<Item>(conn)?;
             },
-            ItemsPerID::RutID(pid) => {
+            QueryItems::RutID(pid) => {
                 use crate::schema::collects::dsl::*;
                 item_id_vec = collects
                     .filter(&rut_id.eq(&pid))  // limit to 42 inserts, no need paging
                     .select(item_id).load::<String>(conn)?;
             },
-            ItemsPerID::TagID(pid) => {
+            QueryItems::TagID(pid) => {
                 use crate::schema::tagitems::dsl::*;
                 item_id_vec = tagitems
                     .filter(&tname.eq(&pid))
                     .order(count.desc()).limit(PER_PAGE.into()) // just limit most 
                     .select(item_id).load::<String>(conn)?;
             },
-            ItemsPerID::UserID(pid, f, p) => {
+            QueryItems::UserID(pid, f, p) => {
                 use crate::schema::staritems::dsl::*;
                 let query = staritems.filter(uname.eq(pid)).filter(flag.eq(f));
                 item_num = query.clone().count().get_result(conn)?;
@@ -278,7 +278,7 @@ impl Handler<ItemsPerID> for Dba {
                     .select(item_id).load::<String>(conn)?
                 };
             },
-            ItemsPerID::KeyID(k,f,i,p) => { // per keyword from taged, star
+            QueryItems::KeyID(k,f,i,p) => { // per keyword from taged, star
                 let fr = f.trim();
                 match fr {
                     "user" => {  
@@ -542,41 +542,41 @@ impl Handler<DelCollect> for Dba {
 
 // as msg in rut get collect info
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct CollectID {
+pub struct QueryCollect {
     pub collect_id: String,
-    pub action: String,    // get / delete
+    pub action: String,    // get|delete
 }
 
-impl Message for CollectID {
+impl Message for QueryCollect {
     type Result = Result<CollectMsg, ServiceError>;
 }
 
 // as msg in collect list per rutid or itemid
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub enum CollectIDs {
+pub enum QueryCollects {
     RutID(String),
     ItemID(String, i32),  // id, paging
     UserID(String, i32),  // id, paging
 }
 
-impl Message for CollectIDs {
+impl Message for QueryCollects {
     type Result = Result<CollectsMsg, ServiceError>;
 }
 
 // handle msg from api::item.get_collect_list
-impl Handler<CollectIDs> for Dba {
+impl Handler<QueryCollects> for Dba {
     type Result = Result<CollectsMsg, ServiceError>;
 
-    fn handle(&mut self, cid: CollectIDs, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, cid: QueryCollects, _: &mut Self::Context) -> Self::Result {
         use crate::schema::collects::dsl::*;
         let conn = &self.0.get().unwrap();
         
         let mut collect_list: Vec<Collect> = Vec::new();
         match cid {
-            CollectIDs::RutID(r) => {
+            QueryCollects::RutID(r) => {
                 collect_list = collects.filter(&rut_id.eq(&r)).load::<Collect>(conn)?;
             },
-            CollectIDs::ItemID(i,p) => {
+            QueryCollects::ItemID(i,p) => {
                 collect_list = 
                 if p < 1 { // no limit
                     collects.filter(&item_id.eq(&i)).load::<Collect>(conn)?
@@ -587,7 +587,7 @@ impl Handler<CollectIDs> for Dba {
                     .load::<Collect>(conn)?
                 };
             },
-            CollectIDs::UserID(u,p) => {
+            QueryCollects::UserID(u,p) => {
                 collect_list = 
                 if p < 1 { // no limit
                     collects.filter(&uname.eq(&u))
@@ -610,10 +610,10 @@ impl Handler<CollectIDs> for Dba {
 }
 
 // handle msg from api::item.get_collect
-impl Handler<CollectID> for Dba {
+impl Handler<QueryCollect> for Dba {
     type Result = Result<CollectMsg, ServiceError>;
 
-    fn handle(&mut self, cid: CollectID, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, cid: QueryCollect, _: &mut Self::Context) -> Self::Result {
         use crate::schema::collects::dsl::*;
         let conn = &self.0.get().unwrap();
         
@@ -644,7 +644,7 @@ pub struct StarItem {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct NewStarItem {
     pub uname: String,
-    pub item_slug: String,
+    pub item_id: String,
     pub note: String,
     pub flag: String,
     pub rate: i32,
@@ -658,7 +658,7 @@ impl Message for NewStarItem {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct StarItemStatus {
     pub uname: String,
-    pub item_slug: String,
+    pub item_id: String,
 }
 
 impl Message for StarItemStatus {
@@ -676,7 +676,7 @@ impl Handler<NewStarItem> for Dba {
         // check if star no -> todo -> done
         let check_star = staritems
             .filter(&uname.eq(&act.uname))
-            .filter(&item_id.eq(&act.item_slug))
+            .filter(&item_id.eq(&act.item_id))
             .load::<StarItem>(conn)?.pop();
 
         if let Some(s) = check_star {
@@ -688,7 +688,7 @@ impl Handler<NewStarItem> for Dba {
             let flg = si.flag.trim();
             if flg == "Done" || flg == "done" {
                 use crate::schema::items::dsl::{items, id as itemid, done_count};
-                diesel::update(items.filter(&itemid.eq(&act.item_slug)))
+                diesel::update(items.filter(&itemid.eq(&act.item_id)))
                     .set(done_count.eq(done_count + 1))
                     .execute(conn)?;
             }
@@ -705,7 +705,7 @@ impl Handler<NewStarItem> for Dba {
             let new_star = StarItem {
                 id: uid,
                 uname: act.uname,
-                item_id: act.item_slug,
+                item_id: act.item_id,
                 star_at: Utc::now().naive_utc(),
                 note: act.note,
                 flag: act.flag,
@@ -734,7 +734,7 @@ impl Handler<StarItemStatus> for Dba {
 
         let check_status = staritems
             .filter(&uname.eq(&status.uname))
-            .filter(&item_id.eq(&status.item_slug))
+            .filter(&item_id.eq(&status.item_id))
             .get_result::<StarItem>(conn)?;
         
 

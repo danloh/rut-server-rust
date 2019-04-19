@@ -11,8 +11,8 @@ use crate::INPUT_LIMIT;
 use crate::api::{ ReqQuery, re_test_url, len_limit };
 use crate::db::user::{ CheckUser };
 use crate::db::item::{ 
-    NewItem, UpdateItem, ItemSlug, ItemsPerID, CollectItem, CollectIDs, 
-    CollectID, UpdateCollect, DelCollect, StarItem, NewStarItem, StarItemStatus
+    NewItem, UpdateItem, QueryItem, QueryItems, CollectItem, QueryCollects, 
+    QueryCollect, UpdateCollect, DelCollect, StarItem, NewStarItem, StarItemStatus
 };
 
 pub fn new(
@@ -37,7 +37,7 @@ pub fn get(
     i_slug: Path<String>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let item_slug = i_slug.into_inner();
-    db.send(ItemSlug{item_slug})
+    db.send(QueryItem{item_slug})
       .from_err()
       .and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
@@ -64,17 +64,17 @@ pub fn get_list(
     let itemsPerID = match per {
         // hope can fuzzy query per uiid..url, contains
         // here are some issue, 400 or no result, % trimed
-        "uiid" => ItemsPerID::Uiid(perid),
-        "title" => ItemsPerID::Title(perid),
-        "url" => ItemsPerID::ItemUrl(
+        "uiid" => QueryItems::Uiid(perid),
+        "title" => QueryItems::Title(perid),
+        "url" => QueryItems::ItemUrl(
             String::from_utf8(decode(&perid).unwrap()).unwrap()
         ),
         // query per relations with  rut, tag, user
-        "rut" => ItemsPerID::RutID(perid),
-        "tag" => ItemsPerID::TagID(perid),
-        "user" => ItemsPerID::UserID(perid, flag, page),
-        "key" => ItemsPerID::KeyID(kw, fr, perid, page),
-        _ => ItemsPerID::ItemID(perid),
+        "rut" => QueryItems::RutID(perid),
+        "tag" => QueryItems::TagID(perid),
+        "user" => QueryItems::UserID(perid, flag, page),
+        "key" => QueryItems::KeyID(kw, fr, perid, page),
+        _ => QueryItems::ItemID(perid),
     };
 
     db.send(itemsPerID)
@@ -129,10 +129,10 @@ pub fn get_collect_list(
     let page = pq.page;
 
     let collectIDs = match per {
-        "item" => CollectIDs::ItemID(perid, page),
-        "rut" => CollectIDs::RutID(perid),
-        "user" => CollectIDs::UserID(perid, page),
-        _ => CollectIDs::RutID(perid),
+        "item" => QueryCollects::ItemID(perid, page),
+        "rut" => QueryCollects::RutID(perid),
+        "user" => QueryCollects::UserID(perid, page),
+        _ => QueryCollects::RutID(perid),
     };
 
     db.send(collectIDs)
@@ -149,7 +149,7 @@ pub fn get_collect(
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let collect_id = cid.into_inner();
     let action = "GET".to_string();
-    db.send(CollectID{ collect_id, action })
+    db.send(QueryCollect{ collect_id, action })
       .from_err()
       .and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
@@ -196,7 +196,7 @@ pub fn star_item(
     auth: CheckUser,
     star_info: Path<(String, String, i32, String)>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    let item_slug = star_info.clone().0;
+    let item_id = star_info.clone().0;
     let flag = star_info.clone().1;
     let rate = star_info.2;
     let note = star_info.clone().3;
@@ -208,7 +208,7 @@ pub fn star_item(
         panic!("illegal flag ")  // temp, todo more
     }
 
-    db.send( NewStarItem{uname, item_slug, note, flag, rate} )
+    db.send( NewStarItem{uname, item_id, note, flag, rate} )
       .from_err()
       .and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
@@ -222,9 +222,9 @@ pub fn star_status(
     i_slug: Path<String>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let uname = auth.uname;
-    let item_slug = i_slug.into_inner();
+    let item_id = i_slug.into_inner();
     
-    db.send( StarItemStatus{ uname, item_slug } )
+    db.send( StarItemStatus{ uname, item_id } )
       .from_err()
       .and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),

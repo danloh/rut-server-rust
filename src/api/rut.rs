@@ -11,9 +11,10 @@ use crate::INPUT_LIMIT;
 use crate::api::{ ReqQuery, re_test_url, len_limit };
 use crate::db::user::{ CheckUser };
 use crate::db::rut::{ 
-    CreateRut, RutSlug, RutsPerID, UpdateRut, StarOrRut, StarRutStatus 
+    CreateRut, QueryRut, QueryRuts, UpdateRut, StarOrRut, StarRutStatus 
 };
 
+// "/ruts" POST
 pub fn new(
     db: Data<DbAddr>,
     rut: Json<CreateRut>, 
@@ -31,12 +32,13 @@ pub fn new(
     })
 }
 
+// "/ruts/{slug}" GET
 pub fn get(
     r_slug: Path<String>,
     db: Data<DbAddr>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let rut_slug = r_slug.into_inner();
-    db.send(RutSlug{rut_slug})
+    db.send(QueryRut{rut_slug})
       .from_err()
       .and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
@@ -44,7 +46,7 @@ pub fn get(
     })
 }
 
-// query: 
+// "/ruts/{per}/{perid}?page=p&flag=create|star&kw= fr=" GET
 pub fn get_list(
     db: Data<DbAddr>,
     pq: Query<ReqQuery>,
@@ -60,11 +62,11 @@ pub fn get_list(
     let fr = pq.clone().fr;
     
     let query_msg = match per {
-        "item" => RutsPerID::ItemID(perid, page),
-        "tag" => RutsPerID::TagID(perid, page),
-        "user" => RutsPerID::UserID(perid, flag, page),
-        "key" => RutsPerID::KeyID(kw, fr, perid, page), // &keyword=&from=tag|user|item
-        _ => RutsPerID::Index(String::from("index")),
+        "item" => QueryRuts::ItemID(perid, page),
+        "tag" => QueryRuts::TagID(perid, page),
+        "user" => QueryRuts::UserID(perid, flag, page),
+        "key" => QueryRuts::KeyID(kw, fr, perid, page), // &keyword=&from=tag|user|item
+        _ => QueryRuts::Index(String::from("index")),
     };
 
     db.send(query_msg)
@@ -95,12 +97,12 @@ pub fn star_or_unstar(
     star_info: Path<(String, u8, String)>, 
     auth: CheckUser
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    let rut_slug = star_info.clone().0;
-    let action= star_info.1;
+    let rut_id = star_info.clone().0;
+    let action: u8 = star_info.1;
     let note = star_info.clone().2;
     let uname = auth.uname;
     
-    db.send( StarOrRut{ rut_slug, uname, note, action })
+    db.send( StarOrRut{ rut_id, uname, note, action })
       .from_err()
       .and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
@@ -114,9 +116,9 @@ pub fn star_status(
     auth: CheckUser
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let uname = auth.uname;
-    let rut_slug = r_info.into_inner();
+    let rut_id = r_info.into_inner();
     
-    db.send( StarRutStatus { uname, rut_slug })
+    db.send( StarRutStatus { uname, rut_id })
       .from_err()
       .and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),

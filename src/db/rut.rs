@@ -24,7 +24,7 @@ pub struct Rut {
     pub content: String,
     pub create_at: NaiveDateTime,
     pub renew_at: NaiveDateTime,
-    pub author_id: String,
+    pub author_id: String,  // todo, change as author
     pub uname: String,     // as who post
     pub credential: String,
     pub logo: String,
@@ -115,39 +115,39 @@ impl Handler<CreateRut> for Dba {
 
 // as msg in select by id
 #[derive(Deserialize,Serialize,Debug,Clone)]
-pub struct RutSlug {
+pub struct QueryRut {
     pub rut_slug: String,
     // pub action: String, // get / delete, to do
 }
 
-impl Message for RutSlug {
+impl Message for QueryRut {
     type Result = Result<RutMsg, ServiceError>;
 }
 
 // as msg to get  rut list, + paging
 #[derive(Deserialize,Serialize,Debug, Clone)]
-pub enum RutsPerID {
+pub enum QueryRuts {
     Index(String),
-    UserID(String, String, i32), // uname, create/star, paging
-    ItemID(String, i32),
+    UserID(String, String, i32), // uname, create|star, paging
+    ItemID(String, i32),         
     TagID(String, i32),
     KeyID(String, String, String, i32), // keyword, per, perid(uname|item|tname), paging
 }
 
-impl Message for RutsPerID {
+impl Message for QueryRuts {
     type Result = Result<RutListMsg, ServiceError>;
 }
 
 
 // handle msg from api::rut.get_rut
-impl Handler<RutSlug> for Dba {
+impl Handler<QueryRut> for Dba {
     type Result = Result<RutMsg, ServiceError>;
 
-    fn handle(&mut self, rslug: RutSlug, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, rslug: QueryRut, _: &mut Self::Context) -> Self::Result {
         use crate::schema::ruts::dsl::*;
         let conn = &self.0.get().unwrap();
 
-        let rut_query = ruts.filter(&id.eq(&rslug.rut_slug))  // todo , slug
+        let rut_query = ruts.filter(&slug.eq(&rslug.rut_slug))  // slug here only
             .get_result::<Rut>(conn)?;
     
         Ok( RutMsg { 
@@ -159,10 +159,10 @@ impl Handler<RutSlug> for Dba {
 }
 
 // handle msg from api::rut.get_rut_list
-impl Handler<RutsPerID> for Dba {
+impl Handler<QueryRuts> for Dba {
     type Result = Result<RutListMsg, ServiceError>;
 
-    fn handle(&mut self, per: RutsPerID, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, per: QueryRuts, _: &mut Self::Context) -> Self::Result {
         use crate::schema::ruts::dsl::*;
         let conn = &self.0.get().unwrap();
         
@@ -172,14 +172,14 @@ impl Handler<RutsPerID> for Dba {
         
         // build id_list per query type
         match per {
-            RutsPerID::Index(_) => {
+            QueryRuts::Index(_) => {
                 id_list = ruts.select(id)
                     .order(renew_at.desc())
                     //.order(vote.desc())
                     .limit(20)
                     .load::<String>(conn)?;
             },
-            RutsPerID::UserID(u,f,p) => {
+            QueryRuts::UserID(u,f,p) => {
                 if &f == "create" {
                     let query = ruts.filter(uname.eq(u));
                     rut_num = query.clone().count().get_result(conn)?;
@@ -205,7 +205,7 @@ impl Handler<RutsPerID> for Dba {
                     };
                 }
             },
-            RutsPerID::ItemID(i,p) => {
+            QueryRuts::ItemID(i,p) => {
                 use crate::schema::collects::dsl::*;
                 let query = collects.filter(item_id.eq(i));
                 rut_num = query.clone().count().get_result(conn)?;
@@ -218,7 +218,7 @@ impl Handler<RutsPerID> for Dba {
                     .select(rut_id).load::<String>(conn)?
                 };
             },
-            RutsPerID::TagID(t,p) => {
+            QueryRuts::TagID(t,p) => {
                 use crate::schema::tagruts::dsl::*;
                 let query = tagruts.filter(tname.eq(t));
                 rut_num = query.clone().count().get_result(conn)?;
@@ -231,7 +231,7 @@ impl Handler<RutsPerID> for Dba {
                     .select(rut_id).load::<String>(conn)?
                 };
             },
-            RutsPerID::KeyID(k,f,i,p) => { // per keyword from taged, created, collected
+            QueryRuts::KeyID(k,f,i,p) => { // per keyword from taged, created, collected
                 let fr = f.trim();
                 match fr {
                     "user" => {  // just use this arm
@@ -334,7 +334,7 @@ pub struct StarRut {
 // as msg in star or unstar rut
 #[derive(Deserialize,Serialize,Debug,Clone)]
 pub struct StarOrRut {
-    pub rut_slug: String,
+    pub rut_id: String,
     pub uname: String,
     pub note: String,
     pub action: u8,  // 0- unstar, 1- star
@@ -348,7 +348,7 @@ impl Message for StarOrRut {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct StarRutStatus {
     pub uname: String,
-    pub rut_slug: String,
+    pub rut_id: String,
 }
 
 impl Message for StarRutStatus {
@@ -369,7 +369,7 @@ impl Handler<StarOrRut> for Dba {
                 let new_star = StarRut {
                     id: uid,
                     uname: act.clone().uname,
-                    rut_id: act.clone().rut_slug,
+                    rut_id: act.clone().rut_id,
                     star_at: Utc::now().naive_utc(),
                     note: act.clone().note,
                 };
@@ -378,7 +378,7 @@ impl Handler<StarOrRut> for Dba {
                 use crate::schema::ruts::dsl::{
                     ruts, id as rid, star_count, item_count, vote, comment_count
                 };
-                diesel::update(ruts.filter(&rid.eq(&act.rut_slug)))
+                diesel::update(ruts.filter(&rid.eq(&act.rut_id)))
                     .set((
                         star_count.eq(star_count + 1),
                         // cal vote, to be task
@@ -390,13 +390,13 @@ impl Handler<StarOrRut> for Dba {
             },
             0 => {
                 diesel::delete(
-                    starruts.filter(&rut_id.eq(&act.rut_slug))
+                    starruts.filter(&rut_id.eq(&act.rut_id))
                             .filter(&uname.eq(&act.uname))
                 )
                 .execute(conn)?;
                 // to update the star_count - 1 in rut
                 use crate::schema::ruts::dsl::{ruts, id as rid, star_count};
-                diesel::update(ruts.filter(&rid.eq(&act.rut_slug)))
+                diesel::update(ruts.filter(&rid.eq(&act.rut_id)))
                     .set(star_count.eq(star_count - 1)).execute(conn)?;
 
                 Ok( Msg { status: 200, message: "unstar".to_string(),})
@@ -415,7 +415,7 @@ impl Handler<StarRutStatus> for Dba {
         let conn = &self.0.get().unwrap();
 
         let check_status = starruts
-            .filter(&rut_id.eq(&status.rut_slug))
+            .filter(&rut_id.eq(&status.rut_id))
             .filter(&uname.eq(&status.uname))
             .load::<StarRut>(conn)?.pop();
         

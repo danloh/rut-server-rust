@@ -10,7 +10,7 @@ use crate::DbAddr;
 use crate::INPUT_LIMIT;
 use crate::api::{ ReqQuery, re_test_url, len_limit };
 use crate::db::user::{ CheckUser };
-use crate::db::etc::{ Etc, PostEtc, EtcsPerID };
+use crate::db::etc::{ Etc, PostEtc, QueryEtcs };
 
 pub fn new(
     db: Data<DbAddr>,
@@ -42,7 +42,7 @@ pub fn get_list(
     // extract Query
     let page = pq.page;
     
-    db.send( EtcsPerID{ per, perid, page })
+    db.send( QueryEtcs{ per, perid, page })
       .from_err()
       .and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),

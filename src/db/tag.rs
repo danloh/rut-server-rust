@@ -92,7 +92,7 @@ impl Handler<CheckTag> for Dba {
 
 // as msg in query tag list
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub enum TagsPerID {
+pub enum QueryTags {
     RutID(String),
     ItemID(String),
     TagID(String),
@@ -100,45 +100,45 @@ pub enum TagsPerID {
     Index(String),
 }
 
-impl Message for TagsPerID {
+impl Message for QueryTags {
     type Result = Result<TagListMsg, ServiceError>;
 }
 
 // handle msg from api::tag.get_tag_list
-impl Handler<TagsPerID> for Dba {
+impl Handler<QueryTags> for Dba {
     type Result = Result<TagListMsg, ServiceError>;
 
-    fn handle(&mut self, per: TagsPerID, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, per: QueryTags, _: &mut Self::Context) -> Self::Result {
         use crate::schema::tags::dsl::*;
         let conn = &self.0.get().unwrap();
         
         let mut tag_list: Vec<String> = Vec::new();
         
         match per {
-            TagsPerID::RutID(r) => {
+            QueryTags::RutID(r) => {
                 use crate::schema::tagruts::dsl::*;
                 tag_list = tagruts.filter(&rut_id.eq(&r)).select(tname)
                     .order(count.desc()).limit(10) // order per count
                     .load::<String>(conn)?;
             },
-            TagsPerID::ItemID(i) => {
+            QueryTags::ItemID(i) => {
                 use crate::schema::tagitems::dsl::*;
                 tag_list = tagitems.filter(&item_id.eq(&i)).select(tname)
                     .order(count.desc()).limit(10) 
                     .load::<String>(conn)?;
             },
-            TagsPerID::TagID(t) => {
+            QueryTags::TagID(t) => {
                 tag_list = tags.filter(&pname.eq(&t)).select(tname)
                     .order(vote.desc()).limit(10) 
                     .load::<String>(conn)?;
             },
-            TagsPerID::UserID(u) => { 
+            QueryTags::UserID(u) => { 
                 use crate::schema::startags::dsl::*;
                 tag_list = startags.filter(&uname.eq(&u)).select(tname)
                     .order(star_at.desc()).limit(42) 
                     .load::<String>(conn)?;
             },
-            TagsPerID::Index(_) => {
+            QueryTags::Index(_) => {
                 tag_list = tags.select(tname).order(vote.desc()).limit(16)
                     .load::<String>(conn)?;
             },
@@ -205,7 +205,7 @@ pub struct TagRut {
 pub struct RutTag {
     pub tnames: Vec<String>,
     pub rut_id: String,
-    pub action: String, // tag or untag
+    pub action: u8, // tag 1 or untag 0
 }
 
 impl Message for RutTag {
@@ -223,7 +223,7 @@ impl Handler<RutTag> for Dba {
         let action = rutg.action;
         let rutID = rutg.rut_id;
 
-        if &action == "1" {  // tag
+        if action == 1 {  // tag
             for rtg in rutg.tnames {
                 // to check if tagged with a same tag
                 let tr = tagruts.filter(&tname.eq(&rtg)).filter(&rut_id.eq(&rutID))
@@ -231,9 +231,7 @@ impl Handler<RutTag> for Dba {
                 match tr {
                     // if tagged, update count + 1 in tagruts
                     Some(tgr) => {
-                        diesel::update(&tgr)
-                        .set(count.eq(count + 1))
-                        .execute(conn)?;
+                        diesel::update(&tgr).set(count.eq(count + 1)).execute(conn)?;
                     },
                     // else new tag-rut
                     None => {

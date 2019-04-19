@@ -11,7 +11,7 @@ use crate::{ MIN_LEN, ANS_LIMIT };
 use crate::api::{ ReqQuery, re_test_url, len_limit };
 use crate::db::user::{ CheckUser };
 use crate::db::tag::{ 
-    Tag, CheckTag, UpdateTag, TagsPerID, TagRut, RutTag, 
+    Tag, CheckTag, UpdateTag, QueryTags, TagRut, RutTag, 
     StarOrTag, StarTagStatus 
 };
 
@@ -66,11 +66,11 @@ pub fn get_list(
     let perid = per_info.clone().1;
     
     let tg_msg = match per {
-        "rut" => TagsPerID::RutID(perid),
-        "item" => TagsPerID::ItemID(perid),
-        "tag" => TagsPerID::TagID(perid),
-        "user" => TagsPerID::UserID(perid),
-        _ => TagsPerID::Index(perid),
+        "rut" => QueryTags::RutID(perid),
+        "item" => QueryTags::ItemID(perid),
+        "tag" => QueryTags::TagID(perid),
+        "user" => QueryTags::UserID(perid),
+        _ => QueryTags::Index(perid),
     };
 
     db.send(tg_msg).from_err()
@@ -99,11 +99,11 @@ pub fn update(
 pub fn tag_rut(
     db: Data<DbAddr>,
     rutg: Json<RutTag>,
-    tg_info: Path<(String, String)>,
+    tg_info: Path<(u8, String)>,
     auth: CheckUser
 ) -> impl Future<Item = HttpResponse, Error = Error> {
 
-    let action = tg_info.clone().0;     // 0-untag/1-tag
+    let action: u8 = tg_info.clone().0;     // 0-untag/1-tag
     let rut_id = tg_info.clone().1;
 
     let tags = rutg.into_inner();

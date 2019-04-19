@@ -123,3 +123,12 @@ pub struct EtcListMsg {
     pub etcs: Vec<Etc>,
     pub count: usize,
 }
+
+// todo
+// respon the status of star rut, follow tag, etc.
+#[derive(Deserialize,Serialize,Debug)]
+pub struct StarStatusMsg {
+    pub status: i32,   // response code
+    pub message: String,  // star | Unstar
+    pub count: i32,    // star num
+}

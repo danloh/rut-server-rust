@@ -87,21 +87,21 @@ impl Handler<PostEtc> for Dba {
 
 // as msg to get etc list
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct EtcsPerID {     // diff way from enum to get
+pub struct QueryEtcs {     // diff way from enum to get
     pub per: String,
     pub perid: String,
     pub page: i32,
 }
 
-impl Message for EtcsPerID {
+impl Message for QueryEtcs {
     type Result = Result<EtcListMsg, ServiceError>;
 }
 
 // handle msg from api::etc.get_etc_list
-impl Handler<EtcsPerID> for Dba {
+impl Handler<QueryEtcs> for Dba {
     type Result = Result<EtcListMsg, ServiceError>;
 
-    fn handle(&mut self, per: EtcsPerID, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, per: QueryEtcs, _: &mut Self::Context) -> Self::Result {
         use crate::schema::etcs::dsl::*;
         let conn = &self.0.get().unwrap();
         
