@@ -9,8 +9,8 @@ use actix_web::{
 use crate::DbAddr;
 use crate::INPUT_LIMIT;
 use crate::api::{ ReqQuery, re_test_url, len_limit };
-use crate::db::user::{ CheckUser };
-use crate::db::etc::{ Etc, PostEtc, QueryEtcs };
+use crate::model::user::{ CheckUser };
+use crate::model::etc::{ Etc, PostEtc, QueryEtcs };
 
 pub fn new(
     db: Data<DbAddr>,

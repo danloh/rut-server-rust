@@ -2,19 +2,18 @@
 
 use futures::{ future::err, Future, IntoFuture };
 use actix_web::{
-    error, Error, HttpRequest, HttpResponse, Responder, ResponseError,
+   HttpRequest, HttpResponse, Responder, 
+    error, Error, ResponseError,
     web::{ self, Path, Json, Data }
 };
 
 use crate::DbAddr;
-use crate::db::user::{ 
-    RegUser, UserID, AuthUser, CheckUser, UpdateUser, ChangePsw,
-    encode_token 
+use crate::model::user::{ 
+    RegUser, UserID, AuthUser, CheckUser, UpdateUser, ChangePsw, encode_token
 };
-use crate::db::msg::{ AuthMsg, UserMsg };
+use crate::model::msg::{ AuthMsg, UserMsg };
 use crate::api::{ re_test_uname };
 use crate::{ MIN_LEN, MAX_UNAME_LEN, MIN_PSW_LEN, ANS_LIMIT };
-
 
 
 pub fn signup(
@@ -24,6 +23,9 @@ pub fn signup(
     
     let reg = reg_user.into_inner();
     // todo validation
+    if true {
+      panic!("Invalid Content");
+    }
 
     db.send(reg)
       .from_err()

@@ -1,45 +1,19 @@
 // etc typed model and msg handler
 
-use actix::{ Handler, Message };
+use actix::{ Handler };
 use diesel::prelude::*;
-use diesel::{ self, QueryDsl, ExpressionMethods, dsl::any, PgTextExpressionMethods, RunQueryDsl };
-use chrono::{ Local, NaiveDateTime, Utc, Duration };
+use diesel::{ 
+    self, QueryDsl, ExpressionMethods, 
+    dsl::any, PgTextExpressionMethods, RunQueryDsl 
+};
+use chrono::{ Utc };
 use uuid::Uuid;
 
 use crate::Dba;
 use crate::errors::ServiceError;
-use crate::db::msg::{ Msg, EtcMsg, EtcListMsg };
+use crate::model::msg::{ Msg, EtcMsg, EtcListMsg };
 use crate::PER_PAGE;
-use crate::schema::etcs;
-
-
-// use to build select query
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
-#[table_name="etcs"]
-pub struct Etc {
-    pub id: String,
-    pub content: String,
-    pub post_at: NaiveDateTime,
-    pub petc_id: String,  // e.g. comment a comment
-    pub rut_id: String,
-    pub item_id: String,
-    pub tname: String, 
-    pub uname: String,  // who post
-    pub vote: i32,
-}
-
-// as msg in create new
-#[derive(Deserialize,Serialize,Debug,Clone)]
-pub struct PostEtc {
-    pub content: String,
-    pub post_to: String,
-    pub to_id: String,
-    pub uname: String,
-}
-
-impl Message for PostEtc {
-    type Result = Result<EtcMsg, ServiceError>;
-}
+use crate::model::etc::{ Etc, PostEtc, QueryEtcs };
 
 // handle msg from api::etc.post_etc
 impl Handler<PostEtc> for Dba {
@@ -83,18 +57,6 @@ impl Handler<PostEtc> for Dba {
             etc: etc_new.clone(),
         })
     }
-}
-
-// as msg to get etc list
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct QueryEtcs {     // diff way from enum to get
-    pub per: String,
-    pub perid: String,
-    pub page: i32,
-}
-
-impl Message for QueryEtcs {
-    type Result = Result<EtcListMsg, ServiceError>;
 }
 
 // handle msg from api::etc.get_etc_list
@@ -160,18 +122,4 @@ impl Handler<QueryEtcs> for Dba {
             count: etc_list.len(),
         })
     }
-}
-
-// todo
-// as msg to del etc
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct DelEtc {
-    pub etc_id: String,
-    pub rut_id: String,   // to update rut after del
-    pub item_id: String,  // to update item after del
-    pub uname: String,  // to check permission
-}
-
-impl Message for DelEtc {
-    type Result = Result<Msg, ServiceError>;
 }

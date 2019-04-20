@@ -9,8 +9,8 @@ use actix_web::{
 use crate::DbAddr;
 use crate::INPUT_LIMIT;
 use crate::api::{ ReqQuery, re_test_url, len_limit };
-use crate::db::user::{ CheckUser };
-use crate::db::item::{ 
+use crate::model::user::{ CheckUser };
+use crate::model::item::{ 
     NewItem, UpdateItem, QueryItem, QueryItems, CollectItem, QueryCollects, 
     QueryCollect, UpdateCollect, DelCollect, StarItem, NewStarItem, StarItemStatus
 };

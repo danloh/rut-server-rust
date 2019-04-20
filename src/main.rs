@@ -31,6 +31,7 @@ use dotenv::dotenv;
 
 mod db;
 mod api;
+mod model;
 mod util;
 mod errors;
 mod schema;

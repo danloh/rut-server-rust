@@ -1,10 +1,10 @@
-// Result msg typed model
+// typed-msg  model
 
-use crate::db::rut::Rut;
-use crate::db::item::{ Item, Collect };
-use crate::db::user::{ User, CheckUser };
-use crate::db::tag::{ Tag };
-use crate::db::etc::{ Etc };
+use crate::model::rut::Rut;
+use crate::model::item::{ Item, Collect };
+use crate::model::user::{ User, CheckUser };
+use crate::model::tag::{ Tag };
+use crate::model::etc::{ Etc };
 
 // general response msg struct
 #[derive(Deserialize,Serialize,Debug)]
