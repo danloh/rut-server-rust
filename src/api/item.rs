@@ -219,10 +219,10 @@ pub fn star_item(
 pub fn star_status(
     db: Data<DbAddr>,
     auth: CheckUser,
-    i_slug: Path<String>,
+    itemid: Path<String>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let uname = auth.uname;
-    let item_id = i_slug.into_inner();
+    let item_id = itemid.into_inner();
     
     db.send( StarItemStatus{ uname, item_id } )
       .from_err()

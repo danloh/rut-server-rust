@@ -26,6 +26,9 @@ use diesel::pg::PgConnection;
 use diesel::r2d2::{ ConnectionManager, Pool };
 use dotenv::dotenv;
 
+// #[macro_use]
+// pub mod macros;
+
 mod db;
 mod api;
 mod util;

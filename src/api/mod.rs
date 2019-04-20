@@ -13,7 +13,6 @@ pub mod item;
 pub mod tag;
 pub mod etc;
 
-
 use regex::Regex;
 
 // for extract typed request Query info: /path?page=&flag=&kw=&fr=
@@ -25,8 +24,6 @@ pub struct ReqQuery {
    fr: String,  // from user|tag..
 }
 
-// build response if anything wrong in checking req before send msg, 
-pub fn gen_response() {}
 
 // re test
 // for re test uname
@@ -49,3 +46,12 @@ pub fn len_limit(text: &str, min: usize, max: usize) -> bool {
     let l = text.len();
     l >= min && l <= max
 }
+
+// build response if anything wrong in checking req before send msg, 
+
+// use futures::{future::err, Future };
+// use crate::errors::ServiceError;
+
+// pub fn gen_response() -> impl Future<Item = (), Error = ServiceError> {
+//     return err(ServiceError::BadRequest("Invalid Content".into(),))
+// }

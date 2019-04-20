@@ -735,14 +735,26 @@ impl Handler<StarItemStatus> for Dba {
         let check_status = staritems
             .filter(&uname.eq(&status.uname))
             .filter(&item_id.eq(&status.item_id))
-            .get_result::<StarItem>(conn)?;
+            .load::<StarItem>(conn)?.pop();
         
 
-        Ok( StarItemMsg{ 
-            status: 200, 
-            message: check_status.flag, 
-            note: check_status.note, 
-            when: check_status.star_at.to_string() 
-        })
+        match check_status {
+            Some(s) => { 
+                Ok( StarItemMsg { 
+                    status: 200, 
+                    message: s.flag, 
+                    note: s.note, 
+                    when: s.star_at.to_string() 
+                }) 
+            },
+            None => { 
+                Ok( StarItemMsg { 
+                    status: 200, 
+                    message: "Options".to_string(),  // as not star
+                    note: "".to_string(), 
+                    when: "".to_string()
+                }) 
+            },
+        }
     }
 }

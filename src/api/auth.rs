@@ -1,8 +1,8 @@
 // api.auth view handler
 
-use futures::Future;
+use futures::{ future::err, Future, IntoFuture };
 use actix_web::{
-    Error, HttpRequest, HttpResponse, Responder, ResponseError,
+    error, Error, HttpRequest, HttpResponse, Responder, ResponseError,
     web::{ self, Path, Json, Data }
 };
 
@@ -12,21 +12,24 @@ use crate::db::user::{
     encode_token 
 };
 use crate::db::msg::{ AuthMsg, UserMsg };
-
+use crate::api::{ re_test_uname };
 use crate::{ MIN_LEN, MAX_UNAME_LEN, MIN_PSW_LEN, ANS_LIMIT };
 
 
+
 pub fn signup(
-    reg: Json<RegUser>,
+    reg_user: Json<RegUser>,
     db: Data<DbAddr>
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    // todo some check
+    
+    let reg = reg_user.into_inner();
+    // todo validation
 
-    db.send(reg.into_inner())
+    db.send(reg)
       .from_err()
       .and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
-        Err(err) => Ok(err.error_response()),
+        Err(er) => Ok(er.error_response()),
     })
 }
 
@@ -50,7 +53,7 @@ pub fn signin(
             };
             Ok(HttpResponse::Ok().json(auth_msg))
         },
-        Err(err) => Ok(err.error_response()),
+        Err(er) => Ok(er.error_response()),
     })
 }
 
@@ -70,7 +73,7 @@ pub fn get(
           };
           Ok(HttpResponse::Ok().json(user_msg))
         },
-        Err(err) => Ok(err.error_response()),
+        Err(er) => Ok(er.error_response()),
     })
 }
 
@@ -92,7 +95,7 @@ pub fn update(
           };
           Ok(HttpResponse::Ok().json(user_msg))
         },
-        Err(err) => Ok(err.error_response()),
+        Err(er) => Ok(er.error_response()),
     })
 }
 
@@ -108,7 +111,7 @@ pub fn change_psw(
       .from_err()
       .and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
-        Err(err) => Ok(err.error_response()),
+        Err(er) => Ok(er.error_response()),
     })
 }
 
