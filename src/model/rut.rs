@@ -2,8 +2,10 @@
 
 use actix::{ Message };
 use chrono::{ NaiveDateTime, Utc };
+use actix_web::{ Error, error };
 
 use crate::errors::ServiceError;
+use crate::model::{ Validate, test_len_limit, re_test_url, TITLE_LEN };
 use crate::model::msg::{ Msg, RutMsg, RutListMsg };
 use crate::schema::{ ruts, starruts };
 
@@ -66,6 +68,24 @@ impl Message for CreateRut {
     type Result = Result<RutMsg, ServiceError>;
 }
 
+impl Validate for CreateRut {
+    fn validate(&self) -> Result<(), Error> {
+        let url = &self.url.trim();
+        let url_test = if url.len() == 0 { true } else { re_test_url(url) };
+        let check_len = 
+            test_len_limit(&self.title, 3, TITLE_LEN) && 
+            test_len_limit(&self.author, 0, 64) && 
+            test_len_limit(&self.credential, 0, 64);
+        let check = url_test && check_len;
+
+        if check { 
+            Ok(()) 
+        } else { 
+            Err(error::ErrorBadRequest("Invalid Input"))
+        }
+    }
+}
+
 // as msg in select by id
 #[derive(Deserialize,Serialize,Debug,Clone)]
 pub struct QueryRut {
@@ -105,6 +125,24 @@ pub struct UpdateRut {
 
 impl Message for UpdateRut {
     type Result = Result<RutMsg, ServiceError>;
+}
+
+impl Validate for UpdateRut {
+    fn validate(&self) -> Result<(), Error> {
+        let url = &self.url.trim();
+        let url_test = if url.len() == 0 { true } else { re_test_url(url) };
+        let check_len = 
+            test_len_limit(&self.title, 3, TITLE_LEN) && 
+            test_len_limit(&self.author, 0, 64) && 
+            test_len_limit(&self.credential, 0, 64);
+        let check = url_test && check_len;
+
+        if check { 
+            Ok(()) 
+        } else { 
+            Err(error::ErrorBadRequest("Invalid Input"))
+        }
+    }
 }
 
 #[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]

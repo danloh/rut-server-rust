@@ -58,7 +58,6 @@ pub fn get(
 
 pub fn get_list(
     db: Data<DbAddr>,
-    pq: Query<ReqQuery>,
     per_info: Path<(String, String)>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     // extract Path

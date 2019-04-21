@@ -1,17 +1,16 @@
 // api.rut, view handler
 
-use futures::Future;
+use futures::{ future::result, Future };
 use actix_web::{
     Error, HttpRequest, HttpResponse, Responder, ResponseError,
     web::{ self, Path, Json, Data, Query }
 };
 
 use crate::DbAddr;
-use crate::INPUT_LIMIT;
 use crate::api::{ ReqQuery };
-use crate::model::user::{ CheckUser };
-use crate::model::rut::{ 
-    CreateRut, QueryRut, QueryRuts, UpdateRut, StarOrRut, StarRutStatus 
+use crate::model::{
+    Validate, user::CheckUser,
+    rut::{ CreateRut, QueryRut, QueryRuts, UpdateRut, StarOrRut, StarRutStatus } 
 };
 
 // "/ruts" POST
@@ -20,16 +19,16 @@ pub fn new(
     rut: Json<CreateRut>, 
     auth: CheckUser
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    // check authed via user:FromRequest
-    //println!("req: {:?} and user: {:?}", req, user);
-    // todo some check, length of input
+    let new_rut = rut.into_inner();
 
-    db.send(rut.into_inner())
-      .from_err()
-      .and_then(|res| match res {
-        Ok(r) => Ok(HttpResponse::Ok().json(r)),
-        Err(err) => Ok(err.error_response()),
-    })
+    result(new_rut.validate()).from_err()
+        .and_then(
+            move |_| db.send(new_rut).from_err()
+        )
+        .and_then(|res| match res {
+            Ok(r) => Ok(HttpResponse::Ok().json(r)),
+            Err(e) => Ok(e.error_response()),
+        })
 }
 
 // "/ruts/{slug}" GET
@@ -56,7 +55,7 @@ pub fn get_list(
     let per = per_info.0.trim();
     let perid = per_info.clone().1;
     // extract Query
-    let page = pq.page;
+    let page = std::cmp::max(pq.page, 1);
     let flag = pq.clone().flag;
     let kw = pq.clone().kw;
     let fr = pq.clone().fr;
@@ -82,14 +81,16 @@ pub fn update(
     rut: Json<UpdateRut>, 
     auth: CheckUser
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    // todo some check
+    let up_rut = rut.into_inner();
 
-    db.send(rut.into_inner())
-      .from_err()
-      .and_then(|res| match res {
-        Ok(rut) => Ok(HttpResponse::Ok().json(rut)),
-        Err(err) => Ok(err.error_response()),
-    })
+    result(up_rut.validate()).from_err()
+        .and_then(
+            move |_| db.send(up_rut).from_err()
+        )
+        .and_then(|res| match res {
+            Ok(r) => Ok(HttpResponse::Ok().json(r)),
+            Err(e) => Ok(e.error_response()),
+        })
 }
 
 pub fn star_or_unstar(

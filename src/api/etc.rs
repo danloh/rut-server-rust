@@ -40,7 +40,7 @@ pub fn get_list(
     let per = per_info.clone().0;
     let perid = per_info.clone().1;
     // extract Query
-    let page = pq.page;
+    let page = std::cmp::max(pq.page, 1);
     
     db.send( QueryEtcs{ per, perid, page })
       .from_err()

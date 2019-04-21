@@ -2,10 +2,14 @@
 
 use actix::{ Message };
 use chrono::{ NaiveDateTime, Utc };
+use actix_web::{ Error, error };
 
-use crate::model::{ Validate, test_len_limit, re_test_url };
 use crate::errors::ServiceError;
 use crate::util::share::{ gen_slug };
+use crate::model::{ 
+    Validate, test_len_limit, re_test_url,
+    TITLE_LEN, UIID_LEN, 
+};
 use crate::model::msg::{ 
     Msg, ItemMsg, ItemListMsg, StarItemMsg, CollectMsg, CollectsMsg 
 };
@@ -76,6 +80,30 @@ impl Message for NewItem {
     type Result = Result<ItemMsg, ServiceError>;
 }
 
+impl Validate for NewItem {
+    fn validate(&self) -> Result<(), Error> {
+        let url = &self.url.trim();
+        let cover = &self.cover.trim();
+        let url_test = if url.len() == 0 { true } else { re_test_url(url) };
+        let cover_test = if cover.len() == 0 { true } else { re_test_url(cover) };
+        let check_len = 
+            test_len_limit(&self.title, 3, TITLE_LEN) && 
+            test_len_limit(&self.uiid, 0, 32) && 
+            test_len_limit(&self.authors, 1, 64) && 
+            test_len_limit(&self.pub_at, 0, 32) && 
+            test_len_limit(&self.publisher, 0, 64) && 
+            test_len_limit(&self.category, 0, 32) && 
+            test_len_limit(&self.edition, 0, 64);
+        let check = url_test && cover_test && check_len;
+
+        if check { 
+            Ok(()) 
+        } else { 
+            Err(error::ErrorBadRequest("Invalid Input"))
+        }
+    }
+}
+
 // as msg in update item
 #[derive(Deserialize,Serialize,Debug,Clone,AsChangeset)]
 #[table_name="items"]
@@ -95,6 +123,31 @@ pub struct UpdateItem {
 
 impl Message for UpdateItem {
     type Result = Result<ItemMsg, ServiceError>;
+}
+
+impl Validate for UpdateItem {
+    fn validate(&self) -> Result<(), Error> {
+        let url = &self.url.trim();
+        let cover = &self.cover.trim();
+        let url_test = if url.len() == 0 { true } else { re_test_url(url) };
+        let cover_test = if cover.len() == 0 { true } else { re_test_url(cover) };
+        let check_len = 
+            test_len_limit(&self.id, 8, 512) && 
+            test_len_limit(&self.title, 3, TITLE_LEN) && 
+            test_len_limit(&self.uiid, 0, 32) && 
+            test_len_limit(&self.authors, 1, 64) && 
+            test_len_limit(&self.pub_at, 0, 32) && 
+            test_len_limit(&self.publisher, 0, 64) && 
+            test_len_limit(&self.category, 0, 32) && 
+            test_len_limit(&self.edition, 0, 64);
+        let check = url_test && cover_test && check_len;
+
+        if check { 
+            Ok(()) 
+        } else { 
+            Err(error::ErrorBadRequest("Invalid Input"))
+        }
+    }
 }
 
 // as msg in query item by slug

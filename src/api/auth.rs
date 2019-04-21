@@ -1,6 +1,6 @@
 // api.auth view handler
 
-use futures::{ future::result, Future, IntoFuture };
+use futures::{ future::result, Future };
 use actix_web::{
    HttpRequest, HttpResponse, Responder, 
     error, Error, ResponseError,
@@ -36,23 +36,26 @@ pub fn signin(
     auth: Json<AuthUser>,
     db: Data<DbAddr>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    // todo some check
+    
+    let auth_user = auth.into_inner();
 
-    db.send(auth.into_inner())
-      .from_err()
-      .and_then(|res| match res {
-        Ok(user) => {
-            let token = encode_token(&user)?;
-            let auth_msg = AuthMsg{
-                status: 200,
-                message: "Success".to_string(),
-                token: token,
-                exp: 5,  // unit: day
-                user: user,
-            };
-            Ok(HttpResponse::Ok().json(auth_msg))
-        },
-        Err(er) => Ok(er.error_response()),
+    result(auth_user.validate()).from_err()
+        .and_then(
+            move |_| db.send(auth_user).from_err()
+        )
+        .and_then(|res| match res {
+            Ok(user) => {
+                let token = encode_token(&user)?;
+                let auth_msg = AuthMsg{
+                    status: 200,
+                    message: "Success".to_string(),
+                    token: token,
+                    exp: 5,  // unit: day
+                    user: user,
+                };
+                Ok(HttpResponse::Ok().json(auth_msg))
+            },
+            Err(e) => Ok(e.error_response()),
     })
 }
 
@@ -81,20 +84,31 @@ pub fn update(
     user: Json<UpdateUser>, 
     auth: CheckUser
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    // todo some check
+    
+    let up_user = user.into_inner();
 
-    db.send(user.into_inner())
-      .from_err()
-      .and_then(|res| match res {
-        Ok(user) => {
-          let user_msg = UserMsg{
-              status: 200,
-              message: "Updated".to_string(),
-              user: user,
-          };
-          Ok(HttpResponse::Ok().json(user_msg))
-        },
-        Err(er) => Ok(er.error_response()),
+    // auth.uname == user.uname
+    if auth.uname != up_user.uname {
+        panic!("No Permission"); // to have a better way!!
+    }
+
+    result(up_user.validate()).from_err()
+        .and_then(
+            move |_| db.send(up_user).from_err()
+        )
+        .and_then(|res| match res {
+            Ok(u) => {
+                let token = encode_token(&u)?;
+                let auth_msg = AuthMsg{
+                    status: 200,
+                    message: "Success".to_string(),
+                    token: token,
+                    exp: 5,  // unit: day
+                    user: u,
+                };
+                Ok(HttpResponse::Ok().json(auth_msg))
+            },
+            Err(e) => Ok(e.error_response()),
     })
 }
 
@@ -103,14 +117,20 @@ pub fn change_psw(
     psw: Json<ChangePsw>, 
     auth: CheckUser
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    // todo some check
+    
+    let user_psw = psw.into_inner();
 
-    // println!("{:?}",user.uname);
-    db.send(psw.into_inner())
-      .from_err()
-      .and_then(|res| match res {
+    // auth.uname == user.uname
+    if auth.uname != user_psw.uname {
+        panic!("No Permission"); // to have a better way!!
+    }
+
+    result(user_psw.validate()).from_err().and_then(
+        move |_| db.send(user_psw).from_err()
+    )
+    .and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
-        Err(er) => Ok(er.error_response()),
+        Err(e) => Ok(e.error_response()),
     })
 }
 

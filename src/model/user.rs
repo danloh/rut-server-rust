@@ -6,7 +6,9 @@ use jsonwebtoken::{ decode, encode, Header, Validation };
 use chrono::{ Local, NaiveDateTime, Utc, Duration };
 use std::convert::From;
 
-use crate::model::{ Validate, test_len_limit, re_test_name, re_test_psw };
+use crate::model::{ 
+    Validate, test_len_limit, re_test_name, re_test_url, re_test_psw, MID_LEN 
+};
 use crate::errors::ServiceError;
 use crate::model::msg::{ Msg, AuthMsg };
 use crate::schema::{ users, follows, timelines };
@@ -210,6 +212,26 @@ impl Message for UpdateUser {
     type Result = Result<CheckUser, ServiceError>;
 }
 
+impl Validate for UpdateUser {
+    fn validate(&self) -> Result<(), Error> {
+        let nickname = &self.nickname.trim();
+        let nickname_test = 
+            if nickname.len() == 0 { true } else { re_test_name(nickname) };
+        let avatar = &self.avatar.trim();
+        let avatar_test = 
+            if avatar.len() == 0 { true } else { re_test_url(avatar) };
+        let check_len = 
+            test_len_limit(&self.location, 0, MID_LEN);
+        let check = nickname_test && avatar_test && check_len;
+
+        if check { 
+            Ok(()) 
+        } else { 
+            Err(error::ErrorBadRequest("Invalid Input"))
+        }
+    }
+}
+
 // msg to change psw
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ChangePsw {
@@ -220,6 +242,18 @@ pub struct ChangePsw {
 
 impl Message for ChangePsw {
     type Result = Result<Msg, ServiceError>;
+}
+
+impl Validate for ChangePsw {
+    fn validate(&self) -> Result<(), Error> {
+        let check = re_test_psw(&self.new_psw);
+
+        if check { 
+            Ok(()) 
+        } else { 
+            Err(error::ErrorBadRequest("Invalid Password"))
+        }
+    }
 }
 
 // to do:

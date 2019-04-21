@@ -48,3 +48,11 @@ pub fn test_len_limit(text: &str, min: usize, max: usize) -> bool {
     let l = text.trim().len();
     l >= min && l <= max
 }
+
+// some const 
+const TITLE_LEN: usize = 256;
+const URL_LEN: usize = 256;
+const UIID_LEN: usize = 32;
+const ST_LEN: usize = 16;  // for some short input: category
+const MID_LEN: usize = 32;  // for some mid input: lcoation
+const LG_LEN: usize = 64;   // for sone longer input: 

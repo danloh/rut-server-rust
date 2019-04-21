@@ -1,14 +1,14 @@
 // api.item, view handler
 
-use futures::Future;
+use futures::{ future::result, Future };
 use actix_web::{
     Error, HttpRequest, HttpResponse, Responder, ResponseError,
     web::{ self, Path, Json, Data, Query }
 };
 
 use crate::DbAddr;
-use crate::INPUT_LIMIT;
 use crate::api::{ ReqQuery };
+use crate::model::Validate;
 use crate::model::user::{ CheckUser };
 use crate::model::item::{ 
     NewItem, UpdateItem, QueryItem, QueryItems, CollectItem, QueryCollects, 
@@ -20,16 +20,16 @@ pub fn new(
     new_item: Json<NewItem>, 
     auth: CheckUser
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    // todo some check of input
-    // check url and cover img url
-    // required: title, author
-
-    db.send(new_item.into_inner())
-      .from_err()
-      .and_then(|res| match res {
-        Ok(item) => Ok(HttpResponse::Ok().json(item)),
-        Err(err) => Ok(err.error_response()),
-    })
+    let newItem = new_item.into_inner();
+    
+    result(newItem.validate()).from_err()
+        .and_then(
+            move |_| db.send(newItem).from_err()
+        )
+        .and_then(|res| match res {
+            Ok(item) => Ok(HttpResponse::Ok().json(item)),
+            Err(e) => Ok(e.error_response()),
+        })
 }
 
 pub fn get(
@@ -54,7 +54,7 @@ pub fn get_list(
     let per = per_info.0.trim();
     let perid = per_info.clone().1;
     // extract Query
-    let page = pq.page;
+    let page = std::cmp::max(pq.page, 1);
     let flag = pq.clone().flag;
     let kw = pq.clone().kw;
     let fr = pq.clone().fr;
@@ -92,16 +92,16 @@ pub fn update(
     up_item: Json<UpdateItem>, 
     auth: CheckUser
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    // todo some check of input
-    // check url and cover img url
-    // required: id, title, author
+    let upItem = up_item.into_inner();
 
-    db.send(up_item.into_inner())
-      .from_err()
-      .and_then(|res| match res {
-        Ok(item) => Ok(HttpResponse::Ok().json(item)),
-        Err(err) => Ok(err.error_response()),
-    })
+    result(upItem.validate()).from_err()
+        .and_then(
+            move |_| db.send(upItem).from_err()
+        )
+        .and_then(|res| match res {
+            Ok(item) => Ok(HttpResponse::Ok().json(item)),
+            Err(e) => Ok(e.error_response()),
+        })
 }
 
 pub fn collect_item(
@@ -128,7 +128,7 @@ pub fn get_collect_list(
     let per = per_info.0.trim();
     let perid = per_info.clone().1;
     // extract Query
-    let page = pq.page;
+    let page = std::cmp::max(pq.page, 1);
 
     let collectIDs = match per {
         "item" => QueryCollects::ItemID(perid, page),
