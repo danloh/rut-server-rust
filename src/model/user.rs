@@ -1,16 +1,16 @@
 // typed model and handle user message
 
 use actix::{ Message };
-use actix_web::{ dev::Payload, FromRequest, HttpRequest };
+use actix_web::{ dev::Payload, FromRequest, HttpRequest, Error, error };
 use jsonwebtoken::{ decode, encode, Header, Validation };
 use chrono::{ Local, NaiveDateTime, Utc, Duration };
 use std::convert::From;
 
+use crate::model::{ Validate, test_len_limit, re_test_name, re_test_psw };
 use crate::errors::ServiceError;
 use crate::model::msg::{ Msg, AuthMsg };
 use crate::schema::{ users, follows, timelines };
 
-// ###### user model ################
 
 #[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
 #[table_name="users"]
@@ -145,6 +145,20 @@ impl Message for RegUser {
     type Result = Result<Msg, ServiceError>;
 }
 
+impl Validate for RegUser {
+    fn validate(&self) -> Result<(), Error> {
+        let uname = &self.uname;
+        let psw = &self.password;
+        let check = re_test_name(uname) && re_test_psw(psw);
+
+        if check { 
+            Ok(()) 
+        } else { 
+            Err(error::ErrorBadRequest("Invalid username or password"))
+        }
+    }
+}
+
 // message to login user
 #[derive(Deserialize,Serialize,Debug)]
 pub struct AuthUser {
@@ -154,6 +168,20 @@ pub struct AuthUser {
 
 impl Message for AuthUser {
     type Result = Result<CheckUser, ServiceError>;
+}
+
+impl Validate for AuthUser {
+    fn validate(&self) -> Result<(), Error> {
+        let uname = &self.uname;
+        let psw = &self.password;
+        let check = test_len_limit(uname, 3, 42) && test_len_limit(psw, 8, 18);
+
+        if check { 
+            Ok(()) 
+        } else { 
+            Err(error::ErrorBadRequest("Invalid username or password")) 
+        }
+    }
 }
 
 // as msg in get user by uname

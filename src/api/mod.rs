@@ -13,7 +13,6 @@ pub mod item;
 pub mod tag;
 pub mod etc;
 
-use regex::Regex;
 
 // for extract typed request Query info: /path?page=&flag=&kw=&fr=
 #[derive(Deserialize,Clone)]
@@ -23,35 +22,3 @@ pub struct ReqQuery {
    kw: String,  // keyword  Option<String>?
    fr: String,  // from user|tag..
 }
-
-
-// re test
-// for re test uname
-pub fn re_test_uname(text: &str) -> bool {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"^[\w-]{3,42}$").unwrap();
-    }
-    RE.is_match(text)
-}
-
-// for re test url
-pub fn re_test_url(text: &str) -> bool {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"^(https?)://([^/:]+)(:[0-9]+)?(/.*)?$").unwrap();
-    }
-    RE.is_match(text)
-}
-
-pub fn len_limit(text: &str, min: usize, max: usize) -> bool {
-    let l = text.len();
-    l >= min && l <= max
-}
-
-// build response if anything wrong in checking req before send msg, 
-
-// use futures::{future::err, Future };
-// use crate::errors::ServiceError;
-
-// pub fn gen_response() -> impl Future<Item = (), Error = ServiceError> {
-//     return err(ServiceError::BadRequest("Invalid Content".into(),))
-// }

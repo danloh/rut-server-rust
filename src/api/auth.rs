@@ -1,6 +1,6 @@
 // api.auth view handler
 
-use futures::{ future::err, Future, IntoFuture };
+use futures::{ future::result, Future, IntoFuture };
 use actix_web::{
    HttpRequest, HttpResponse, Responder, 
     error, Error, ResponseError,
@@ -11,9 +11,8 @@ use crate::DbAddr;
 use crate::model::user::{ 
     RegUser, UserID, AuthUser, CheckUser, UpdateUser, ChangePsw, encode_token
 };
+use crate::model::Validate;
 use crate::model::msg::{ AuthMsg, UserMsg };
-use crate::api::{ re_test_uname };
-use crate::{ MIN_LEN, MAX_UNAME_LEN, MIN_PSW_LEN, ANS_LIMIT };
 
 
 pub fn signup(
@@ -22,17 +21,15 @@ pub fn signup(
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     
     let reg = reg_user.into_inner();
-    // todo validation
-    if true {
-      panic!("Invalid Content");
-    }
 
-    db.send(reg)
-      .from_err()
-      .and_then(|res| match res {
-        Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
-        Err(er) => Ok(er.error_response()),
-    })
+    result(reg.validate()).from_err()
+        .and_then(
+            move |_| db.send(reg).from_err()
+        )
+        .and_then(|res| match res {
+            Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
+            Err(e) => Ok(e.error_response()),
+        })
 }
 
 pub fn signin(

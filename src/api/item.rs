@@ -8,7 +8,7 @@ use actix_web::{
 
 use crate::DbAddr;
 use crate::INPUT_LIMIT;
-use crate::api::{ ReqQuery, re_test_url, len_limit };
+use crate::api::{ ReqQuery };
 use crate::model::user::{ CheckUser };
 use crate::model::item::{ 
     NewItem, UpdateItem, QueryItem, QueryItems, CollectItem, QueryCollects, 
@@ -204,13 +204,6 @@ pub fn star_item(
     let note = star_info.clone().3;
     let uname = auth.uname;
     
-    // do some process and check on flag
-    // flag only can be todo, doing, done
-    // let flag = flg.trim().to_lowercase();
-    // if flag != "todo" && flag != "doing" && flag != "done" {
-    //     panic!("illegal flag ")  // temp, todo more
-    // }
-
     db.send( NewStarItem{uname, item_id, note, flag, rate} )
       .from_err()
       .and_then(|res| match res {

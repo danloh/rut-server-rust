@@ -8,7 +8,7 @@ use actix_web::{
 
 use crate::DbAddr;
 use crate::INPUT_LIMIT;
-use crate::api::{ ReqQuery, re_test_url, len_limit };
+use crate::api::{ ReqQuery };
 use crate::model::user::{ CheckUser };
 use crate::model::rut::{ 
     CreateRut, QueryRut, QueryRuts, UpdateRut, StarOrRut, StarRutStatus 

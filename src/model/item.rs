@@ -3,6 +3,7 @@
 use actix::{ Message };
 use chrono::{ NaiveDateTime, Utc };
 
+use crate::model::{ Validate, test_len_limit, re_test_url };
 use crate::errors::ServiceError;
 use crate::util::share::{ gen_slug };
 use crate::model::msg::{ 
