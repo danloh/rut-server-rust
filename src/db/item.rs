@@ -10,7 +10,6 @@ use chrono::{ Utc };
 use uuid::Uuid;
 
 use crate::Dba;
-use crate::{ PER_PAGE };
 use crate::errors::ServiceError;
 use crate::util::share::{ gen_slug };
 use crate::model::msg::{ Msg, ItemMsg, ItemListMsg, StarItemMsg, CollectMsg, CollectsMsg };
@@ -20,6 +19,7 @@ use crate::model::item::{
    Collect, QueryCollects, QueryCollect, UpdateCollect, DelCollect, 
    StarItem, NewStarItem, StarItemStatus
 };
+use crate::model::PER_PAGE;
 
 
 // handle msg from api::item.submit_item

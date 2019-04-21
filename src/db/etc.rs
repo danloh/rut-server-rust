@@ -12,7 +12,7 @@ use uuid::Uuid;
 use crate::Dba;
 use crate::errors::ServiceError;
 use crate::model::msg::{ Msg, EtcMsg, EtcListMsg };
-use crate::PER_PAGE;
+use crate::model::PER_PAGE;
 use crate::model::etc::{ Etc, PostEtc, QueryEtcs };
 
 // handle msg from api::etc.post_etc

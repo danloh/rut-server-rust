@@ -6,14 +6,6 @@
 #[macro_use] extern crate diesel;
 #[macro_use] extern crate lazy_static;
 
-// eliminate magic number
-const PER_PAGE: i32 = 20;   // for paging
-const ANS_LIMIT: usize = 42;  // limit tag len, fo tags, collect item
-const MAX_UNAME_LEN: usize = 16;
-const MIN_PSW_LEN: usize = 8;
-const MIN_LEN: usize = 1;
-const INPUT_LIMIT: usize = 512;  // limit input title, url
-
 use actix::{ Actor, SyncContext };
 use actix::prelude::*;
 use actix_web::{

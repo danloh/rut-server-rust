@@ -2,9 +2,11 @@
 
 use actix::{ Message };
 use chrono::{ NaiveDateTime };
+use actix_web::{ Error, error };
 
 use crate::errors::ServiceError;
 use crate::model::msg::{ Msg, TagMsg, TagListMsg };
+use crate::model::{ Validate, test_len_limit, re_test_url, TAG_LEN };
 use crate::schema::{ tags, tagruts, tagitems, tagetcs, startags };
 
 
@@ -53,6 +55,18 @@ impl Message for CheckTag {
     type Result = Result<TagMsg, ServiceError>;
 }
 
+impl Validate for CheckTag {
+    fn validate(&self) -> Result<(), Error> {
+        let check = test_len_limit(&self.tname, 1, TAG_LEN);
+
+        if check { 
+            Ok(()) 
+        } else { 
+            Err(error::ErrorBadRequest("Invalid Input"))
+        }
+    }
+}
+
 // as msg in query tag list
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum QueryTags {
@@ -81,6 +95,23 @@ impl Message for UpdateTag {
     type Result = Result<TagMsg, ServiceError>;
 }
 
+impl Validate for UpdateTag {
+    fn validate(&self) -> Result<(), Error> {
+        let url = &self.logo.trim();
+        let url_test = if url.len() == 0 { true } else { re_test_url(url) };
+        let check_len = 
+            test_len_limit(&self.tname, 1, TAG_LEN) && 
+            test_len_limit(&self.pname, 0, TAG_LEN);  // pname canbe none
+        let check = url_test && check_len;
+        
+        if check { 
+            Ok(()) 
+        } else { 
+            Err(error::ErrorBadRequest("Invalid Input"))
+        }
+    }
+}
+
 #[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
 #[table_name="tagruts"]
 pub struct TagRut {
@@ -100,6 +131,20 @@ pub struct RutTag {
 
 impl Message for RutTag {
     type Result = Result<Msg, ServiceError>;
+}
+
+impl Validate for RutTag {
+    fn validate(&self) -> Result<(), Error> {
+        let tags = &self.tnames;
+        let action = *&self.action;
+        let check = tags.len() > 0 && (action == 0 || action == 1); 
+        
+        if check { 
+            Ok(()) 
+        } else { 
+            Err(error::ErrorBadRequest("Invalid Input"))
+        }
+    }
 }
 
 #[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]

@@ -49,10 +49,13 @@ pub fn test_len_limit(text: &str, min: usize, max: usize) -> bool {
     l >= min && l <= max
 }
 
-// some const 
-const TITLE_LEN: usize = 256;
-const URL_LEN: usize = 256;
-const UIID_LEN: usize = 32;
-const ST_LEN: usize = 16;  // for some short input: category
-const MID_LEN: usize = 32;  // for some mid input: lcoation
-const LG_LEN: usize = 64;   // for sone longer input: 
+// some const to eliminate magic number
+pub const PER_PAGE: i32 = 20;    // for paging
+pub const TITLE_LEN: usize = 256;
+pub const URL_LEN: usize = 256;
+pub const UIID_LEN: usize = 32;
+pub const TAG_LEN: usize = 42;
+pub const ST_LEN: usize = 16;  // for some short input: category
+pub const MID_LEN: usize = 32;  // for some mid input: lcoation
+pub const LG_LEN: usize = 64;   // for sone longer input: 
+

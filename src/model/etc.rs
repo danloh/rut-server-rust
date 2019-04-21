@@ -2,8 +2,10 @@
 
 use actix::{ Message };
 use chrono::{ NaiveDateTime };
+use actix_web::{ Error, error };
 
 use crate::errors::ServiceError;
+use crate::model::{ Validate, test_len_limit, re_test_url, TAG_LEN };
 use crate::model::msg::{ Msg, EtcMsg, EtcListMsg };
 use crate::schema::etcs;
 
@@ -36,6 +38,19 @@ impl Message for PostEtc {
     type Result = Result<EtcMsg, ServiceError>;
 }
 
+impl Validate for PostEtc {
+    fn validate(&self) -> Result<(), Error> {
+        let check_len = test_len_limit(&self.content, 1, 512);
+        let check = check_len;
+
+        if check { 
+            Ok(()) 
+        } else { 
+            Err(error::ErrorBadRequest("Invalid Input(1-512)"))
+        }
+    }
+}
+
 // as msg to get etc list
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct QueryEtcs {     // diff way from enum to get
@@ -47,7 +62,6 @@ pub struct QueryEtcs {     // diff way from enum to get
 impl Message for QueryEtcs {
     type Result = Result<EtcListMsg, ServiceError>;
 }
-
 
 // todo
 // as msg to del etc

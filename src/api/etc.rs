@@ -1,15 +1,15 @@
 // api.etc, view handler: comment, excerpt, etc.
 
-use futures::Future;
+use futures::{ future::result, Future};
 use actix_web::{
     Error, HttpRequest, HttpResponse, Responder, ResponseError,
     web::{ self, Path, Json, Data, Query }
 };
 
 use crate::DbAddr;
-use crate::INPUT_LIMIT;
 use crate::api::{ ReqQuery };
 use crate::model::user::{ CheckUser };
+use crate::model::{ Validate };
 use crate::model::etc::{ Etc, PostEtc, QueryEtcs };
 
 pub fn new(
@@ -18,16 +18,18 @@ pub fn new(
     auth: CheckUser
 ) -> impl Future<Item = HttpResponse, Error = Error> {
 
-    db.send( PostEtc {
-        content: petc.content.clone(),
-        post_to: petc.post_to.clone(),
-        to_id: petc.to_id.clone(),
-        uname: auth.uname,
-    })
-    .from_err().and_then(|res| match res {
-        Ok(rut) => Ok(HttpResponse::Ok().json(rut)),
-        Err(err) => Ok(err.error_response()),
-    })
+    let post_etc = petc.into_inner();
+    let uname = auth.uname;
+    let new_etc = PostEtc{ uname, ..post_etc };
+
+    result(new_etc.validate()).from_err()
+        .and_then(
+            move |_| db.send(new_etc).from_err()
+        )
+        .and_then(|res| match res {
+            Ok(et) => Ok(HttpResponse::Ok().json(et)),
+            Err(e) => Ok(e.error_response()),
+        })
 }
 
 pub fn get_list(

@@ -16,7 +16,7 @@ use crate::model::msg::{ Msg, RutMsg, RutListMsg };
 use crate::model::rut::{ 
     Rut, CreateRut, QueryRut, QueryRuts, UpdateRut, StarRut, StarOrRut, StarRutStatus 
 };
-use crate::PER_PAGE;
+use crate::model::PER_PAGE;
 
 // handle msg from api::rut.new_rut
 impl Handler<CreateRut> for Dba {
