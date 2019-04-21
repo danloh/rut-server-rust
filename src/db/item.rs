@@ -179,7 +179,7 @@ impl Handler<QueryItems> for Dba {
                     "user" => {  
                         use crate::schema::staritems::dsl::{staritems, uname, flag, item_id};
                         let ids = staritems.filter(&uname.eq(&i))
-                            .filter(&flag.eq("done"))  // just search done
+                            .filter(&flag.eq(3))  // just search done
                             .select(item_id).load::<String>(conn)?;
                         item_list = items.filter(&title.ilike(&k))
                             .filter(&id.eq(any(&ids)))
@@ -336,7 +336,7 @@ impl Handler<DelCollect> for Dba {
         let rut_q = 
             ruts.filter(&rid.eq(&rutID)).get_result::<Rut>(conn)?;
         
-        let item_num = rut_q.item_count;  // to use in re-order
+        let item_num = rut_q.item_count as i16;  // to use in re-order
 
         diesel::update(&rut_q)
             .set((
@@ -438,34 +438,30 @@ impl Handler<NewStarItem> for Dba {
         use crate::schema::staritems::dsl::*;
         let conn = &self.0.get().unwrap();
         
-        // check if star no -> todo -> done
+        // check if star-ed already
         let check_star = staritems
             .filter(&uname.eq(&act.uname))
             .filter(&item_id.eq(&act.item_id))
             .load::<StarItem>(conn)?.pop();
+        
+        // flag
+        let flg = act.flag;
+        let mut si: StarItem;
 
         if let Some(s) = check_star {
-            // if stared, todo -> doing or done
-            let si = diesel::update(&s)
-                .set(flag.eq(act.flag))
+            // if stared, just update flag:  todo -> doing -> done
+            si = diesel::update(&s)
+                .set(flag.eq(&flg))
                 .get_result::<StarItem>(conn)?;
             // update item done_count + 1 if done
-            let flg = si.flag.trim();
-            if flg == "Done" || flg == "done" {
+            if flg == 3 {
                 use crate::schema::items::dsl::{items, id as itemid, done_count};
                 diesel::update(items.filter(&itemid.eq(&act.item_id)))
                     .set(done_count.eq(done_count + 1))
                     .execute(conn)?;
             }
-
-            Ok( StarItemMsg {
-                status: 200, 
-                message: flg.to_string(),
-                note: si.note, 
-                when: si.star_at.to_string(),
-            })
         } else {
-            // otherwise new star
+            // otherwise new star-item
             let uid = format!("{}", uuid::Uuid::new_v4());
             let new_star = StarItem {
                 id: uid,
@@ -473,19 +469,19 @@ impl Handler<NewStarItem> for Dba {
                 item_id: act.item_id,
                 star_at: Utc::now().naive_utc(),
                 note: act.note,
-                flag: act.flag,
+                flag: flg,
                 rate: act.rate,
             };
-            let si = diesel::insert_into(staritems).values(&new_star)
+            si = diesel::insert_into(staritems).values(&new_star)
                 .get_result::<StarItem>(conn)?;
-            
-            Ok( StarItemMsg { 
-                status: 200, 
-                message: si.flag, 
-                note: si.note, 
-                when: si.star_at.to_string() 
-            })
         }
+
+        Ok( StarItemMsg { 
+            status: 200, 
+            message: si.flag.to_string(), 
+            note: si.note, 
+            when: si.star_at.to_string() 
+        })
     }
 }
 
@@ -507,7 +503,7 @@ impl Handler<StarItemStatus> for Dba {
             Some(s) => { 
                 Ok( StarItemMsg { 
                     status: 200, 
-                    message: s.flag, 
+                    message: s.flag.to_string(), 
                     note: s.note, 
                     when: s.star_at.to_string() 
                 }) 

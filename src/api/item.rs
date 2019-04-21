@@ -72,7 +72,9 @@ pub fn get_list(
         // query per relations with  rut, tag, user
         "rut" => QueryItems::RutID(perid),
         "tag" => QueryItems::TagID(perid),
-        "user" => QueryItems::UserID(perid, flag, page),
+        "user" => QueryItems::UserID(
+          perid, flag.parse::<i16>().unwrap(), page
+        ),
         "key" => QueryItems::KeyID(kw, fr, perid, page),
         _ => QueryItems::ItemID(perid),
     };
@@ -194,19 +196,20 @@ pub fn update_collect(
 pub fn star_item(
     db: Data<DbAddr>,
     auth: CheckUser,
-    star_info: Path<(String, String, i32, String)>,
+    star_info: Path<(String, i16, i16, String)>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let item_id = star_info.clone().0;
-    let flag = star_info.clone().1;
+    let flag = star_info.1;   // 1-todo|2-doing|3-done
     let rate = star_info.2;
     let note = star_info.clone().3;
     let uname = auth.uname;
-
+    
+    // do some process and check on flag
     // flag only can be todo, doing, done
-    let flg = flag.to_lowercase();
-    if flg != "todo" && flg != "doing" && flg != "done" {
-        panic!("illegal flag ")  // temp, todo more
-    }
+    // let flag = flg.trim().to_lowercase();
+    // if flag != "todo" && flag != "doing" && flag != "done" {
+    //     panic!("illegal flag ")  // temp, todo more
+    // }
 
     db.send( NewStarItem{uname, item_id, note, flag, rate} )
       .from_err()

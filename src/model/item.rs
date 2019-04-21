@@ -116,7 +116,7 @@ pub enum QueryItems {
     ItemUrl(String),
     RutID(String),
     TagID(String),
-    UserID(String, String, i32),  // (uname, flag, paging)
+    UserID(String, i16, i32),  // (uname, flag, paging)
     KeyID(String, String, String, i32) // keyword, per, perid(uname|tname), paging
 }
 
@@ -130,7 +130,7 @@ pub struct Collect {
     pub id: String,
     pub rut_id: String,
     pub item_id: String,
-    pub item_order: i32,
+    pub item_order: i16,
     pub content: String,
     // pub spoiler: bool,  // to do but 
     pub uname: String,
@@ -157,7 +157,7 @@ impl Collect {
 pub struct CollectItem {
     pub rut_id: String,
     pub item_id: String,
-    pub item_order: i32,
+    pub item_order: i16,
     pub content: String,
     pub uname: String,
 }
@@ -171,7 +171,7 @@ impl Message for CollectItem {
 #[table_name="collects"]
 pub struct UpdateCollect {
     pub id: String,
-    // pub item_order: i32,  // re-order, to do
+    // pub item_order: i16,  // re-order, to do
     pub content: String,
     pub uname: String,  // to check permission
     // pub spoiler: bool,  // to do but 
@@ -223,8 +223,8 @@ pub struct StarItem {
     pub item_id: String,
     pub star_at: NaiveDateTime,
     pub note: String,
-    pub flag: String,    // Todo|Done|Doing
-    pub rate: i32,
+    pub flag: i16,    // 1-Todo|3-Done|2-Doing
+    pub rate: i16,
 }
 
 // as msg in star item: todo, done, doing
@@ -233,8 +233,8 @@ pub struct NewStarItem {
     pub uname: String,
     pub item_id: String,
     pub note: String,
-    pub flag: String,
-    pub rate: i32,
+    pub flag: i16,
+    pub rate: i16,
 }
 
 impl Message for NewStarItem {

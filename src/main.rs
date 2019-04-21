@@ -124,7 +124,7 @@ fn main() -> std::io::Result<()> {
             .service(resource("/items/{per}/{id}")
                 .route(get().to_async(api::item::get_list))
             )
-            .service(resource("/staritem/{itemid}/{flag}/{rate}/{note}")
+            .service(resource("/staritem/{itemid}/{flag:[1|2|3]}/{rate}/{note}")
                 .route(get().to_async(api::item::star_item))
             )
             .service(resource("/itemflag/{itemid}")

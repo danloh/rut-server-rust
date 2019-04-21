@@ -17,7 +17,7 @@ pub struct Rut {
     pub content: String,
     pub create_at: NaiveDateTime,
     pub renew_at: NaiveDateTime,
-    pub author_id: String,  // todo, change as author
+    pub author: String,  // todo, change as author
     pub uname: String,     // as who post
     pub credential: String,
     pub logo: String,
@@ -38,7 +38,7 @@ impl Rut {
             content: rut.content,
             create_at: Utc::now().naive_utc(),
             renew_at: Utc::now().naive_utc(),
-            author_id: rut.author,
+            author: rut.author,
             uname: rut.uname,
             credential: rut.credential,
             logo: "".to_owned(),
@@ -99,7 +99,7 @@ pub struct UpdateRut {
     pub title: String,
     pub url: String,
     pub content: String,
-    pub author_id: String,
+    pub author: String,
     pub credential: String,
 }
 

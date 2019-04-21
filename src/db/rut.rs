@@ -209,7 +209,7 @@ impl Handler<UpdateRut> for Dba {
                 title.eq(rut.title.clone()),
                 url.eq(rut.url.clone()),
                 content.eq(rut.content.clone()),
-                author_id.eq(rut.author_id.clone()),
+                author.eq(rut.author.clone()),
                 credential.eq(rut.credential.clone()),
                 renew_at.eq(Utc::now().naive_utc()),
             ))
