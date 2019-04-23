@@ -12,12 +12,12 @@ path = "tests/lib.rs"
 futures = "0.1.26"
 actix = { version = "0.8.1", features = ["http"] }
 actix-rt = "0.2.2"
-actix-web = "1.0.0-alpha.6"
+actix-web = "1.0.0-beta.1"
 diesel = { version = "1.4.2", features = ["postgres","chrono","serde_json","uuidv07","r2d2"] }
 r2d2 = "0.8.4"
 serde_derive="1.0.90"
-serde_json="1.0"
-serde="1.0"
+serde_json="1.0.39"
+serde="1.0.90"
 jsonwebtoken = { git = "https://github.com/Keats/jsonwebtoken.git", branch = "next" }
 
 derive_more = "0.14"
@@ -31,8 +31,5 @@ env_logger = "0.6.1"
 dotenv = "0.13.0"
 base64 = "0.10.1"
 num_cpus = "1.10.0"
-
-#validator = "0.8.0"
-#validator_derive = "0.8.0"
 
 # openssl = "0.10.20"

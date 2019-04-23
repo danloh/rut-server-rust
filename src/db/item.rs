@@ -234,6 +234,15 @@ impl Handler<CollectItem> for Dba {
         use crate::schema::ruts::dsl::{ruts, id as rid, item_count, logo, renew_at};
         use crate::schema::items::dsl::{items, id as itemid, rut_count, cover};
         let conn = &self.0.get().unwrap();
+
+        // to check if have collected
+        let check_collect = collects
+            .filter(&rut_id.eq(&collect.rut_id))
+            .filter(&item_id.eq(&collect.item_id))
+            .load::<Collect>(conn)?.pop();
+        if let Some(c) = check_collect {
+            return Err(ServiceError::BadRequest("400: Duplicate".into()))
+        }
         
         // get item cover then as rut logo, and check if item exist
         let item_q = items
@@ -248,15 +257,14 @@ impl Handler<CollectItem> for Dba {
         let item_num = (&rut_q).item_count;
         // limit the item_count to 42
         if item_num >= 42 {
-            return Err(ServiceError::BadRequest(
-                "418: The answer to life the universe and everything".into()
-            ))
+            return Err(ServiceError::BadRequest("418: Answer 42".into()))
         }
         
         // new collect
         let uuid_v4 = uuid::Uuid::new_v4();
         let uid = format!("{}", uuid_v4);
-        let new_collect = Collect::new(uid, collect);
+        let i_order = (item_num + 1) as i16;
+        let new_collect = Collect::new(uid, i_order, collect);
         let collect_new = diesel::insert_into(collects)
             .values(&new_collect).get_result::<Collect>(conn)?;
         
@@ -434,29 +442,33 @@ impl Handler<QueryCollect> for Dba {
 impl Handler<NewStarItem> for Dba {
     type Result = Result<StarItemMsg, ServiceError>;
 
-    fn handle(&mut self, act: NewStarItem, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, istar: NewStarItem, _: &mut Self::Context) -> Self::Result {
         use crate::schema::staritems::dsl::*;
         let conn = &self.0.get().unwrap();
         
         // check if star-ed already
         let check_star = staritems
-            .filter(&uname.eq(&act.uname))
-            .filter(&item_id.eq(&act.item_id))
+            .filter(&uname.eq(&istar.uname))
+            .filter(&item_id.eq(&istar.item_id))
             .load::<StarItem>(conn)?.pop();
         
         // flag
-        let flg = act.flag;
+        let flg = istar.flag;
         let mut si: StarItem;
 
         if let Some(s) = check_star {
             // if stared, just update flag:  todo -> doing -> done
             si = diesel::update(&s)
-                .set(flag.eq(&flg))
+                .set((
+                    note.eq(&istar.note),
+                    flag.eq(&flg),
+                    rate.eq(&istar.rate),
+                ))
                 .get_result::<StarItem>(conn)?;
             // update item done_count + 1 if done
             if flg == 3 {
                 use crate::schema::items::dsl::{items, id as itemid, done_count};
-                diesel::update(items.filter(&itemid.eq(&act.item_id)))
+                diesel::update(items.filter(&itemid.eq(&istar.item_id)))
                     .set(done_count.eq(done_count + 1))
                     .execute(conn)?;
             }
@@ -465,12 +477,12 @@ impl Handler<NewStarItem> for Dba {
             let uid = format!("{}", uuid::Uuid::new_v4());
             let new_star = StarItem {
                 id: uid,
-                uname: act.uname,
-                item_id: act.item_id,
+                uname: istar.uname,
+                item_id: istar.item_id,
                 star_at: Utc::now().naive_utc(),
-                note: act.note,
+                note: istar.note,
                 flag: flg,
-                rate: act.rate,
+                rate: istar.rate,
             };
             si = diesel::insert_into(staritems).values(&new_star)
                 .get_result::<StarItem>(conn)?;

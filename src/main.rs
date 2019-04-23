@@ -154,7 +154,7 @@ fn main() -> std::io::Result<()> {
                 .route(post().to_async(api::etc::new))
             )
             .service(resource("/etcs/{per}/{perid}")
-                .route(post().to_async(api::etc::get_list))
+                .route(get().to_async(api::etc::get_list))
             )
             .default_service(
                 route().to(|| HttpResponse::NotFound())

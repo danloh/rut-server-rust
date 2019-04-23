@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 use crate::Dba;
 use crate::errors::ServiceError;
-use crate::model::msg::{ Msg, TagMsg, TagListMsg };
+use crate::model::msg::{ Msg, TagMsg, TagListMsg, StarStatusMsg };
 use crate::model::tag::{ 
     Tag, CheckTag, UpdateTag, QueryTags, TagRut, RutTag, 
     StarTag, StarOrTag, StarTagStatus 
@@ -200,76 +200,84 @@ impl Handler<RutTag> for Dba {
 
 // handle msg from api::tag.star_unstar_tag
 impl Handler<StarOrTag> for Dba {
-    type Result = Result<Msg, ServiceError>;
+    type Result = Result<StarStatusMsg, ServiceError>;
 
-    fn handle(&mut self, act: StarOrTag, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, tstar: StarOrTag, _: &mut Self::Context) -> Self::Result {
         use crate::schema::startags::dsl::*;
+        use crate::schema::tags::dsl::{tags, tname as t_name, star_count, rut_count, vote};
         let conn = &self.0.get().unwrap();
+
+        let tag_query = tags.filter(&t_name.eq(&tstar.tname))
+            .get_result::<Tag>(conn)?;
+        let s_count = tag_query.star_count;
         
-        match act.action {
+        match tstar.action {
             1  => {  // star
-                // limit star tag to 42
+                // limit user to star tag to 42
                 let tag_star_num = 
-                    startags.filter(&uname.eq(&act.uname)).count().execute(conn)?;
+                    startags.filter(&uname.eq(&tstar.uname)).count().execute(conn)?;
                 if tag_star_num > 42 {
-                    return Ok( Msg{ status: 418, message: "unstar".to_string(),})
+                    return Ok( StarStatusMsg{ status: 418, message: "unstar".to_string(), count: 42,})
                 }
                 
                 let uid = format!("{}", uuid::Uuid::new_v4());
                 let new_star = StarTag {
                     id: uid,
-                    uname: act.clone().uname,
-                    tname: act.clone().tname,
+                    uname: tstar.clone().uname,
+                    tname: tstar.clone().tname,
                     star_at: Utc::now().naive_utc(),
-                    note: act.clone().note,
+                    note: tstar.clone().note,
                 };
                 diesel::insert_into(startags).values(&new_star).execute(conn)?;
                 // to update star_count + 1 in tag
-                use crate::schema::tags::dsl::{tags, tname, star_count, rut_count, vote};
-                diesel::update(tags.filter(&tname.eq(&act.tname)))
+                diesel::update(&tag_query)
                     .set((
                         star_count.eq(star_count + 1),
                         vote.eq(rut_count * 2 + star_count)  // cal vote, to be task
                     ))
                     .execute(conn)?;
 
-                Ok( Msg{ status: 200, message: "star".to_string(),})
+                Ok( StarStatusMsg{ status: 200, message: "star".to_string(), count: s_count+1,})
             },
             0 => { // unsatr
                 diesel::delete(
-                    startags.filter(&tname.eq(&act.tname))
-                            .filter(&uname.eq(&act.uname))
+                    startags.filter(&tname.eq(&tstar.tname))
+                            .filter(&uname.eq(&tstar.uname))
                 )
                 .execute(conn)?;
 
                 // to update the star_count - 1 in tag
-                use crate::schema::tags::dsl::{tags, tname as t_name, star_count};
-                diesel::update(tags.filter(&t_name.eq(&act.tname)))
+                diesel::update(&tag_query)
                     .set(star_count.eq(star_count - 1)).execute(conn)?;
 
-                Ok( Msg{ status: 200, message: "unstar".to_string(),})
+                Ok( StarStatusMsg{ status: 200, message: "unstar".to_string(), count: s_count-1,})
             },
-            _ =>  { Ok( Msg{ status: 400, message: "unstar".to_string(),}) },
+            _ =>  { Ok( StarStatusMsg{ status: 400, message: "unstar".to_string(), count: s_count,}) },
         }
     }
 }
 
 // handle msg from api::tag.star_tag_status
 impl Handler<StarTagStatus> for Dba {
-    type Result = Result<Msg, ServiceError>;
+    type Result = Result<StarStatusMsg, ServiceError>;
 
     fn handle(&mut self, status: StarTagStatus, _: &mut Self::Context) -> Self::Result {
         use crate::schema::startags::dsl::*;
+        use crate::schema::tags::dsl::{tags, tname as t_name, star_count};
         let conn = &self.0.get().unwrap();
 
         let check_status = startags
             .filter(&uname.eq(&status.uname))
             .filter(&tname.eq(&status.tname))
             .load::<StarTag>(conn)?.pop();
-        
-        match check_status {
-            Some(_) => { Ok( Msg{status: 200, message: "star".to_string() }) },
-            None => { Ok( Msg{ status: 200, message: "unstar".to_string() }) },
-        }
+            
+        let s_count = tags.filter(&t_name.eq(&status.tname))
+            .select(star_count).get_result::<i32>(conn)?;
+
+        let msg = match check_status {
+            Some(_) => { "star" },
+            None => { "unstar" },
+        };
+        Ok( StarStatusMsg{ status: 200, message: msg.to_string(), count: s_count}) 
     }
 }

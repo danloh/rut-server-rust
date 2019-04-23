@@ -5,7 +5,7 @@ use chrono::{ NaiveDateTime };
 use actix_web::{ Error, error };
 
 use crate::errors::ServiceError;
-use crate::model::msg::{ Msg, TagMsg, TagListMsg };
+use crate::model::msg::{ Msg, TagMsg, TagListMsg, StarStatusMsg };
 use crate::model::{ Validate, test_len_limit, re_test_url, TAG_LEN };
 use crate::schema::{ tags, tagruts, tagitems, tagetcs, startags };
 
@@ -167,7 +167,7 @@ pub struct StarOrTag {
 }
 
 impl Message for StarOrTag {
-    type Result = Result<Msg, ServiceError>;
+    type Result = Result<StarStatusMsg, ServiceError>;
 }
 
 // as msg to check if star a tag
@@ -178,7 +178,7 @@ pub struct StarTagStatus {
 }
 
 impl Message for StarTagStatus {
-    type Result = Result<Msg, ServiceError>;
+    type Result = Result<StarStatusMsg, ServiceError>;
 }
 
 // to do

@@ -193,14 +193,14 @@ pub struct Collect {
 
 // Collect's constructor
 impl Collect {
-    pub fn new(uid: String, c: CollectItem) -> Self {
+    pub fn new(uid: String, i_order: i16, c: CollectItem) -> Self {
         Collect {
             id: uid,
             rut_id: c.rut_id,
             item_id: c.item_id,
-            item_order: c.item_order,
+            item_order: i_order,
             content: c.content, 
-            uname: c.uname,   
+            uname: c.uname,
             collect_at: Utc::now().naive_utc(),
         }
     }

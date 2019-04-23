@@ -12,7 +12,7 @@ use uuid::Uuid;
 use crate::Dba;
 use crate::errors::ServiceError;
 use crate::util::share::{ gen_slug };
-use crate::model::msg::{ Msg, RutMsg, RutListMsg };
+use crate::model::msg::{ Msg, RutMsg, RutListMsg, StarStatusMsg };
 use crate::model::rut::{ 
     Rut, CreateRut, QueryRut, QueryRuts, UpdateRut, StarRut, StarOrRut, StarRutStatus 
 };
@@ -102,8 +102,7 @@ impl Handler<QueryRuts> for Dba {
                     let query = ruts.filter(uname.eq(u));
                     rut_num = query.clone().count().get_result(conn)?;
                     rut_list = if p < 1 {  // no limit, hope never use
-                        query.order(create_at.desc())
-                        .load::<Rut>(conn)?
+                        query.order(create_at.desc()).load::<Rut>(conn)?
                     } else {
                         query.order(create_at.desc())
                         .limit(PER_PAGE.into()).offset((PER_PAGE * (p-1)).into())
@@ -225,28 +224,32 @@ impl Handler<UpdateRut> for Dba {
 
 // handle msg from api::rut.star_unstar_rut
 impl Handler<StarOrRut> for Dba {
-    type Result = Result<Msg, ServiceError>;
+    type Result = Result<StarStatusMsg, ServiceError>;
 
-    fn handle(&mut self, act: StarOrRut, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, rstar: StarOrRut, _: &mut Self::Context) -> Self::Result {
         use crate::schema::starruts::dsl::*;
         let conn = &self.0.get().unwrap();
-        
-        match act.action {
+
+        use crate::schema::ruts::dsl::{
+            ruts, id as rid, star_count, item_count, vote, comment_count
+        };
+        let rut_query = ruts.filter(&rid.eq(&rstar.rut_id))
+            .get_result::<Rut>(conn)?;
+        let s_count = rut_query.star_count;
+
+        match rstar.action {
             1  => {
                 let uid = format!("{}", uuid::Uuid::new_v4());
                 let new_star = StarRut {
                     id: uid,
-                    uname: act.clone().uname,
-                    rut_id: act.clone().rut_id,
+                    uname: rstar.clone().uname,
+                    rut_id: rstar.clone().rut_id,
                     star_at: Utc::now().naive_utc(),
-                    note: act.clone().note,
+                    note: rstar.clone().note,
                 };
                 diesel::insert_into(starruts).values(&new_star).execute(conn)?;
                 // to update star_count + 1 in rut
-                use crate::schema::ruts::dsl::{
-                    ruts, id as rid, star_count, item_count, vote, comment_count
-                };
-                diesel::update(ruts.filter(&rid.eq(&act.rut_id)))
+                diesel::update(ruts.filter(&rid.eq(&rstar.rut_id)))
                     .set((
                         star_count.eq(star_count + 1),
                         // cal vote, to be task
@@ -254,42 +257,46 @@ impl Handler<StarOrRut> for Dba {
                     ))
                     .execute(conn)?;
 
-                Ok( Msg { status: 200, message: "star".to_string(),})
+                Ok( StarStatusMsg{ status: 200, message: "star".to_string(), count: s_count+1 })
             },
             0 => {
                 diesel::delete(
-                    starruts.filter(&rut_id.eq(&act.rut_id))
-                            .filter(&uname.eq(&act.uname))
+                    starruts.filter(&rut_id.eq(&rstar.rut_id))
+                            .filter(&uname.eq(&rstar.uname))
                 )
                 .execute(conn)?;
                 // to update the star_count - 1 in rut
-                use crate::schema::ruts::dsl::{ruts, id as rid, star_count};
-                diesel::update(ruts.filter(&rid.eq(&act.rut_id)))
+                diesel::update(ruts.filter(&rid.eq(&rstar.rut_id)))
                     .set(star_count.eq(star_count - 1)).execute(conn)?;
 
-                Ok( Msg { status: 200, message: "unstar".to_string(),})
+                Ok( StarStatusMsg{ status: 200, message: "unstar".to_string(),count: s_count-1 })
             },
-            _ =>  { Ok( Msg { status: 400, message: "unstar".to_string(),}) },
+            _ =>  { Ok( StarStatusMsg{ status: 400, message: "unstar".to_string(), count: s_count }) },
         }
     }
 }
 
 // handle msg from api::rut.star_rut_status
 impl Handler<StarRutStatus> for Dba {
-    type Result = Result<Msg, ServiceError>;
+    type Result = Result<StarStatusMsg, ServiceError>;
 
     fn handle(&mut self, status: StarRutStatus, _: &mut Self::Context) -> Self::Result {
         use crate::schema::starruts::dsl::*;
         let conn = &self.0.get().unwrap();
 
+        use crate::schema::ruts::dsl::{ruts, id as rid, star_count};
+        let s_count = ruts.filter(&rid.eq(&status.rut_id))
+            .select(star_count).get_result::<i32>(conn)?;
+
         let check_status = starruts
             .filter(&rut_id.eq(&status.rut_id))
             .filter(&uname.eq(&status.uname))
             .load::<StarRut>(conn)?.pop();
+        let msg = match check_status {
+            Some(_) => { "star" },
+            None => { "unstar" },
+        };
         
-        match check_status {
-            Some(_) => { Ok( Msg {status: 200, message: "star".to_string() }) },
-            None => { Ok( Msg { status: 200, message: "unstar".to_string() }) },
-        }
+        Ok(StarStatusMsg{status: 200, message: msg.to_string(), count: s_count})
     }
 }

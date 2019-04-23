@@ -6,7 +6,7 @@ use actix_web::{ Error, error };
 
 use crate::errors::ServiceError;
 use crate::model::{ Validate, test_len_limit, re_test_url, TITLE_LEN };
-use crate::model::msg::{ Msg, RutMsg, RutListMsg };
+use crate::model::msg::{ Msg, RutMsg, RutListMsg, StarStatusMsg };
 use crate::schema::{ ruts, starruts };
 
 // use to build select query
@@ -165,7 +165,7 @@ pub struct StarOrRut {
 }
 
 impl Message for StarOrRut {
-    type Result = Result<Msg, ServiceError>;
+    type Result = Result<StarStatusMsg, ServiceError>;
 }
 
 // as msg to check if star a rut
@@ -176,5 +176,5 @@ pub struct StarRutStatus {
 }
 
 impl Message for StarRutStatus {
-    type Result = Result<Msg, ServiceError>;
+    type Result = Result<StarStatusMsg, ServiceError>;
 }
