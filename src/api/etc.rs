@@ -1,49 +1,53 @@
 // api.etc, view handler: comment, excerpt, etc.
 
-use actix_web::{ 
-    HttpResponse, HttpRequest, FutureResponse, AsyncResponder,
-    Error, Json, State
+use futures::{ future::result, Future};
+use actix_web::{
+    Error, HttpRequest, HttpResponse, Responder, ResponseError,
+    web::{ self, Path, Json, Data, Query }
 };
-use futures::Future;
-use router::AppState;
-use model::etc::{ Etc, PostEtc, EtcsPerID };
-use model::user::{ CheckUser };
 
-pub fn post_etc((pe, req, user): (Json<PostEtc>, HttpRequest<AppState>, CheckUser))
- -> FutureResponse<HttpResponse> {
+use crate::DbAddr;
+use crate::api::{ ReqQuery };
+use crate::model::user::{ CheckUser };
+use crate::model::{ Validate };
+use crate::model::etc::{ Etc, PostEtc, QueryEtcs };
 
-    let l_pe = pe.content.trim().len();
-    if l_pe == 0 {
-        use api::gen_response;
-        return gen_response(req)
-    }
+pub fn new(
+    db: Data<DbAddr>,
+    petc: Json<PostEtc>, 
+    auth: CheckUser
+) -> impl Future<Item = HttpResponse, Error = Error> {
 
-    req.state().db.send( PostEtc {
-        content: pe.content.clone(),
-        post_to: pe.post_to.clone(),
-        to_id: pe.to_id.clone(),
-        uname: user.uname.clone(),
-    })
-    .from_err().and_then(|res| match res {
-        Ok(rut) => Ok(HttpResponse::Ok().json(rut)),
-        Err(_) => Ok(HttpResponse::InternalServerError().into()),
-    })
-    .responder()
+    let post_etc = petc.into_inner();
+    let uname = auth.uname;
+    let new_etc = PostEtc{ uname, ..post_etc };
+
+    result(new_etc.validate()).from_err()
+        .and_then(
+            move |_| db.send(new_etc).from_err()
+        )
+        .and_then(|res| match res {
+            Ok(et) => Ok(HttpResponse::Ok().json(et)),
+            Err(e) => Ok(e.error_response()),
+        })
 }
 
-pub fn get_etc_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
-    let per = String::from(req.match_info().get("per").unwrap());
-    let per_id = String::from(req.match_info().get("perid").unwrap());
+pub fn get_list(
+    db: Data<DbAddr>,
+    pq: Query<ReqQuery>,
+    per_info: Path<(String, String)>,
+) -> impl Future<Item = HttpResponse, Error = Error> {
+
+    // extract Path
+    let per = per_info.clone().0;
+    let perid = per_info.clone().1;
+    // extract Query
+    let page = std::cmp::max(pq.page, 1);
     
-    // paging in query param
-    let paging = if let Some(i) = req.query().get("page") {
-        i.parse::<i32>().unwrap()
-    } else { 1 }; // if 0, query all
-    
-    req.state().db.send(EtcsPerID{ per, per_id, paging })
-    .from_err().and_then(|res| match res {
+    db.send( QueryEtcs{ per, perid, page })
+      .from_err()
+      .and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
-        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+        Err(err) => Ok(err.error_response()),
     })
-    .responder()
 }

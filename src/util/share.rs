@@ -59,16 +59,15 @@ fn _slugify(s: &str) -> String {
     string
 }
 
+// slug, better to show url: ty as type, for rut|item|collect
 pub fn gen_slug(ty: &str, text: &str, uid: &Uuid) -> String {
     format!("{}-{}-{}", ty, slugify(text), to_blob(uid))
 }
 
 // get the value per key
-pub fn get_v(map_ref: &HashMap<String, String>, k: &str) -> String { 
+pub fn get_v(map_ref: &HashMap<String, String>, k: &str) -> String {
     let res = map_ref.get(k);
-    
-    if let Some(r) = res {
-        return r.clone()
-    }
+
+    if let Some(r) = res { return r.clone() }
     return "".to_string()
 }

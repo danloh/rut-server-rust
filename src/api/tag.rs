@@ -1,158 +1,165 @@
 // api.tag, view handler
 
-use actix_web::{ 
-    HttpResponse, HttpRequest, FutureResponse, AsyncResponder,
-    Error, Json, State
+use futures::{ future::result, Future};
+use actix_web::{
+    Error, HttpRequest, HttpResponse, Responder, ResponseError,
+    web::{ self, Path, Json, Data, Query }
 };
-use futures::Future;
-use router::AppState;
-use model::tag::{ 
-    Tag, CheckTag, UpdateTag, TagsPerID, RutTag, StarOrTag, StarTagStatus 
+
+use crate::DbAddr;
+use crate::api::{ ReqQuery };
+use crate::model::{ Validate, TAG_LEN };
+use crate::model::user::{ CheckUser };
+use crate::model::tag::{
+    Tag, CheckTag, UpdateTag, QueryTags, TagRut, RutTag,
+    StarOrTag, StarTagStatus
 };
-use model::user::{ CheckUser };
-use api::{ re_test_url, re_test_uname };
-use ::{ MIN_LEN, ANS_LIMIT };
 
 
-pub fn new_tag((req, user): (HttpRequest<AppState>, CheckUser))
- -> FutureResponse<HttpResponse> {
-    let tname = String::from(req.match_info().get("tname").unwrap());
+pub fn new(
+    db: Data<DbAddr>,
+    tg: Path<String>,
+    auth: CheckUser
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    let tname = tg.into_inner().trim().replace(" ", "-");
     let action = String::from("POST");
-    //println!("{:?}", req.method().as_str());
-    //println!("{:?}", tname);
-    // check the length of tname and inner whitespace
-    let l = tname.trim().len();
-    if l <= MIN_LEN || l > ANS_LIMIT || tname.contains(" ") {
-        use api::gen_response;
-        return gen_response(req)
-    }
 
-    req.state().db.send( CheckTag { tname, action })
-    .from_err().and_then(|res| match res {
-        Ok(rut) => Ok(HttpResponse::Ok().json(rut)),
-        Err(_) => Ok(HttpResponse::InternalServerError().into()),
-    })
-    .responder()
+    let tag = CheckTag{ tname, action };
+
+    result(tag.validate()).from_err()
+        .and_then(
+            move |_| db.send(tag).from_err()
+        )
+        .and_then(|res| match res {
+            Ok(t) => Ok(HttpResponse::Ok().json(t)),
+            Err(e) => Ok(e.error_response()),
+        })
 }
 
 // new_tag Post, get_tag Get, 2 api send msg to a same msg handler
 
-pub fn get_tag(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
-    let tname = String::from(req.match_info().get("tname").unwrap());
+pub fn get(
+    db: Data<DbAddr>,
+    tg: Path<String>,
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    let tname = tg.into_inner();
     let action = String::from("GET");
-    // println!("{:?}", req.method().as_str());
 
-    req.state().db.send( CheckTag { tname, action })
-    .from_err().and_then(|res| match res {
-        Ok(rut) => Ok(HttpResponse::Ok().json(rut)),
-        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+    db.send( CheckTag{ tname, action })
+      .from_err()
+      .and_then(|res| match res {
+        Ok(tag) => Ok(HttpResponse::Ok().json(tag)),
+        Err(err) => Ok(err.error_response()),
     })
-    .responder()
 }
 
-pub fn get_tag_list(req: HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
-    let per = req.match_info().get("per").unwrap();
-    let perid = String::from(req.match_info().get("id").unwrap());
-    
-    let q_per = match per {
-        "rut" => TagsPerID::RutID(perid),
-        "item" => TagsPerID::ItemID(perid),
-        "tag" => TagsPerID::TagID(perid),
-        "user" => TagsPerID::UserID(perid),
-        _ => TagsPerID::Index(perid),
+pub fn get_list(
+    db: Data<DbAddr>,
+    per_info: Path<(String, String)>,
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    // extract Path
+    let per = per_info.0.trim();
+    let perid = per_info.clone().1;
+
+    let tg_msg = match per {
+        "rut" => QueryTags::RutID(perid),
+        "item" => QueryTags::ItemID(perid),
+        "tag" => QueryTags::TagID(perid),
+        "user" => QueryTags::UserID(perid),
+        _ => QueryTags::Index(perid),
     };
 
-    req.state().db.send(q_per).from_err().and_then(|res| match res {
+    db.send(tg_msg).from_err()
+      .and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
-        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+        Err(err) => Ok(err.error_response()),
     })
-    .responder()
 }
 
-pub fn update_tag((tag, req, user): (Json<UpdateTag>, HttpRequest<AppState>, CheckUser))
- -> FutureResponse<HttpResponse> {
-    // do some check
-    let url = tag.logo.trim();
-    let url_test = if url.len() == 0 { true } else { re_test_url(url) };
-    let pname = tag.pname.trim();
-    let pname_test = if pname.len() == 0 { true } else { re_test_uname(pname) };
-    let tname = String::from(req.match_info().get("tname").unwrap());
+pub fn update(
+    db: Data<DbAddr>,
+    tg: Json<UpdateTag>,
+    auth: CheckUser
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    let tag = tg.into_inner();
+    // todo some check
+    let p_name = tag.pname.trim();
+    let pname = if p_name == "" { "".to_owned() } else { p_name.replace(" ", "-") };
+    let up_tag = UpdateTag{ pname, ..tag };
 
-    let check = url_test && pname_test && tname == tag.tname;
-    if !check {
-        use api::gen_response;
-        return gen_response(req)
-    }
-
-    req.state().db.send( UpdateTag {
-        tname: tname.to_string(),  // just as id, not change
-        intro: tag.intro.clone(),
-        logo: url.to_string(),
-        pname: pname.to_string(),
-    })
-    .from_err().and_then(|res| match res {
-        Ok(item) => Ok(HttpResponse::Ok().json(item)),
-        Err(_) => Ok(HttpResponse::InternalServerError().into()),
-    })
-    .responder()
+    result(up_tag.validate()).from_err()
+        .and_then(
+            move |_| db.send(up_tag).from_err()
+        )
+        .and_then(|res| match res {
+            Ok(t) => Ok(HttpResponse::Ok().json(t)),
+            Err(e) => Ok(e.error_response()),
+        })
 }
 
-pub fn tag_rut((tags, req, user): (Json<RutTag>, HttpRequest<AppState>, CheckUser))
- -> FutureResponse<HttpResponse> {
-    let action = String::from(req.match_info().get("action").unwrap()); // 0-untag/1-tag
-    let rut_id = String::from(req.match_info().get("rutid").unwrap());
-    // println!("{:?}", tags);
+pub fn tag_rut(
+    db: Data<DbAddr>,
+    rutg: Json<RutTag>,
+    tg_info: Path<(u8, String)>,
+    auth: CheckUser
+) -> impl Future<Item = HttpResponse, Error = Error> {
+
+    let tags = rutg.into_inner();
 
     // filter per length, no inner space; to do: regex to test tag name
-    let tnames: Vec<String> = tags.tnames.clone().into_iter().filter(
-        |t| t.trim().len() < ANS_LIMIT && t.trim().len() > MIN_LEN && !(t.contains(" "))
-    ).collect();
-    // check if any
-    if tnames.len() == 0  {
-        use api::gen_response;
-        return gen_response(req)
-    }
+    let tnames: Vec<String> =
+        tags.tnames.clone().into_iter()
+            .map(|t| t.trim().replace(" ", "-"))
+            .filter(
+                |t| t.trim().len() <= TAG_LEN && t.trim().len() >= 1
+            )
+            .collect();
 
-    req.state().db.send( RutTag { 
-        tnames: tnames.clone(),
-        rut_id: tags.rut_id.clone(),
-        action: action.clone(), 
-    })
-    .from_err().and_then(|res| match res {
-        Ok(rut) => Ok(HttpResponse::Ok().json(rut)),
-        Err(_) => Ok(HttpResponse::InternalServerError().into()),
-    })
-    .responder()
+    let rut_tags = RutTag{ tnames, ..tags };
+
+    result(rut_tags.validate()).from_err()
+        .and_then(
+            move |_| db.send(rut_tags).from_err()
+        )
+        .and_then(|res| match res {
+            Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
+            Err(e) => Ok(e.error_response()),
+        })
 }
 
-pub fn star_unstar_tag(req: HttpRequest<AppState>, user: CheckUser)
- -> FutureResponse<HttpResponse> {
-    let action: u8 = req.match_info().get("action").unwrap().parse().unwrap();
-    let tname = String::from(req.match_info().get("tname").unwrap());
-    let note = String::from(req.match_info().get("note").unwrap());
-    
-    req.state().db.send( StarOrTag {
-        uname: user.uname.clone(),
-        tname: tname.clone(),
-        note: note.clone(),
-        action: action,
+pub fn star_or_unstar(
+    db: Data<DbAddr>,
+    star_info: Path<(String, u8, String)>,
+    auth: CheckUser
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    let tname = star_info.clone().0;
+    let action: u8 = star_info.1;
+    let note = star_info.clone().2;
+
+    db.send( StarOrTag {
+        uname: auth.uname,
+        tname,
+        note,
+        action,
     })
     .from_err().and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
-        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+        Err(err) => Ok(err.error_response()),
     })
-    .responder()
 }
 
-pub fn star_tag_status(req: HttpRequest<AppState>, user: CheckUser)
- -> FutureResponse<HttpResponse> {
-    let uname = user.uname;
-    let tname = String::from(req.match_info().get("tname").unwrap());
-    
-    req.state().db.send( StarTagStatus { uname, tname })
-    .from_err().and_then(|res| match res {
+pub fn star_status(
+    db: Data<DbAddr>,
+    tg: Path<String>,
+    auth: CheckUser
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    let uname = auth.uname;
+    let tname = tg.into_inner();
+
+    db.send( StarTagStatus { uname, tname })
+      .from_err()
+      .and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
-        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+        Err(err) => Ok(err.error_response()),
     })
-    .responder()
 }

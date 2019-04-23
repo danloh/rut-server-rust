@@ -1,9 +1,13 @@
-// rut model
+// rut typed model and msg handler
 
-use db::schema::{ ruts, starruts };
-use actix_web::{ Error, actix::Message };
-use chrono::{Utc, NaiveDateTime};
-use model::msg::{ Msg, RutMsg, RutListMsg };
+use actix::{ Message };
+use chrono::{ NaiveDateTime, Utc };
+use actix_web::{ Error, error };
+
+use crate::errors::ServiceError;
+use crate::model::{ Validate, test_len_limit, re_test_url, TITLE_LEN };
+use crate::model::msg::{ Msg, RutMsg, RutListMsg, StarStatusMsg };
+use crate::schema::{ ruts, starruts };
 
 // use to build select query
 #[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
@@ -15,7 +19,7 @@ pub struct Rut {
     pub content: String,
     pub create_at: NaiveDateTime,
     pub renew_at: NaiveDateTime,
-    pub author_id: String,
+    pub author: String,  // todo, change as author
     pub uname: String,     // as who post
     pub credential: String,
     pub logo: String,
@@ -36,7 +40,7 @@ impl Rut {
             content: rut.content,
             create_at: Utc::now().naive_utc(),
             renew_at: Utc::now().naive_utc(),
-            author_id: rut.author_id,
+            author: rut.author,
             uname: rut.uname,
             credential: rut.credential,
             logo: "".to_owned(),
@@ -50,18 +54,61 @@ impl Rut {
 }
 
 // as msg in create new
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize,Serialize,Debug,Clone)]
 pub struct CreateRut {
     pub title: String,
     pub url: String,
     pub content: String,
+    pub author: String,
     pub uname: String,
-    pub author_id: String,
     pub credential: String,
 }
 
 impl Message for CreateRut {
-    type Result = Result<RutMsg, Error>;
+    type Result = Result<RutMsg, ServiceError>;
+}
+
+impl Validate for CreateRut {
+    fn validate(&self) -> Result<(), Error> {
+        let url = &self.url.trim();
+        let url_test = if url.len() == 0 { true } else { re_test_url(url) };
+        let check_len =
+            test_len_limit(&self.title, 3, TITLE_LEN) &&
+            test_len_limit(&self.author, 0, 64) &&
+            test_len_limit(&self.credential, 0, 64);
+        let check = url_test && check_len;
+
+        if check {
+            Ok(())
+        } else {
+            Err(error::ErrorBadRequest("Invalid Input"))
+        }
+    }
+}
+
+// as msg in select by id
+#[derive(Deserialize,Serialize,Debug,Clone)]
+pub struct QueryRut {
+    pub rut_slug: String,
+    // pub action: String, // get / delete, to do
+}
+
+impl Message for QueryRut {
+    type Result = Result<RutMsg, ServiceError>;
+}
+
+// as msg to get  rut list, + paging
+#[derive(Deserialize,Serialize,Debug, Clone)]
+pub enum QueryRuts {
+    Index(String),
+    UserID(String, String, i32), // uname, create|star, paging
+    ItemID(String, i32),
+    TagID(String, i32),
+    KeyID(String, String, String, i32), // keyword, per, perid(uname|item|tname), paging
+}
+
+impl Message for QueryRuts {
+    type Result = Result<RutListMsg, ServiceError>;
 }
 
 // as msg in update rut
@@ -72,36 +119,30 @@ pub struct UpdateRut {
     pub title: String,
     pub url: String,
     pub content: String,
-    pub author_id: String,
+    pub author: String,
     pub credential: String,
 }
 
 impl Message for UpdateRut {
-    type Result = Result<RutMsg, Error>;
+    type Result = Result<RutMsg, ServiceError>;
 }
 
-// as msg in select by id
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct RutID {
-    pub rut_id: String,
-}
+impl Validate for UpdateRut {
+    fn validate(&self) -> Result<(), Error> {
+        let url = &self.url.trim();
+        let url_test = if url.len() == 0 { true } else { re_test_url(url) };
+        let check_len =
+            test_len_limit(&self.title, 3, TITLE_LEN) &&
+            test_len_limit(&self.author, 0, 64) &&
+            test_len_limit(&self.credential, 0, 64);
+        let check = url_test && check_len;
 
-impl Message for RutID {
-    type Result = Result<RutMsg, Error>;
-}
-
-// as msg to get  rut list, + paging
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub enum RutsPerID {
-    Index(String),
-    UserID(String, String, i32), // uname, create/star, paging
-    ItemID(String, i32),
-    TagID(String, i32),
-    KeyID(String, String, String, i32), // keyword, per, perid(uname|item|tname), paging
-}
-
-impl Message for RutsPerID {
-    type Result = Result<RutListMsg, Error>;
+        if check {
+            Ok(())
+        } else {
+            Err(error::ErrorBadRequest("Invalid Input"))
+        }
+    }
 }
 
 #[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
@@ -115,7 +156,7 @@ pub struct StarRut {
 }
 
 // as msg in star or unstar rut
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize,Serialize,Debug,Clone)]
 pub struct StarOrRut {
     pub rut_id: String,
     pub uname: String,
@@ -124,7 +165,7 @@ pub struct StarOrRut {
 }
 
 impl Message for StarOrRut {
-    type Result = Result<Msg, Error>;
+    type Result = Result<StarStatusMsg, ServiceError>;
 }
 
 // as msg to check if star a rut
@@ -135,5 +176,5 @@ pub struct StarRutStatus {
 }
 
 impl Message for StarRutStatus {
-    type Result = Result<Msg, Error>;
+    type Result = Result<StarStatusMsg, ServiceError>;
 }

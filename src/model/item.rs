@@ -1,9 +1,19 @@
-// item module
+// item typed model and msg handler
 
-use db::schema::{items, collects, staritems};
-use actix_web::{ Error, actix::Message };
-use chrono::{Utc, NaiveDateTime};
-use model::msg::{ Msg, ItemMsg, ItemListMsg, StarItemMsg, CollectMsg, CollectsMsg };
+use actix::{ Message };
+use chrono::{ NaiveDateTime, Utc };
+use actix_web::{ Error, error };
+
+use crate::errors::ServiceError;
+use crate::util::share::{ gen_slug };
+use crate::model::{
+    Validate, test_len_limit, re_test_url,
+    TITLE_LEN, UIID_LEN,
+};
+use crate::model::msg::{
+    Msg, ItemMsg, ItemListMsg, StarItemMsg, CollectMsg, CollectsMsg
+};
+use crate::schema::{ items, collects, staritems };
 
 // use to build select query
 #[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
@@ -24,26 +34,26 @@ pub struct Item {
     pub etc_count: i32,   // review, etc.
     pub done_count: i32,  // num of who done
     pub vote: i32,        //  cal per rut, done, etc
-    pub slug: String, 
+    pub slug: String, // to do
 }
 
 // Item's constructor
 impl Item {
-    pub fn new(id: String, slug: String, item: SubmitItem) -> Self {
+    pub fn new(uid: String, slug: String, item: NewItem) -> Self {
         Item {
-            id,
+            id: uid,
             title: item.title,
             uiid: item.uiid,
-            authors: item.authors, 
-            pub_at: item.pub_at,   
+            authors: item.authors,
+            pub_at: item.pub_at,
             publisher: item.publisher,
-            category: item.category, 
+            category: item.category,
             url: item.url,
-            cover: item.cover,    
-            edition: item.edition,  
+            cover: item.cover,
+            edition: item.edition,
             detail: item.detail,
             rut_count: 0,
-            etc_count: 0,   
+            etc_count: 0,
             done_count: 0,
             vote: 0,
             slug,
@@ -53,7 +63,7 @@ impl Item {
 
 // as msg in submit new item
 #[derive(Deserialize,Serialize,Debug,Clone)]
-pub struct SubmitItem {
+pub struct NewItem {
     pub title: String,
     pub uiid: String,  // unique item id, like isbn...
     pub authors: String,
@@ -66,8 +76,32 @@ pub struct SubmitItem {
     pub detail: String,
 }
 
-impl Message for SubmitItem {
-    type Result = Result<ItemMsg, Error>;
+impl Message for NewItem {
+    type Result = Result<ItemMsg, ServiceError>;
+}
+
+impl Validate for NewItem {
+    fn validate(&self) -> Result<(), Error> {
+        let url = &self.url.trim();
+        let cover = &self.cover.trim();
+        let url_test = if url.len() == 0 { true } else { re_test_url(url) };
+        let cover_test = if cover.len() == 0 { true } else { re_test_url(cover) };
+        let check_len =
+            test_len_limit(&self.title, 3, TITLE_LEN) &&
+            test_len_limit(&self.uiid, 0, 32) &&
+            test_len_limit(&self.authors, 1, 64) &&
+            test_len_limit(&self.pub_at, 0, 32) &&
+            test_len_limit(&self.publisher, 0, 64) &&
+            test_len_limit(&self.category, 0, 32) &&
+            test_len_limit(&self.edition, 0, 64);
+        let check = url_test && cover_test && check_len;
+
+        if check {
+            Ok(())
+        } else {
+            Err(error::ErrorBadRequest("Invalid Input"))
+        }
+    }
 }
 
 // as msg in update item
@@ -78,7 +112,7 @@ pub struct UpdateItem {
     pub title: String,
     pub uiid: String,
     pub authors: String,
-    pub pub_at: String, 
+    pub pub_at: String,
     pub publisher: String,
     pub category: String,
     pub url: String,
@@ -88,35 +122,60 @@ pub struct UpdateItem {
 }
 
 impl Message for UpdateItem {
-    type Result = Result<ItemMsg, Error>;
+    type Result = Result<ItemMsg, ServiceError>;
 }
 
-// as msg in query item by id
+impl Validate for UpdateItem {
+    fn validate(&self) -> Result<(), Error> {
+        let url = &self.url.trim();
+        let cover = &self.cover.trim();
+        let url_test = if url.len() == 0 { true } else { re_test_url(url) };
+        let cover_test = if cover.len() == 0 { true } else { re_test_url(cover) };
+        let check_len =
+            test_len_limit(&self.id, 8, 512) &&
+            test_len_limit(&self.title, 3, TITLE_LEN) &&
+            test_len_limit(&self.uiid, 0, 32) &&
+            test_len_limit(&self.authors, 1, 64) &&
+            test_len_limit(&self.pub_at, 0, 32) &&
+            test_len_limit(&self.publisher, 0, 64) &&
+            test_len_limit(&self.category, 0, 32) &&
+            test_len_limit(&self.edition, 0, 64);
+        let check = url_test && cover_test && check_len;
+
+        if check {
+            Ok(())
+        } else {
+            Err(error::ErrorBadRequest("Invalid Input"))
+        }
+    }
+}
+
+// as msg in query item by slug
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct ItemID {
-    pub item_id: String,
+pub struct QueryItem {
+    pub item_slug: String,
     // pub action: String, // get / delete, to do
 }
 
-impl Message for ItemID {
-    type Result = Result<ItemMsg, Error>;
+impl Message for QueryItem {
+    type Result = Result<ItemMsg, ServiceError>;
 }
 
 // as msg to query items per tag, rut, user; id,title,url,uiid
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub enum ItemsPerID {
-    ItemID(String),
+pub enum QueryItems {
+    ItemID(String), // should be slug
     Uiid(String),
     Title(String),
     ItemUrl(String),
     RutID(String),
     TagID(String),
-    UserID(String, String, i32),  // (uname, flag, paging)
+    UserID(String, i16, i32),  // (uname, flag, paging)
     KeyID(String, String, String, i32) // keyword, per, perid(uname|tname), paging
 }
 
-impl Message for ItemsPerID {
-    type Result = Result<ItemListMsg, Error>;
+impl Message for QueryItems {
+    type Result = Result<ItemListMsg, ServiceError>;
 }
 
 #[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
@@ -125,23 +184,23 @@ pub struct Collect {
     pub id: String,
     pub rut_id: String,
     pub item_id: String,
-    pub item_order: i32,
+    pub item_order: i16,
     pub content: String,
-    // pub spoiler: bool,  // to do but 
+    // pub spoiler: bool,  // to do but
     pub uname: String,
     pub collect_at: NaiveDateTime,
 }
 
 // Collect's constructor
 impl Collect {
-    pub fn new(uid: String, i_order: i32, c: CollectItem) -> Self {
+    pub fn new(uid: String, i_order: i16, c: CollectItem) -> Self {
         Collect {
             id: uid,
             rut_id: c.rut_id,
             item_id: c.item_id,
             item_order: i_order,
-            content: c.content, 
-            uname: c.uname,   
+            content: c.content,
+            uname: c.uname,
             collect_at: Utc::now().naive_utc(),
         }
     }
@@ -152,13 +211,13 @@ impl Collect {
 pub struct CollectItem {
     pub rut_id: String,
     pub item_id: String,
-    pub item_order: i32,
+    pub item_order: i16,
     pub content: String,
     pub uname: String,
 }
 
 impl Message for CollectItem {
-    type Result = Result<CollectMsg, Error>;
+    type Result = Result<CollectMsg, ServiceError>;
 }
 
 // as msg in update item
@@ -166,25 +225,14 @@ impl Message for CollectItem {
 #[table_name="collects"]
 pub struct UpdateCollect {
     pub id: String,
-    // pub item_order: i32,  // re-order, to do
+    // pub item_order: i16,  // re-order, to do
     pub content: String,
     pub uname: String,  // to check permission
-    // pub spoiler: bool,  // to do but 
+    // pub spoiler: bool,  // to do but
 }
 
 impl Message for UpdateCollect {
-    type Result = Result<CollectMsg, Error>;
-}
-
-// as msg in rut get collect info
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct CollectID {
-    pub collect_id: String,
-    pub action: String,    // get / delete
-}
-
-impl Message for CollectID {
-    type Result = Result<CollectMsg, Error>;
+    type Result = Result<CollectMsg, ServiceError>;
 }
 
 // as msg to del collect
@@ -195,19 +243,30 @@ pub struct DelCollect {
 }
 
 impl Message for DelCollect {
-    type Result = Result<Msg, Error>;
+    type Result = Result<Msg, ServiceError>;
+}
+
+// as msg in rut get collect info
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct QueryCollect {
+    pub collect_id: String,
+    pub action: String,    // get|delete
+}
+
+impl Message for QueryCollect {
+    type Result = Result<CollectMsg, ServiceError>;
 }
 
 // as msg in collect list per rutid or itemid
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub enum CollectIDs {
+pub enum QueryCollects {
     RutID(String),
     ItemID(String, i32),  // id, paging
     UserID(String, i32),  // id, paging
 }
 
-impl Message for CollectIDs {
-    type Result = Result<CollectsMsg, Error>;
+impl Message for QueryCollects {
+    type Result = Result<CollectsMsg, ServiceError>;
 }
 
 #[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
@@ -218,8 +277,8 @@ pub struct StarItem {
     pub item_id: String,
     pub star_at: NaiveDateTime,
     pub note: String,
-    pub flag: String,    // 0->to do,1->done, 2->doing
-    pub rate: i32,
+    pub flag: i16,    // 1-Todo|3-Done|2-Doing
+    pub rate: i16,
 }
 
 // as msg in star item: todo, done, doing
@@ -228,12 +287,12 @@ pub struct NewStarItem {
     pub uname: String,
     pub item_id: String,
     pub note: String,
-    pub flag: String,
-    pub rate: i32,
+    pub flag: i16,
+    pub rate: i16,
 }
 
 impl Message for NewStarItem {
-    type Result = Result<StarItemMsg, Error>;
+    type Result = Result<StarItemMsg, ServiceError>;
 }
 
 // as msg to check if star a rut
@@ -244,5 +303,5 @@ pub struct StarItemStatus {
 }
 
 impl Message for StarItemStatus {
-    type Result = Result<StarItemMsg, Error>;
+    type Result = Result<StarItemMsg, ServiceError>;
 }

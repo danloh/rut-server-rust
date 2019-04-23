@@ -1,10 +1,10 @@
-// Result msg struct in response
+// typed-msg  model
 
-use model::rut::Rut;
-use model::item::{ Item, Collect };
-use model::user::{ User, CheckUser };
-use model::tag::{ Tag };
-use model::etc::{ Etc };
+use crate::model::rut::Rut;
+use crate::model::item::{ Item, Collect };
+use crate::model::user::{ User, CheckUser };
+use crate::model::tag::{ Tag };
+use crate::model::etc::{ Etc };
 
 // general response msg struct
 #[derive(Deserialize,Serialize,Debug)]
@@ -13,13 +13,21 @@ pub struct Msg {
     pub message: String,
 }
 
-// msg for login or get user info
+// msg for login
 #[derive(Deserialize,Serialize,Debug)]
-pub struct LoginMsg {
+pub struct AuthMsg {
     pub status: i32,
     pub message: String,
     pub token: String,
     pub exp: i32,
+    pub user: CheckUser,
+}
+
+// msg for get user info
+#[derive(Deserialize,Serialize,Debug)]
+pub struct UserMsg {
+    pub status: i32,
+    pub message: String,
     pub user: CheckUser,
 }
 
@@ -114,4 +122,13 @@ pub struct EtcListMsg {
     pub message: String,
     pub etcs: Vec<Etc>,
     pub count: usize,
+}
+
+// todo
+// respon the status of star rut, follow tag, etc.
+#[derive(Deserialize,Serialize,Debug)]
+pub struct StarStatusMsg {
+    pub status: i32,   // response code
+    pub message: String,  // star | Unstar
+    pub count: i32,    // star num
 }

@@ -1,6 +1,12 @@
-// db mod
+///  msg handler mod
 
-// Build Actor, send, receive, handle msg with db
+// msg handler, 
+// handle the msg from view handler(api mod)
+// comm with db
+// send back he result
 
-pub mod dba;
-pub mod schema;
+pub mod user;
+pub mod rut;
+pub mod item;
+pub mod tag;
+pub mod etc;

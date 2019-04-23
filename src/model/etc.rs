@@ -1,9 +1,14 @@
-// etc module: excerpt, article, review, comment, etc.
+// etc typed model and msg handler
 
-use db::schema::etcs;
-use actix_web::{ Error, actix::Message };
-use chrono::{Utc, NaiveDateTime};
-use model::msg::{ Msg, EtcMsg, EtcListMsg };
+use actix::{ Message };
+use chrono::{ NaiveDateTime };
+use actix_web::{ Error, error };
+
+use crate::errors::ServiceError;
+use crate::model::{ Validate, test_len_limit, re_test_url, TAG_LEN };
+use crate::model::msg::{ Msg, EtcMsg, EtcListMsg };
+use crate::schema::etcs;
+
 
 // use to build select query
 #[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
@@ -21,7 +26,7 @@ pub struct Etc {
 }
 
 // as msg in create new
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize,Serialize,Debug,Clone)]
 pub struct PostEtc {
     pub content: String,
     pub post_to: String,
@@ -30,21 +35,35 @@ pub struct PostEtc {
 }
 
 impl Message for PostEtc {
-    type Result = Result<EtcMsg, Error>;
+    type Result = Result<EtcMsg, ServiceError>;
+}
+
+impl Validate for PostEtc {
+    fn validate(&self) -> Result<(), Error> {
+        let check_len = test_len_limit(&self.content, 1, 512);
+        let check = check_len;
+
+        if check { 
+            Ok(()) 
+        } else { 
+            Err(error::ErrorBadRequest("Invalid Input(1-512)"))
+        }
+    }
 }
 
 // as msg to get etc list
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct EtcsPerID {     // diff way from enum to get
+pub struct QueryEtcs {     // diff way from enum to get
     pub per: String,
-    pub per_id: String,
-    pub paging: i32,
+    pub perid: String,
+    pub page: i32,
 }
 
-impl Message for EtcsPerID {
-    type Result = Result<EtcListMsg, Error>;
+impl Message for QueryEtcs {
+    type Result = Result<EtcListMsg, ServiceError>;
 }
 
+// todo
 // as msg to del etc
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct DelEtc {
@@ -55,5 +74,5 @@ pub struct DelEtc {
 }
 
 impl Message for DelEtc {
-    type Result = Result<Msg, Error>;
+    type Result = Result<Msg, ServiceError>;
 }

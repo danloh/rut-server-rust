@@ -1,7 +1,7 @@
 
 A Service for sharing read list, welcome to join: https://ruthub.com
 
-Rework: Actix-web + Diesel, mig from [Python](https://github.com/danloh/rut-server-py)
+WIP: update to actix-web 1.0
 
 Todo:
 1- Clean Code,

@@ -3,7 +3,7 @@ table! {
         id -> Varchar,
         rut_id -> Varchar,
         item_id -> Varchar,
-        item_order -> Int4,
+        item_order -> Int2,
         content -> Text,
         uname -> Varchar,
         collect_at -> Timestamp,
@@ -63,7 +63,7 @@ table! {
         content -> Text,
         create_at -> Timestamp,
         renew_at -> Timestamp,
-        author_id -> Varchar,
+        author -> Varchar,
         uname -> Varchar,
         credential -> Varchar,
         logo -> Varchar,
@@ -82,8 +82,8 @@ table! {
         item_id -> Varchar,
         star_at -> Timestamp,
         note -> Varchar,
-        flag -> Varchar,
-        rate -> Int4,
+        flag -> Int2,
+        rate -> Int2,
     }
 }
 
