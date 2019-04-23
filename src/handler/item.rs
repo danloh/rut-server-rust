@@ -244,6 +244,17 @@ impl Handler<CollectItem> for Dba {
         use db::schema::ruts::dsl::{ruts, id as rid, item_count, logo, renew_at};
         use db::schema::items::dsl::{items, id as itemid, rut_count, cover};
         let conn = &self.0.get().map_err(error::ErrorInternalServerError)?;
+
+        // to check if have collected
+        let check_collect = collects
+            .filter(&rut_id.eq(&collect.rut_id))
+            .filter(&item_id.eq(&collect.item_id))
+            .load::<Collect>(conn)
+            .map_err(error::ErrorInternalServerError)?.pop();
+
+        if let Some(c) = check_collect {
+            return Err(error::ErrorBadRequest("Duplicate"))
+        }
         
         // get item cover then as rut logo, and check if item exist
         let item_q = items
@@ -260,11 +271,11 @@ impl Handler<CollectItem> for Dba {
         let item_num = (&rut_q).item_count;
         // limit the item_count to 42
         if item_num >= 42 {
-            return Err(error::ErrorInternalServerError("42"))
+            return Err(error::ErrorBadRequest("42"))
         }
 
         let uid = format!("{}", uuid::Uuid::new_v4());
-        let new_collect = Collect::new(uid, collect.clone());
+        let new_collect = Collect::new(uid, item_num + 1, collect.clone());
         let collect_new = diesel::insert_into(collects)
             .values(&new_collect).get_result::<Collect>(conn)
             .map_err(error::ErrorInternalServerError)?;
