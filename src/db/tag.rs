@@ -29,22 +29,20 @@ impl Handler<CheckTag> for Dba {
         if action == "POST" {
             let newtag = Tag::new(tg.tname);
             let tag_new = diesel::insert_into(tags)
-                .values(&newtag)
-                .get_result::<Tag>(conn)?;
+                .values(&newtag).get_result::<Tag>(conn)?;
 
             Ok( TagMsg { 
                 status: 200, 
                 message: "Added".to_string(),
-                tag: tag_new.clone(),
+                tag: tag_new,
             })
         } else { // GET
-            let tag_q = tags.filter(&tname.eq(&tg.tname))
-                .get_result::<Tag>(conn)?;
+            let tag_q = tags.filter(&tname.eq(&tg.tname)).get_result::<Tag>(conn)?;
 
             Ok( TagMsg { 
                 status: 200, 
                 message: "Get".to_string(),
-                tag: tag_q.clone(),
+                tag: tag_q,
             })
         }
     }
@@ -109,16 +107,16 @@ impl Handler<UpdateTag> for Dba {
 
         let tag_update = diesel::update(tags.filter(&tname.eq(&tg.tname)))
             .set((
-                intro.eq(tg.intro.clone()),
-                logo.eq(tg.logo.clone()),
-                pname.eq(tg.pname.clone()),  // to check if pname existing?
+                intro.eq(tg.intro),
+                logo.eq(tg.logo),
+                pname.eq(tg.pname),  // to check if pname existing?
             ))
             .get_result::<Tag>(conn)?;
 
         Ok( TagMsg { 
             status: 201, 
             message: "Updated".to_string(),
-            tag: tag_update.clone(),
+            tag: tag_update,
         })
     }
 }

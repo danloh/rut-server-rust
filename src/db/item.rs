@@ -35,9 +35,8 @@ impl Handler<NewItem> for Dba {
         let s_uiid = &submit.uiid;
         let s_url = &submit.url;
         if s_uiid.trim() != "" {
-            let check_q_id = items.filter(&uiid.eq(s_uiid))
-                .load::<Item>(conn)?.pop();
-            if let Some(i) = check_q_id {
+            let check_uid = items.filter(&uiid.eq(s_uiid)).load::<Item>(conn)?.pop();
+            if let Some(i) = check_uid {
                 return Ok( ItemMsg { 
                     status: 422, 
                     message: "Existing".to_string(),
@@ -46,9 +45,8 @@ impl Handler<NewItem> for Dba {
             }
         }
         if s_url.trim() != "" {
-            let check_q_id = items.filter(&url.eq(s_url))
-                .load::<Item>(conn)?.pop();
-            if let Some(i) = check_q_id {
+            let check_url = items.filter(&url.eq(s_url)).load::<Item>(conn)?.pop();
+            if let Some(i) = check_url {
                 return Ok( ItemMsg { 
                     status: 422, 
                     message: "Existing".to_string(),
@@ -68,7 +66,7 @@ impl Handler<NewItem> for Dba {
         Ok( ItemMsg { 
             status: 201, 
             message: "Submitted".to_string(),
-            item: item_new.clone(),
+            item: item_new,
         })
     }
 }
@@ -89,7 +87,7 @@ impl Handler<UpdateItem> for Dba {
         Ok( ItemMsg { 
             status: 201,
             message: "Updated".to_string(),
-            item: item_update.clone(),
+            item: item_update,
         })
     }
 }
@@ -219,7 +217,7 @@ impl Handler<QueryItems> for Dba {
         Ok( ItemListMsg { 
             status: 200, 
             message: "Success".to_string(),
-            items: item_list.clone(),
+            items: item_list,
             count: item_count,
         })
     }
@@ -245,8 +243,7 @@ impl Handler<CollectItem> for Dba {
         }
         
         // get item cover then as rut logo, and check if item exist
-        let item_q = items
-            .filter(&itemid.eq(&collect.item_id))
+        let item_q = items.filter(&itemid.eq(&collect.item_id))
             .get_result::<Item>(conn)?;
         
         // to gen item order, curr_item_count + 1, or pass from frontend
@@ -309,7 +306,7 @@ impl Handler<UpdateCollect> for Dba {
         Ok( CollectMsg { 
             status: 201,
             message: "Updated".to_string(),
-            collect: collect_update.clone(),
+            collect: collect_update,
         })
     }
 }

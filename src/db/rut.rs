@@ -52,7 +52,7 @@ impl Handler<CreateRut> for Dba {
         Ok( RutMsg { 
             status: 201, 
             message: "Created".to_string(),
-            rut: rut_new.clone(),
+            rut: rut_new,
         })
     }
 }
@@ -71,7 +71,7 @@ impl Handler<QueryRut> for Dba {
         Ok( RutMsg { 
             status: 200, 
             message: "Success".to_string(),
-            rut: rut_query.clone(),
+            rut: rut_query,
         })
     }
 }
@@ -189,7 +189,7 @@ impl Handler<QueryRuts> for Dba {
         Ok( RutListMsg { 
             status: 201, 
             message: "Success".to_string(),
-            ruts: rut_list.clone(),
+            ruts: rut_list,
             count: rut_num as usize,
         })
     }
@@ -205,11 +205,11 @@ impl Handler<UpdateRut> for Dba {
         
         let rut_update = diesel::update(ruts.filter(&id.eq(&rut.id)))
             .set((
-                title.eq(rut.title.clone()),
-                url.eq(rut.url.clone()),
-                content.eq(rut.content.clone()),
-                author.eq(rut.author.clone()),
-                credential.eq(rut.credential.clone()),
+                title.eq(rut.title),
+                url.eq(rut.url),
+                content.eq(rut.content),
+                author.eq(rut.author),
+                credential.eq(rut.credential),
                 renew_at.eq(Utc::now().naive_utc()),
             ))
             .get_result::<Rut>(conn)?;
@@ -217,7 +217,7 @@ impl Handler<UpdateRut> for Dba {
         Ok( RutMsg { 
             status: 201, 
             message: "Updated".to_string(),
-            rut: rut_update.clone(),
+            rut: rut_update,
         })
     }
 }

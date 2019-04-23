@@ -109,8 +109,11 @@ pub fn tag_rut(
     // filter per length, no inner space; to do: regex to test tag name
     let tnames: Vec<String> = 
         tags.tnames.clone().into_iter()
-        .map(|t| t.trim().replace(" ", "-"))
-        .filter(|t| t.trim().len() <= TAG_LEN && t.trim().len() >= 1 ).collect();
+            .map(|t| t.trim().replace(" ", "-"))
+            .filter(
+                |t| t.trim().len() <= TAG_LEN && t.trim().len() >= 1 
+            )
+            .collect();
 
     let rut_tags = RutTag{ tnames, ..tags };
 
