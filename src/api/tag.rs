@@ -100,20 +100,17 @@ pub fn update(
 pub fn tag_rut(
     db: Data<DbAddr>,
     rutg: Json<RutTag>,
-    tg_info: Path<(u8, String)>,
+    tg_info: Path<(u8, String)>, // ?? no use?
     auth: CheckUser
 ) -> impl Future<Item = HttpResponse, Error = Error> {
 
     let tags = rutg.into_inner();
 
-    // filter per length, no inner space; to do: regex to test tag name
-    let tnames: Vec<String> =
-        tags.tnames.clone().into_iter()
-            .map(|t| t.trim().replace(" ", "-"))
-            .filter(
-                |t| t.trim().len() <= TAG_LEN && t.trim().len() >= 1
-            )
-            .collect();
+    // filter per length, no whitespace; todo: regex to test tag name
+    let tnames: Vec<String> = tags.tnames.clone().into_iter()
+        .map( |t| t.trim().replace(" ", "-") )
+        .filter( |t| t.len() <= TAG_LEN && t.len() >= 1 )
+        .collect();
 
     let rut_tags = RutTag{ tnames, ..tags };
 
