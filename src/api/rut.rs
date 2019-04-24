@@ -63,8 +63,8 @@ pub fn get_list(
     let query_msg = match per {
         "item" => QueryRuts::ItemID(perid, page),
         "tag" => QueryRuts::TagID(perid, page),
-        "user" => QueryRuts::UserID(perid, flag, page),
-        "key" => QueryRuts::KeyID(kw, fr, perid, page), // &keyword=&from=tag|user|item
+        "user" => QueryRuts::UserID(perid, flag, page),  // flag=create|star
+        "key" => QueryRuts::KeyID(kw, fr, perid, page), // &kw=&fr=tag|user|item
         _ => QueryRuts::Index(String::from("index")),
     };
 

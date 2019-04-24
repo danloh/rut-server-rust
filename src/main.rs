@@ -140,8 +140,9 @@ fn main() -> std::io::Result<()> {
             )
             .service(resource("/tags/{per}/{id}")
                 .route(get().to_async(api::tag::get_list))
+                //.route(post().to_async(api::tag::tag_any)) // tag rut|item|etc
             )
-            .service(resource("/tagr/{action:[0|1]}/{rutid}")
+            .service(resource("/tagr/{action:[0|1]}/{rutid}")  // can be "/tagrut/{action:[0|1]}"
                 .route(post().to_async(api::tag::tag_rut))
             )
             .service(resource("/startag/{tname}/{action:[0|1]}/{note}")
