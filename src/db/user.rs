@@ -9,7 +9,7 @@ use crate::Dba;
 use crate::errors::ServiceError;
 use crate::model::msg::{ Msg, AuthMsg };
 use crate::model::user::{ 
-    User, CheckUser, RegUser, AuthUser, UserID, UpdateUser, ChangePsw 
+    User, CheckUser, RegUser, AuthUser, QueryUser, UpdateUser, ChangePsw 
 };
 
 
@@ -79,10 +79,10 @@ impl Handler<AuthUser> for Dba {
 
 // get user
 // handle msg from api::auth.get_user
-impl Handler<UserID> for Dba {
+impl Handler<QueryUser> for Dba {
     type Result = Result<CheckUser, ServiceError>;
 
-    fn handle(&mut self, uid: UserID, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, uid: QueryUser, _: &mut Self::Context) -> Self::Result {
         use crate::schema::users::dsl::*;
         let conn: &PgConnection = &self.0.get().unwrap();
 

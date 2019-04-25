@@ -91,11 +91,9 @@ impl Handler<QueryRuts> for Dba {
         // build id_list per query type
         match per {
             QueryRuts::Index(_) => {
-                id_list = ruts.select(id)
-                    .order(renew_at.desc())
+                rut_list = ruts.order(renew_at.desc())
                     //.order(vote.desc())
-                    .limit(20)
-                    .load::<String>(conn)?;
+                    .limit(20).load::<Rut>(conn)?;
             },
             QueryRuts::UserID(u,f,p) => {
                 if &f == "create" {

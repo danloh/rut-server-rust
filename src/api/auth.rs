@@ -9,7 +9,7 @@ use actix_web::{
 
 use crate::DbAddr;
 use crate::model::user::{ 
-    RegUser, UserID, AuthUser, CheckUser, UpdateUser, ChangePsw, encode_token
+    RegUser, QueryUser, AuthUser, CheckUser, UpdateUser, ChangePsw, encode_token
 };
 use crate::model::Validate;
 use crate::model::msg::{ AuthMsg, UserMsg };
@@ -64,7 +64,7 @@ pub fn get(
     db: Data<DbAddr>
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let uname = path_uname.into_inner();
-    db.send(UserID{uname})
+    db.send(QueryUser{uname})
       .from_err()
       .and_then(|res| match res {
         Ok(user) => {

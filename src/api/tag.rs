@@ -133,12 +133,7 @@ pub fn star_or_unstar(
     let action: u8 = star_info.1;
     let note = star_info.clone().2;
     
-    db.send( StarOrTag {
-        uname: auth.uname,
-        tname,
-        note,
-        action,
-    })
+    db.send( StarOrTag{uname: auth.uname, tname, note, action,} )
     .from_err().and_then(|res| match res {
         Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
         Err(err) => Ok(err.error_response()),
