@@ -45,7 +45,7 @@ impl Tag {
 }
 
 // as msg in create new tag, get tag
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize,Serialize,Debug,Clone)]
 pub struct CheckTag {
     pub tname: String,
     pub action: String, // get / post / delete
@@ -68,7 +68,7 @@ impl Validate for CheckTag {
 }
 
 // as msg in query tag list
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize,Serialize,Debug,Clone)]
 pub enum QueryTags {
     RutID(String),
     ItemID(String),
@@ -122,7 +122,7 @@ pub struct TagRut {
 }
 
 // as msg in tag or untag rut
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize,Serialize,Debug,Clone)]
 pub struct RutTag {
     pub tnames: Vec<String>,
     pub rut_id: String,
@@ -136,10 +136,10 @@ impl Message for RutTag {
 impl Validate for RutTag {
     fn validate(&self) -> Result<(), Error> {
         let tags = &self.tnames;
-        let action = *&self.action;
+        let action = self.action;
         let check = tags.len() > 0 && (action == 0 || action == 1);
 
-        if check {
+        if check { 
             Ok(())
         } else {
             Err(error::ErrorBadRequest("Invalid Input"))
@@ -158,7 +158,7 @@ pub struct StarTag {
 }
 
 // as msg in star or unstar tag
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize,Serialize,Debug,Clone)]
 pub struct StarOrTag {
     pub uname: String,
     pub tname: String,
@@ -182,7 +182,7 @@ impl Message for StarTagStatus {
 }
 
 // to do
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
+#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
 #[table_name="tagitems"]
 pub struct TagItem {
     pub id: String,
@@ -192,10 +192,40 @@ pub struct TagItem {
 }
 
 // to do
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
+#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
 #[table_name="tagetcs"]
 pub struct TagEtc {
     pub id: String,
     pub tname: String,
     pub etc_id: String,
+}
+
+// as msg in tag or untag rut|item|etc
+#[derive(Deserialize,Serialize,Debug,Clone)]
+pub struct TagAny {
+    pub tnames: Vec<String>,
+    pub tag_to: String,  // rut|item|etc
+    pub to_id: String,
+    pub action: u8, // tag 1 or untag 0
+}
+
+impl Message for TagAny {
+    type Result = Result<Msg, ServiceError>;
+}
+
+impl Validate for TagAny {
+    fn validate(&self) -> Result<(), Error> {
+        let tags = &self.tnames;
+        let action = self.action;
+        let tag_to = &self.tag_to;
+        let check =
+            tags.len() > 0 && (action == 0 || action == 1) &&
+            (tag_to == "rut" || tag_to == "item" || tag_to == "etc");
+
+        if check {
+            Ok(())
+        } else {
+            Err(error::ErrorBadRequest("Invalid Input"))
+        }
+    }
 }

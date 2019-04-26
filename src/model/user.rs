@@ -187,12 +187,12 @@ impl Validate for AuthUser {
 }
 
 // as msg in get user by uname
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct UserID {
+#[derive(Deserialize,Serialize,Debug,Clone)]
+pub struct QueryUser {
     pub uname: String,
 }
 
-impl Message for UserID {
+impl Message for QueryUser {
     type Result = Result<CheckUser, ServiceError>;
 }
 
