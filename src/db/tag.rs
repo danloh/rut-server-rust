@@ -14,7 +14,7 @@ use crate::errors::ServiceError;
 use crate::model::msg::{ Msg, TagMsg, TagListMsg, StarStatusMsg };
 use crate::model::tag::{ 
     Tag, CheckTag, UpdateTag, QueryTags, TagRut, RutTag, 
-    StarTag, StarOrTag, StarTagStatus 
+    TagItem, TagEtc, TagAny, StarTag, StarOrTag, StarTagStatus 
 };
 
 // handle msg from api::tag.new_tag and get_tag
@@ -277,5 +277,142 @@ impl Handler<StarTagStatus> for Dba {
             None => { "unstar" },
         };
         Ok( StarStatusMsg{ status: 200, message: msg.to_string(), count: s_count}) 
+    }
+}
+
+// handle tag rut|item|etc
+impl Handler<TagAny> for Dba {
+    type Result = Result<Msg, ServiceError>;
+
+    fn handle(&mut self, tg: TagAny, _: &mut Self::Context) -> Self::Result {
+        let conn = &self.0.get().unwrap();
+        
+        let tgnames = tg.tnames;
+        let tag_to = tg.tag_to.trim();
+        let action = tg.action;
+        let toID = tg.to_id;
+
+        match tag_to {
+            "rut" => {
+                use crate::schema::tagruts::dsl::*;
+                for rtg in tgnames {
+                    if action == 1 {  // tag
+                        // to check if tagged with a same tag
+                        let tr = tagruts.filter(&tname.eq(&rtg)).filter(&rut_id.eq(&toID))
+                            .load::<TagRut>(conn)?.pop();
+                        match tr {
+                            // if tagged, update count + 1 in tagruts
+                            Some(tgr) => {
+                                diesel::update(&tgr).set(count.eq(count + 1)).execute(conn)?;
+                            },
+                            // else new tag-rut
+                            None => {
+                                let new_tag_rut = TagRut {
+                                    id: (rtg.clone() + "-" + &toID),
+                                    tname: rtg.clone(),
+                                    rut_id: toID.clone(),
+                                    count: 1,
+                                };
+                                diesel::insert_into(tagruts).values(&new_tag_rut).execute(conn)?;
+                                // check tnames if existing
+                                use crate::schema::tags::dsl::{tags, tname as t_name, rut_count};
+                                let tag_check = tags.filter(&t_name.eq(&rtg)).load::<Tag>(conn)?.pop();
+                                match tag_check {
+                                    Some(t) => {
+                                        // then update tags.rut_count
+                                        diesel::update(&t).set(rut_count.eq(rut_count + 1)).execute(conn)?;
+                                    },
+                                    None => {
+                                        let newtag = Tag{
+                                            rut_count: 1,
+                                            ..Tag::new(rtg)
+                                        };
+                                        // new_tag 
+                                        diesel::insert_into(tags).values(&newtag).execute(conn)?;
+                                    }
+                                }
+                            },
+                        }
+                    } else { // untag
+                        diesel::delete(tagruts.filter(&tname.eq(&rtg))).execute(conn)?;
+                    }
+                }
+            },
+            "item" => {
+                use crate::schema::tagitems::dsl::*;
+                for itg in tgnames {
+                    if action == 1 {  // tag
+                        // to check if tagged with a same tag
+                        let ti = tagitems.filter(&tname.eq(&itg)).filter(&item_id.eq(&toID))
+                            .load::<TagItem>(conn)?.pop();
+                        match ti {
+                            // if tagged, update count + 1
+                            Some(tgi) => {
+                                diesel::update(&tgi).set(count.eq(count + 1)).execute(conn)?;
+                            },
+                            // else new tag-rut
+                            None => {
+                                let new_tag_item = TagItem {
+                                    id: itg.clone() + "-" + &toID,
+                                    tname: itg.clone(),
+                                    item_id: toID.clone(),
+                                    count: 1,
+                                };
+                                diesel::insert_into(tagitems).values(&new_tag_item).execute(conn)?; 
+                                // check tnames if existing
+                                use crate::schema::tags::dsl::{tags, tname as t_name, item_count};
+                                let tag_check = tags.filter(&t_name.eq(&itg)).load::<Tag>(conn)?.pop();
+                                match tag_check {
+                                    Some(t) => {
+                                        // then update tags.rut_count
+                                        diesel::update(&t).set(item_count.eq(item_count + 1)).execute(conn)?;
+                                    },
+                                    None => {
+                                        let newtag = Tag{
+                                            item_count: 1,
+                                            ..Tag::new(itg)
+                                        };
+                                        // new_tag 
+                                        diesel::insert_into(tags).values(&newtag).execute(conn)?;
+                                    }
+                                } 
+                            },
+                        }
+                    } else { // untag
+                        diesel::delete(tagitems.filter(&tname.eq(&itg))).execute(conn)?;
+                    }
+                }
+            },
+            "etc" => {
+                use crate::schema::tagetcs::dsl::*;
+                for etg in tgnames {
+                    // to check if tagged with a same tag
+                    let te = tagetcs.filter(&tname.eq(&etg)).filter(&etc_id.eq(&toID))
+                        .load::<TagEtc>(conn)?.pop();
+                    if let None = te {
+                        let new_tag_etc = TagEtc {
+                            id: etg.clone() + "-" + &toID,
+                            tname: etg.clone(),
+                            etc_id: toID.clone(),
+                        };
+                        diesel::insert_into(tagetcs).values(&new_tag_etc).execute(conn)?; 
+                        // check tnames if existing
+                        use crate::schema::tags::dsl::{tags, tname as t_name};
+                        let tag_check = tags.filter(&t_name.eq(&etg)).load::<Tag>(conn)?.pop();
+                        if let None = tag_check {
+                            let newtag = Tag{ etc_count: 1, ..Tag::new(etg) };
+                            // new_tag 
+                            diesel::insert_into(tags).values(&newtag).execute(conn)?;
+                        }
+                    }
+                }
+            },
+            _  => (),
+        }
+
+        Ok( Msg { 
+            status: 201, 
+            message: "Done".to_string(),
+        })
     }
 }

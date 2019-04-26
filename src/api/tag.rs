@@ -11,8 +11,8 @@ use crate::api::{ ReqQuery };
 use crate::model::{ Validate, TAG_LEN };
 use crate::model::user::{ CheckUser };
 use crate::model::tag::{ 
-    Tag, CheckTag, UpdateTag, QueryTags, TagRut, RutTag, 
-    StarOrTag, StarTagStatus 
+    Tag, CheckTag, UpdateTag, QueryTags, TagRut, 
+    RutTag, TagAny, StarOrTag, StarTagStatus 
 };
 
 
@@ -97,6 +97,7 @@ pub fn update(
         })
 }
 
+// to be deprecated
 pub fn tag_rut(
     db: Data<DbAddr>,
     rutg: Json<RutTag>,
@@ -117,6 +118,33 @@ pub fn tag_rut(
     result(rut_tags.validate()).from_err()
         .and_then(
             move |_| db.send(rut_tags).from_err()
+        )
+        .and_then(|res| match res {
+            Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
+            Err(e) => Ok(e.error_response()),
+        })
+}
+
+// for tag rut|item|etc
+pub fn tag_any(
+    db: Data<DbAddr>,
+    tg: Json<TagAny>,
+    auth: CheckUser
+) -> impl Future<Item = HttpResponse, Error = Error> {
+
+    let tags = tg.into_inner();
+
+    // filter per length, no whitespace; todo: regex to test tag name
+    let tnames: Vec<String> = tags.tnames.clone().into_iter()
+        .map( |t| t.trim().replace(" ", "-") )
+        .filter( |t| t.len() <= TAG_LEN && t.len() >= 1 )
+        .collect();
+
+    let any_tags = TagAny{ tnames, ..tags };
+
+    result(any_tags.validate()).from_err()
+        .and_then(
+            move |_| db.send(any_tags).from_err()
         )
         .and_then(|res| match res {
             Ok(msg) => Ok(HttpResponse::Ok().json(msg)),

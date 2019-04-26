@@ -41,7 +41,7 @@ pub fn init_dba() -> DbAddr {
     let db_url = dotenv::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let manager = ConnectionManager::<PgConnection>::new(db_url);
     let cpu_num = num_cpus::get();
-    let pool_num = (cpu_num) as u32;
+    let pool_num = std::cmp::max(10, cpu_num * 2 + 1) as u32;
     // p_num subject to c_num?? 
     let conn = Pool::builder()
         .max_size(pool_num)
@@ -49,7 +49,7 @@ pub fn init_dba() -> DbAddr {
         .expect("Failed to create pool.");
 
     SyncArbiter::start( 
-        cpu_num * 2, 
+        cpu_num * 2 + 1, 
         move || { Dba(conn.clone()) }
     )
 }
@@ -144,6 +144,9 @@ fn main() -> std::io::Result<()> {
             )
             .service(resource("/tagr/{action:[0|1]}/{rutid}")  // can be "/tagrut/{action:[0|1]}"
                 .route(post().to_async(api::tag::tag_rut))
+            )
+            .service(resource("/totag/{action:[0|1]}")  // tag rut|item|etc
+                .route(post().to_async(api::tag::tag_any))
             )
             .service(resource("/startag/{tname}/{action:[0|1]}/{note}")
                 .route(get().to_async(api::tag::star_or_unstar))
