@@ -67,24 +67,28 @@ pub fn get_list(
         "uiid" => QueryItems::Uiid(perid),
         "title" => QueryItems::Title(perid),
         "url" => QueryItems::ItemUrl(
-            String::from_utf8(decode(&perid).unwrap()).unwrap()
+            String::from_utf8(
+                decode(&perid).unwrap_or(Vec::new())
+            ).unwrap_or("not_url".into())    // do some validation
         ),
         // query per relations with  rut, tag, user
         "rut" => QueryItems::RutID(perid),
         "tag" => QueryItems::TagID(perid),
         "user" => QueryItems::UserID(
-          perid, flag.parse::<i16>().unwrap(), page
+          perid, flag.parse::<i16>().unwrap_or(3), page
         ),
         "key" => QueryItems::KeyID(kw, fr, perid, page),
         _ => QueryItems::ItemID(perid),
     };
 
-    db.send(itemsPerID)
-      .from_err()
-      .and_then(|res| match res {
-        Ok(msg) => Ok(HttpResponse::Ok().json(msg)),
-        Err(err) => Ok(err.error_response()),
-    })
+    result(itemsPerID.validate()).from_err()
+        .and_then(
+            move |_| db.send(itemsPerID).from_err()
+        )
+        .and_then(|res| match res {
+            Ok(items) => Ok(HttpResponse::Ok().json(items)),
+            Err(e) => Ok(e.error_response()),
+        })
 }
 
 pub fn update(

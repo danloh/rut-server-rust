@@ -28,7 +28,7 @@ impl Handler<NewItem> for Dba {
 
     fn handle(&mut self, submit: NewItem, _: &mut Self::Context) -> Self::Result {
         use crate::schema::items::dsl::*;
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
         
         // check if existing, field may be ""
         // do not use or_filter()
@@ -78,7 +78,7 @@ impl Handler<UpdateItem> for Dba {
 
     fn handle(&mut self, item: UpdateItem, _: &mut Self::Context) -> Self::Result {
         use crate::schema::items::dsl::*;
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
 
         let item_update = diesel::update(items.filter(&id.eq(&item.id)))
             .set(&item)
@@ -98,7 +98,7 @@ impl Handler<QueryItem> for Dba {
 
     fn handle(&mut self, islug: QueryItem, _: &mut Self::Context) -> Self::Result {
         use crate::schema::items::dsl::*;
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
 
         let item_query = items.filter(&slug.eq(&islug.item_slug)) // slug here only
             .get_result::<Item>(conn)?;
@@ -117,7 +117,7 @@ impl Handler<QueryItems> for Dba {
 
     fn handle(&mut self, perid: QueryItems, _: &mut Self::Context) -> Self::Result {
         use crate::schema::items::dsl::*;
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
         
         let mut item_id_vec: Vec<String> = Vec::new();
         let mut item_list: Vec<Item> = Vec::new();
@@ -231,7 +231,7 @@ impl Handler<CollectItem> for Dba {
         use crate::schema::collects::dsl::*;
         use crate::schema::ruts::dsl::{ruts, id as rid, item_count, logo, renew_at};
         use crate::schema::items::dsl::{items, id as itemid, rut_count, cover};
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
 
         // to check if have collected
         let check_collect = collects
@@ -291,7 +291,7 @@ impl Handler<UpdateCollect> for Dba {
 
     fn handle(&mut self, up_collect: UpdateCollect, _: &mut Self::Context) -> Self::Result {
         use crate::schema::collects::dsl::*;
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
 
         let collect_query = collects.filter(&id.eq(&up_collect.id))
             .get_result::<Collect>(conn)?;
@@ -317,7 +317,7 @@ impl Handler<DelCollect> for Dba {
 
     fn handle(&mut self, dc: DelCollect, _: &mut Self::Context) -> Self::Result {
         use crate::schema::collects::dsl::*;
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
         
         let q_collect = collects.filter(&id.eq(&dc.collect_id))
             .get_result::<Collect>(conn)?;
@@ -376,7 +376,7 @@ impl Handler<QueryCollects> for Dba {
 
     fn handle(&mut self, cid: QueryCollects, _: &mut Self::Context) -> Self::Result {
         use crate::schema::collects::dsl::*;
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
         
         let mut collect_list: Vec<Collect> = Vec::new();
         match cid {
@@ -422,7 +422,7 @@ impl Handler<QueryCollect> for Dba {
 
     fn handle(&mut self, cid: QueryCollect, _: &mut Self::Context) -> Self::Result {
         use crate::schema::collects::dsl::*;
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
         
         let collect_query = 
             collects.filter(&id.eq(&cid.collect_id)).get_result::<Collect>(conn)?;
@@ -441,7 +441,7 @@ impl Handler<NewStarItem> for Dba {
 
     fn handle(&mut self, istar: NewStarItem, _: &mut Self::Context) -> Self::Result {
         use crate::schema::staritems::dsl::*;
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
         
         // check if star-ed already
         let check_star = staritems
@@ -500,7 +500,7 @@ impl Handler<StarItemStatus> for Dba {
 
     fn handle(&mut self, status: StarItemStatus, _: &mut Self::Context) -> Self::Result {
         use crate::schema::staritems::dsl::*;
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
 
         let check_status = staritems
             .filter(&uname.eq(&status.uname))

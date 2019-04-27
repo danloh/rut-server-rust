@@ -26,7 +26,7 @@ impl Handler<CreateRut> for Dba {
         // import table, column
         use crate::schema::ruts::dsl::*;
         // retrieve a connecion from pool
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
         
         // check if existing per url
         let new_url = &new_rut.url;
@@ -63,7 +63,7 @@ impl Handler<QueryRut> for Dba {
 
     fn handle(&mut self, rslug: QueryRut, _: &mut Self::Context) -> Self::Result {
         use crate::schema::ruts::dsl::*;
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
 
         let rut_query = ruts.filter(&slug.eq(&rslug.rut_slug))  // slug here only
             .get_result::<Rut>(conn)?;
@@ -82,7 +82,7 @@ impl Handler<QueryRuts> for Dba {
 
     fn handle(&mut self, per: QueryRuts, _: &mut Self::Context) -> Self::Result {
         use crate::schema::ruts::dsl::*;
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
         
         let mut id_list: Vec<String> = Vec::new();
         let mut rut_list: Vec<Rut> = Vec::new();
@@ -199,7 +199,7 @@ impl Handler<UpdateRut> for Dba {
 
     fn handle(&mut self, rut: UpdateRut, _: &mut Self::Context) -> Self::Result {
         use crate::schema::ruts::dsl::*;
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
         
         let rut_update = diesel::update(ruts.filter(&id.eq(&rut.id)))
             .set((
@@ -226,7 +226,7 @@ impl Handler<StarOrRut> for Dba {
 
     fn handle(&mut self, rstar: StarOrRut, _: &mut Self::Context) -> Self::Result {
         use crate::schema::starruts::dsl::*;
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
 
         use crate::schema::ruts::dsl::{
             ruts, id as rid, star_count, item_count, vote, comment_count
@@ -280,7 +280,7 @@ impl Handler<StarRutStatus> for Dba {
 
     fn handle(&mut self, status: StarRutStatus, _: &mut Self::Context) -> Self::Result {
         use crate::schema::starruts::dsl::*;
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
 
         use crate::schema::ruts::dsl::{ruts, id as rid, star_count};
         let s_count = ruts.filter(&rid.eq(&status.rut_id))

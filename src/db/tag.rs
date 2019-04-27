@@ -23,7 +23,7 @@ impl Handler<CheckTag> for Dba {
 
     fn handle(&mut self, tg: CheckTag, _: &mut Self::Context) -> Self::Result {
         use crate::schema::tags::dsl::*;
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
         
         let action = tg.action.trim();
         if action == "POST" {
@@ -54,7 +54,7 @@ impl Handler<QueryTags> for Dba {
 
     fn handle(&mut self, per: QueryTags, _: &mut Self::Context) -> Self::Result {
         use crate::schema::tags::dsl::*;
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
         
         let mut tag_list: Vec<String> = Vec::new();
         
@@ -103,7 +103,7 @@ impl Handler<UpdateTag> for Dba {
 
     fn handle(&mut self, tg: UpdateTag, _: &mut Self::Context) -> Self::Result {
         use crate::schema::tags::dsl::*;
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
 
         let tag_update = diesel::update(tags.filter(&tname.eq(&tg.tname)))
             .set((
@@ -127,7 +127,7 @@ impl Handler<RutTag> for Dba {
 
     fn handle(&mut self, rutg: RutTag, _: &mut Self::Context) -> Self::Result {
         use crate::schema::tagruts::dsl::*;
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
 
         let action = rutg.action;
         let rutID = rutg.rut_id;
@@ -203,7 +203,7 @@ impl Handler<StarOrTag> for Dba {
     fn handle(&mut self, tstar: StarOrTag, _: &mut Self::Context) -> Self::Result {
         use crate::schema::startags::dsl::*;
         use crate::schema::tags::dsl::{tags, tname as t_name, star_count, rut_count, vote};
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
 
         let tag_query = tags.filter(&t_name.eq(&tstar.tname))
             .get_result::<Tag>(conn)?;
@@ -262,7 +262,7 @@ impl Handler<StarTagStatus> for Dba {
     fn handle(&mut self, status: StarTagStatus, _: &mut Self::Context) -> Self::Result {
         use crate::schema::startags::dsl::*;
         use crate::schema::tags::dsl::{tags, tname as t_name, star_count};
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
 
         let check_status = startags
             .filter(&uname.eq(&status.uname))
@@ -285,7 +285,7 @@ impl Handler<TagAny> for Dba {
     type Result = Result<Msg, ServiceError>;
 
     fn handle(&mut self, tg: TagAny, _: &mut Self::Context) -> Self::Result {
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
         
         let tgnames = tg.tnames;
         let tag_to = tg.tag_to.trim();

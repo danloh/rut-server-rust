@@ -89,7 +89,7 @@ impl Validate for NewItem {
         let check_len =
             test_len_limit(&self.title, 3, TITLE_LEN) &&
             test_len_limit(&self.uiid, 0, 32) &&
-            test_len_limit(&self.authors, 1, 64) &&
+            test_len_limit(&self.authors, 1, 128) &&
             test_len_limit(&self.pub_at, 0, 32) &&
             test_len_limit(&self.publisher, 0, 64) &&
             test_len_limit(&self.category, 0, 32) &&
@@ -135,7 +135,7 @@ impl Validate for UpdateItem {
             test_len_limit(&self.id, 8, 512) &&
             test_len_limit(&self.title, 3, TITLE_LEN) &&
             test_len_limit(&self.uiid, 0, 32) &&
-            test_len_limit(&self.authors, 1, 64) &&
+            test_len_limit(&self.authors, 1, 128) &&
             test_len_limit(&self.pub_at, 0, 32) &&
             test_len_limit(&self.publisher, 0, 64) &&
             test_len_limit(&self.category, 0, 32) &&
@@ -151,7 +151,7 @@ impl Validate for UpdateItem {
 }
 
 // as msg in query item by slug
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize,Serialize,Debug,Clone)]
 pub struct QueryItem {
     pub item_slug: String,
     // pub action: String, // get / delete, to do
@@ -162,7 +162,7 @@ impl Message for QueryItem {
 }
 
 // as msg to query items per tag, rut, user; id,title,url,uiid
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize,Serialize,Debug,Clone)]
 pub enum QueryItems {
     ItemID(String), // should be slug
     Uiid(String),
@@ -176,6 +176,22 @@ pub enum QueryItems {
 
 impl Message for QueryItems {
     type Result = Result<ItemListMsg, ServiceError>;
+}
+
+impl Validate for QueryItems  {
+    fn validate(&self) -> Result<(), Error> {
+        let check: bool = match self {
+            QueryItems::ItemUrl(url) => { re_test_url(url) },
+            // could do more
+            _ => { true },
+        };
+
+        if check {
+            Ok(())
+        } else {
+            Err(error::ErrorBadRequest("Invalid Input"))
+        }
+    }
 }
 
 #[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]

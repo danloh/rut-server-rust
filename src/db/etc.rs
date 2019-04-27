@@ -22,7 +22,7 @@ impl Handler<PostEtc> for Dba {
     fn handle(&mut self, new_etc: PostEtc, _: &mut Self::Context) -> Self::Result {
 
         use crate::schema::etcs::dsl::*;
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
         
         // extract the id
         use std::collections::HashMap;
@@ -66,7 +66,7 @@ impl Handler<QueryEtcs> for Dba {
 
     fn handle(&mut self, per: QueryEtcs, _: &mut Self::Context) -> Self::Result {
         use crate::schema::etcs::dsl::*;
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
         
         let p = per.page;
         // eliminate no limit

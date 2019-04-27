@@ -21,7 +21,7 @@ pub trait Validate {
 pub fn re_test_name(text: &str) -> bool {
     lazy_static! {
         static ref RE: Regex = 
-            Regex::new(r"^[\w-]{3,42}$").unwrap();
+            Regex::new(r"^[\w-]{3,42}$").unwrap(); // let fail in test
     }
     RE.is_match(text)
 }
@@ -30,7 +30,7 @@ pub fn re_test_name(text: &str) -> bool {
 pub fn re_test_psw(text: &str) -> bool {
     lazy_static! {
         static ref RE: Regex = 
-            Regex::new(r"^[\w#@~%^$&*-]{8,18}$").unwrap();
+            Regex::new(r"^[\w#@~%^$&*-]{8,18}$").unwrap(); // let fail in test
     }
     RE.is_match(text)
 }
@@ -39,7 +39,7 @@ pub fn re_test_psw(text: &str) -> bool {
 pub fn re_test_url(text: &str) -> bool {
     lazy_static! {
         static ref RE: Regex = 
-            Regex::new(r"^(https?)://([^/:]+)(:[0-9]+)?(/.*)?$").unwrap();
+            Regex::new(r"^(https?)://([^/:]+)(:[0-9]+)?(/.*)?$").unwrap(); // let fail in test
     }
     RE.is_match(text)
 }

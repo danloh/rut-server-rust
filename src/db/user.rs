@@ -30,7 +30,7 @@ impl Handler<RegUser> for Dba {
 
     fn handle(&mut self, msg: RegUser, _: &mut Self::Context) -> Self::Result {
         use crate::schema::users::dsl::*;
-        let conn = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
 
         let check_user = users.filter(&uname.eq(&msg.uname))
             .load::<User>(conn)?.pop();
@@ -60,7 +60,7 @@ impl Handler<AuthUser> for Dba {
 
     fn handle(&mut self, msg: AuthUser, _: &mut Self::Context) -> Self::Result {
         use crate::schema::users::dsl::*;
-        let conn: &PgConnection = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
 
         let mut query_user = 
             users.filter(&uname.eq(&msg.uname)).load::<User>(conn)?.pop();
@@ -84,7 +84,7 @@ impl Handler<QueryUser> for Dba {
 
     fn handle(&mut self, uid: QueryUser, _: &mut Self::Context) -> Self::Result {
         use crate::schema::users::dsl::*;
-        let conn: &PgConnection = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
 
         let query_user = 
             users.filter(&uname.eq(&uid.uname)).get_result::<User>(conn)?;
@@ -100,7 +100,7 @@ impl Handler<UpdateUser> for Dba {
 
     fn handle(&mut self, user: UpdateUser, _: &mut Self::Context) -> Self::Result {
         use crate::schema::users::dsl::*;
-        let conn: &PgConnection = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
 
         let update_user = diesel::update(users.filter(&uname.eq(&user.uname)))
             .set(&user).get_result::<User>(conn)?;
@@ -115,7 +115,7 @@ impl Handler<ChangePsw> for Dba {
 
     fn handle(&mut self, psw: ChangePsw, _: &mut Self::Context) -> Self::Result {
         use crate::schema::users::dsl::*;
-        let conn: &PgConnection = &self.0.get().unwrap();
+        let conn = &self.0.get()?;
 
         let check_user = 
             users.filter(&uname.eq(&psw.uname)).load::<User>(conn)?.pop();
