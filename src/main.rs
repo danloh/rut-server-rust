@@ -93,7 +93,7 @@ fn main() -> std::io::Result<()> {
             )
             .service(resource("/ruts/{slug}")
                 .route(get().to_async(api::rut::get))
-                .route(post().to_async(api::rut::update))  // per frontend, can be del
+                .route(post().to_async(api::rut::update)) // can be del, per frontend
                 //.route(delete().to_async(api::rut::delete))
             )
             .service(resource("/ruts/{per}/{perid}")  // ?page=p&flag=create|star&kw= fr=
@@ -111,10 +111,10 @@ fn main() -> std::io::Result<()> {
             )
             .service(resource("/items/{slug}")
                 .route(get().to_async(api::item::get))
-                .route(post().to_async(api::item::update))  // can be del, per frontend
+                .route(post().to_async(api::item::update)) // can be del, per frontend
                 // .route(delete().to_async(api::item::delete))
             )
-            .service(resource("/items/{per}/{id}")
+            .service(resource("/items/{per}/{id}") //?page=p&flag=&kw=url_base64&fr= // special per-url
                 .route(get().to_async(api::item::get_list))
             )
             .service(resource("/staritem/{itemid}/{flag:[1|2|3]}/{rate}/{note}")

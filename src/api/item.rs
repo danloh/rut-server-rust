@@ -75,8 +75,8 @@ pub fn get_list(
         "title" => QueryItems::Title(perid),
         "url" => QueryItems::ItemUrl(
             String::from_utf8(
-                decode(&perid).unwrap_or(Vec::new())
-            ).unwrap_or("not_url".into())    // do some validation
+                decode(&kw).unwrap_or(Vec::new()) //url as kw, avoid route error
+            ).unwrap_or("not_url".into()) 
         ),
         // query per relations with  rut, tag, user
         "rut" => QueryItems::RutID(perid),

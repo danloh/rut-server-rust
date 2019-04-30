@@ -53,7 +53,6 @@ impl WebPage {
         let url = self.get_url();
         let html = self.get_html();
         let domain = self.get_domain();
-        println!("domain: {}", domain);
         match domain.trim() {
             "amazon.com" => parse_amz_page(url, html),
             _ => parse_other_page(url, html),
@@ -79,7 +78,7 @@ pub fn parse_amz_page(url: String, html: Html) -> NewItem {
     }
 
     let title_parts: Vec<&str> = title_text.split(":").collect();
-    println!("{:#?}", title_parts);
+    //println!("{:#?}", title_parts);
     // try get uid, author, not always works
     let p_len = title_parts.len();
     let uid = title_parts[std::cmp::max(p_len - 3, 0 )];
@@ -103,7 +102,7 @@ pub fn parse_amz_page(url: String, html: Html) -> NewItem {
     if imgs.len() > 0 {
         let img = imgs[0];
         match img.value().attr("data-a-dynamic-image") {
-            Some(src) => { //img_src = src.to_owned();
+            Some(src) => {
                 let src_urls: Vec<&str> = src.split(":").collect();
                 let src_url = src_urls[1];
                 let img_src_url = ("https:".to_owned() + src_url).replace("\"", "");
@@ -172,7 +171,7 @@ pub fn parse_other_page(url: String, html: Html) -> NewItem {
         title: title_text.clone(),
         cover: img_src,
         url: url,
-        category: "Course".to_owned(),
+        category: "WebPage".to_owned(),
         detail: title_text,
         ..NewItem::new()
     }

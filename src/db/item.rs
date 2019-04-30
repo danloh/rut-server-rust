@@ -171,6 +171,7 @@ impl Handler<QueryItems> for Dba {
                     Some(i) => { item_list = vec!(i); }
                     None => {
                         // spider per url
+                        //println!("via spider");
                         let page = WebPage::new(&u);
                         let sp_item = page.into_item();
                         // insert new to db

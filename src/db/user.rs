@@ -19,7 +19,6 @@ pub fn hash_password(plain: &str) -> Result<String, ServiceError> {
         Ok(cost) => cost.parse().unwrap_or(DEFAULT_COST),
         _ => DEFAULT_COST,
     };
-    //println!("{}", &hashing_cost);
     hash(plain, hashing_cost).map_err(|_| ServiceError::InternalServerError)
 }
 
