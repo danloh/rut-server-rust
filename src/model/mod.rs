@@ -44,6 +44,28 @@ pub fn re_test_url(text: &str) -> bool {
     RE.is_match(text)
 }
 
+pub fn re_test_img_url(text: &str) -> bool {
+    lazy_static! {
+        static ref RE: Regex = 
+            Regex::new(r"^https?://.+\.(jpg|gif|png|svg)$").unwrap(); // let fail in test
+    }
+    RE.is_match(text)
+}
+
+pub fn replace_sep(text: &str, rep: &str) -> String {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"[-|,_]").unwrap(); // let fail in test
+    }
+    RE.replace_all(text, rep).into_owned()
+}
+
+pub fn trim_url_qry(text: &str, rep: &str) -> String {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"/ref=.*").unwrap(); // let fail in test
+    }
+    RE.replace_all(text, rep).into_owned()
+}
+
 pub fn test_len_limit(text: &str, min: usize, max: usize) -> bool {
     let l = text.trim().len();
     l >= min && l <= max

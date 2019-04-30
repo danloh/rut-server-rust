@@ -45,6 +45,7 @@ impl Handler<NewItem> for Dba {
                 })
             }
         }
+
         if s_url.trim() != "" {
             let check_url = items.filter(&url.eq(s_url)).load::<Item>(conn)?.pop();
             if let Some(i) = check_url {

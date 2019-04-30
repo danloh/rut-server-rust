@@ -14,6 +14,7 @@ use crate::model::item::{
     NewItem, UpdateItem, QueryItem, QueryItems, CollectItem, QueryCollects, 
     QueryCollect, UpdateCollect, DelCollect, StarItem, NewStarItem, StarItemStatus
 };
+use crate::model::{ re_test_img_url, replace_sep, trim_url_qry };
 
 pub fn new(
     db: Data<DbAddr>,
@@ -21,10 +22,16 @@ pub fn new(
     auth: CheckUser
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let newItem = new_item.into_inner();
+    let uid = newItem.uiid;
+    let uiid = replace_sep(&uid, "");
+    let new_url = newItem.url;
+    let url = trim_url_qry(&new_url, "");
+
+    let item_new = NewItem{ uiid, url, ..newItem };
     
-    result(newItem.validate()).from_err()
+    result(item_new.validate()).from_err()
         .and_then(
-            move |_| db.send(newItem).from_err()
+            move |_| db.send(item_new).from_err()
         )
         .and_then(|res| match res {
             Ok(item) => Ok(HttpResponse::Ok().json(item)),
@@ -98,9 +105,16 @@ pub fn update(
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let upItem = up_item.into_inner();
 
-    result(upItem.validate()).from_err()
+    let uid = upItem.uiid;
+    let uiid = replace_sep(&uid, "");
+    let up_url = upItem.url;
+    let url = trim_url_qry(&up_url, "");
+
+    let item_up = UpdateItem{ uiid, url, ..upItem };
+
+    result(item_up.validate()).from_err()
         .and_then(
-            move |_| db.send(upItem).from_err()
+            move |_| db.send(item_up).from_err()
         )
         .and_then(|res| match res {
             Ok(item) => Ok(HttpResponse::Ok().json(item)),

@@ -209,7 +209,7 @@ impl Handler<UpdateRut> for Dba {
                 gen_slug("r", &rut.title, &r_uuid)
             } else { old_rut.clone().slug };
         
-        let rut_update = diesel::update(ruts.filter(&id.eq(&rut.id)))
+        let rut_update = diesel::update(&old_rut)
             .set((
                 title.eq(rut.title),
                 url.eq(rut.url),
