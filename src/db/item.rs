@@ -19,6 +19,7 @@ use crate::model::item::{
    Collect, QueryCollects, QueryCollect, UpdateCollect, DelCollect, 
    StarItem, NewStarItem, StarItemStatus
 };
+use crate::bot::WebPage;
 use crate::model::PER_PAGE;
 
 
@@ -80,8 +81,28 @@ impl Handler<UpdateItem> for Dba {
         use crate::schema::items::dsl::*;
         let conn = &self.0.get()?;
 
-        let item_update = diesel::update(items.filter(&id.eq(&item.id)))
-            .set(&item)
+        let old_item = items.filter(&id.eq(&item.id)).get_result::<Item>(conn)?;
+        // to update slug if title changed
+        let i_slug = 
+            if item.title != old_item.title {
+                let i_uuid = Uuid::parse_str(&old_item.id)?;
+                gen_slug("i", &item.title, &i_uuid)
+            } else { old_item.clone().slug };
+
+        let item_update = diesel::update(&old_item)
+            .set((
+                title.eq(item.title),
+                uiid.eq(item.uiid),
+                authors.eq(item.authors),
+                pub_at.eq(item.pub_at),
+                publisher.eq(item.publisher),
+                category.eq(item.category),
+                url.eq(item.url),
+                cover.eq(item.cover),
+                edition.eq(item.edition),
+                detail.eq(item.detail),
+                slug.eq(i_slug)
+            ))
             .get_result::<Item>(conn)?;
 
         Ok( ItemMsg { 
@@ -141,9 +162,26 @@ impl Handler<QueryItems> for Dba {
                     .load::<Item>(conn)?;
             },
             QueryItems::ItemUrl(u) => {
-                item_list = items
-                    .filter(&url.ilike(&u)).limit(10)
-                    .load::<Item>(conn)?;
+                // query in db or via spider
+                // url 1to1 item
+                let item = items.filter(&url.ilike(&u))
+                    .load::<Item>(conn)?.pop();
+                match item {
+                    Some(i) => { item_list = vec!(i); }
+                    None => {
+                        // spider per url
+                        let page = WebPage::new(&u);
+                        let sp_item = page.into_item();
+                        // insert new to db
+                        let uuid_v4 = uuid::Uuid::new_v4();
+                        let uid = format!("{}", uuid_v4);
+                        let i_slug = gen_slug("i", &sp_item.title, &uuid_v4);
+                        let new_item = Item::new(uid, i_slug, sp_item);
+                        let item_new = diesel::insert_into(items)
+                            .values(&new_item).get_result::<Item>(conn)?;
+                        item_list = vec!(item_new);
+                    }
+                }
             },
             QueryItems::RutID(pid) => {
                 use crate::schema::collects::dsl::*;

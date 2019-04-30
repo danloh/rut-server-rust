@@ -27,6 +27,7 @@ mod model;
 mod util;
 mod errors;
 mod schema;
+mod bot;
 
 // This is db executor actor
 pub struct Dba(pub Pool<ConnectionManager<PgConnection>>);

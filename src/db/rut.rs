@@ -200,6 +200,14 @@ impl Handler<UpdateRut> for Dba {
     fn handle(&mut self, rut: UpdateRut, _: &mut Self::Context) -> Self::Result {
         use crate::schema::ruts::dsl::*;
         let conn = &self.0.get()?;
+
+        let old_rut = ruts.filter(&id.eq(&rut.id)).get_result::<Rut>(conn)?;
+        // to update slug if title changed
+        let r_slug = 
+            if rut.title != old_rut.title {
+                let r_uuid = Uuid::parse_str(&old_rut.id)?;
+                gen_slug("r", &rut.title, &r_uuid)
+            } else { old_rut.clone().slug };
         
         let rut_update = diesel::update(ruts.filter(&id.eq(&rut.id)))
             .set((
@@ -209,6 +217,7 @@ impl Handler<UpdateRut> for Dba {
                 author.eq(rut.author),
                 credential.eq(rut.credential),
                 renew_at.eq(Utc::now().naive_utc()),
+                slug.eq(r_slug),
             ))
             .get_result::<Rut>(conn)?;
 

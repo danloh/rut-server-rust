@@ -76,6 +76,24 @@ pub struct NewItem {
     pub detail: String,
 }
 
+// Item's constructor
+impl NewItem {
+    pub fn new() -> Self {
+        NewItem {
+            title: "".to_owned(),
+            uiid: "".to_owned(),
+            authors: "".to_owned(),
+            pub_at: "".to_owned(),
+            publisher: "".to_owned(),
+            category: "".to_owned(),
+            url: "".to_owned(),
+            cover: "".to_owned(),
+            edition: "".to_owned(),
+            detail: "".to_owned(),
+        }
+    }
+}
+
 impl Message for NewItem {
     type Result = Result<ItemMsg, ServiceError>;
 }
