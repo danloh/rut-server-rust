@@ -78,12 +78,14 @@ pub fn parse_amz_page(url: String, html: Html) -> NewItem {
     }
 
     let title_parts: Vec<&str> = title_text.split(":").collect();
-    //println!("{:#?}", title_parts);
     // try get uid, author, not always works
-    let p_len = title_parts.len();
-    let uid = title_parts[std::cmp::max(p_len - 3, 0 )];
+    let p_len = title_parts.len() as i32;
+    //println!("{:#?} and len {}", title_parts, p_len);
+    let idx_uid = std::cmp::max(p_len - 3, 0 ) as usize;
+    let uid = title_parts[idx_uid];
     let uiid = replace_sep(uid, "");
-    let author = title_parts[std::cmp::max(p_len - 4, 0 )];
+    let idx_author = std::cmp::max(p_len - 4, 0 ) as usize;
+    let author = title_parts[idx_author];
 
     // get product title
     let ptitles: Vec<_> = html.select(&protitle_selector).collect();
