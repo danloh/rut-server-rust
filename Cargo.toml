@@ -1,6 +1,6 @@
 [package]
 name = "rut-server-rust"
-version = "0.0.2"
+version = "0.0.3"
 edition = "2018"
 authors = ["DLuo"]
 
@@ -12,7 +12,7 @@ path = "tests/lib.rs"
 futures = "0.1.26"
 actix = { version = "0.8.1", features = ["http"] }
 actix-rt = "0.2.2"
-actix-web = "1.0.0-beta.2"
+actix-web = "1.0.0-beta.3"
 diesel = { version = "1.4.2", features = ["postgres","chrono","serde_json","uuidv07","r2d2"] }
 r2d2 = "0.8.4"
 serde_derive="1.0.90"
@@ -32,7 +32,7 @@ dotenv = "0.13.0"
 base64 = "0.10.1"
 num_cpus = "1.10.0"
 
-reqwest = "0.9.15"
+reqwest = "0.9.16"
 scraper = "0.10.0"
 
 # openssl = "0.10.20"
