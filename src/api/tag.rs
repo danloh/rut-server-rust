@@ -8,7 +8,7 @@ use actix_web::{
 
 use crate::DbAddr;
 use crate::api::{ ReqQuery };
-use crate::model::{ Validate, TAG_LEN };
+use crate::model::{ Validate, TAG_LEN, replace_sep };
 use crate::model::user::{ CheckUser };
 use crate::model::tag::{
     Tag, CheckTag, UpdateTag, QueryTags, TagRut,
@@ -21,7 +21,7 @@ pub fn new(
     tg: Path<String>,
     auth: CheckUser
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    let tname = tg.into_inner().trim().replace(" ", "-");
+    let tname = replace_sep(tg.into_inner().trim(), "-");
     let action = String::from("POST");
 
     let tag = CheckTag{ tname, action };
@@ -84,7 +84,7 @@ pub fn update(
     let tag = tg.into_inner();
     // todo some check
     let p_name = tag.pname.trim();
-    let pname = if p_name == "" { "".to_owned() } else { p_name.replace(" ", "-") };
+    let pname = if p_name == "" { "".to_owned() } else { replace_sep(p_name, "-") };
     let up_tag = UpdateTag{ pname, ..tag };
 
     result(up_tag.validate()).from_err()
@@ -109,7 +109,7 @@ pub fn tag_rut(
 
     // filter per length, no whitespace; todo: regex to test tag name
     let tnames: Vec<String> = tags.tnames.clone().into_iter()
-        .map( |t| t.trim().replace(" ", "-") )
+        .map( |t| replace_sep(t.trim(), "-") )
         .filter( |t| t.len() <= TAG_LEN && t.len() >= 1 )
         .collect();
 
@@ -136,7 +136,7 @@ pub fn tag_any(
 
     // filter per length, no whitespace; todo: regex to test tag name
     let tnames: Vec<String> = tags.tnames.clone().into_iter()
-        .map( |t| t.trim().replace(" ", "-") )
+        .map( |t| replace_sep(t.trim(), "-") )
         .filter( |t| t.len() <= TAG_LEN && t.len() >= 1 )
         .collect();
 

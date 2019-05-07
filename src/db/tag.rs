@@ -105,13 +105,25 @@ impl Handler<UpdateTag> for Dba {
         use crate::schema::tags::dsl::*;
         let conn = &self.0.get()?;
 
+        let p_name = tg.pname;
+
         let tag_update = diesel::update(tags.filter(&tname.eq(&tg.tname)))
             .set((
                 intro.eq(tg.intro),
                 logo.eq(tg.logo),
-                pname.eq(tg.pname),  // to check if pname existing?
+                pname.eq(p_name.clone()),
             ))
             .get_result::<Tag>(conn)?;
+        
+        // insert pname if not existing
+        let tag_check = tags.filter(&tname.eq(&p_name)).load::<Tag>(conn)?.pop();
+        match tag_check {
+            Some(_t) => (),
+            None => {
+                let newtag = Tag::new(p_name);
+                diesel::insert_into(tags).values(&newtag).execute(conn)?;
+            }
+        }
 
         Ok( TagMsg { 
             status: 201, 

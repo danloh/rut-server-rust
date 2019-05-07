@@ -141,9 +141,8 @@ fn main() -> std::io::Result<()> {
             )
             .service(resource("/tags/{per}/{id}")
                 .route(get().to_async(api::tag::get_list))
-                //.route(post().to_async(api::tag::tag_any)) // tag rut|item|etc
             )
-            .service(resource("/tagr/{action:[0|1]}/{rutid}")  // can be "/tagrut/{action:[0|1]}"
+            .service(resource("/tagr/{action:[0|1]}/{rutid}")  // can be merged in totag/action
                 .route(post().to_async(api::tag::tag_rut))
             )
             .service(resource("/totag/{action:[0|1]}")  // tag rut|item|etc
