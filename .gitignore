@@ -10,3 +10,4 @@ Cargo.lock
 migrations/.gitkeep
 src/util/macros.rs
 src/macros.rs
+rut.log

@@ -5,6 +5,7 @@
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate diesel;
 #[macro_use] extern crate lazy_static;
+#[macro_use] extern crate log;
 
 use actix::{ Actor, SyncContext };
 use actix::prelude::*;
@@ -55,18 +56,36 @@ pub fn init_dba() -> DbAddr {
     )
 }
 
+pub fn init_fern_logger() -> Result<(), fern::InitError> {
+    fern::Dispatch::new()
+        .format(|out, message, record| {
+            out.finish(format_args!(
+                "{}[{}][{},{}] {}",
+                chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
+                record.level(),
+                record.target(),
+                record.line().unwrap_or(0),
+                message
+            ))
+        })
+        .level(log::LevelFilter::Debug)
+        .chain(fern::log_file("rut.log")?)
+        .apply()?;
+
+    Ok(())
+}
 
 fn main() -> std::io::Result<()> {
 
-    std::env::set_var("RUST_LOG", "rut-server-rust=debug");
-    std::env::set_var("RUST_BACKTRACE", "1");
-    env_logger::init();
-
-    let sys = actix::System::new("rut-server-rust");
+    // init logger
+    init_fern_logger().unwrap_or_default();
+    // new runtime
+    let sys = actix_rt::System::new("rut-server-rust");
+    // init actor
     let addr: DbAddr = init_dba();
 
-    let bind_host = dotenv::var("BIND_ADDRESS").expect("BIND_ADDRESS must be set");
-
+    let bind_host = dotenv::var("BIND_ADDRESS").unwrap_or("127.0.0.1:8083".to_string());
+    // config Server, App, AppState, middleware, service
     HttpServer::new( move || { App::new()
         .data(addr.clone())
         .wrap(Logger::default())
