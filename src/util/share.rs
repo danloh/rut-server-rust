@@ -1,9 +1,9 @@
 // some sharing helpers
 
 use base64;
+use deunicode::deunicode_char;
 use std::collections::HashMap;
 use uuid::Uuid;
-use deunicode::deunicode_char;
 
 pub fn to_blob(uuid: &Uuid) -> String {
     base64::encode_config(uuid.as_bytes(), base64::URL_SAFE_NO_PAD)
@@ -68,6 +68,8 @@ pub fn gen_slug(ty: &str, text: &str, uid: &Uuid) -> String {
 pub fn get_v(map_ref: &HashMap<String, String>, k: &str) -> String {
     let res = map_ref.get(k);
 
-    if let Some(r) = res { return r.clone() }
-    return "".to_string()
+    if let Some(r) = res {
+        return r.clone();
+    }
+    return "".to_string();
 }

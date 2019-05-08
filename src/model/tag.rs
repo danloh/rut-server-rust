@@ -1,29 +1,28 @@
 // tag typed model and msg handler
 
-use actix::{ Message };
-use chrono::{ NaiveDateTime };
-use actix_web::{ Error, error };
+use actix::Message;
+use actix_web::{error, Error};
+use chrono::NaiveDateTime;
 
 use crate::errors::ServiceError;
-use crate::model::msg::{ Msg, TagMsg, TagListMsg, StarStatusMsg };
-use crate::model::{ Validate, test_len_limit, re_test_url, TAG_LEN };
-use crate::schema::{ tags, tagruts, tagitems, tagetcs, startags };
-
+use crate::model::msg::{Msg, StarStatusMsg, TagListMsg, TagMsg};
+use crate::model::{re_test_url, test_len_limit, Validate, TAG_LEN};
+use crate::schema::{startags, tagetcs, tagitems, tagruts, tags};
 
 // use to build select query
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
-#[table_name="tags"]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Identifiable, Queryable, Insertable)]
+#[table_name = "tags"]
 pub struct Tag {
     pub id: String,
     pub tname: String,
     pub intro: String,
     pub logo: String,
-    pub pname: String,  // parent tag name != tname. check constain
+    pub pname: String, // parent tag name != tname. check constain
     pub item_count: i32,
     pub rut_count: i32,
     pub etc_count: i32,
     pub star_count: i32,
-    pub vote: i32,       //cal per star,rut,item,comment
+    pub vote: i32, //cal per star,rut,item,comment
 }
 
 // Rut's constructor
@@ -45,7 +44,7 @@ impl Tag {
 }
 
 // as msg in create new tag, get tag
-#[derive(Deserialize,Serialize,Debug,Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CheckTag {
     pub tname: String,
     pub action: String, // get / post / delete
@@ -68,7 +67,7 @@ impl Validate for CheckTag {
 }
 
 // as msg in query tag list
-#[derive(Deserialize,Serialize,Debug,Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum QueryTags {
     RutID(String),
     ItemID(String),
@@ -82,13 +81,13 @@ impl Message for QueryTags {
 }
 
 // as msg in update tag
-#[derive(Deserialize,Serialize,Debug,Clone,AsChangeset)]
-#[table_name="tags"]
+#[derive(Deserialize, Serialize, Debug, Clone, AsChangeset)]
+#[table_name = "tags"]
 pub struct UpdateTag {
     pub tname: String,
     pub intro: String,
     pub logo: String,
-    pub pname: String,  // parent tag name
+    pub pname: String, // parent tag name
 }
 
 impl Message for UpdateTag {
@@ -98,10 +97,13 @@ impl Message for UpdateTag {
 impl Validate for UpdateTag {
     fn validate(&self) -> Result<(), Error> {
         let url = &self.logo.trim();
-        let url_test = if url.len() == 0 { true } else { re_test_url(url) };
+        let url_test = if url.len() == 0 {
+            true
+        } else {
+            re_test_url(url)
+        };
         let check_len =
-            test_len_limit(&self.tname, 1, TAG_LEN) &&
-            test_len_limit(&self.pname, 0, TAG_LEN);  // pname canbe none
+            test_len_limit(&self.tname, 1, TAG_LEN) && test_len_limit(&self.pname, 0, TAG_LEN); // pname canbe none
         let check = url_test && check_len;
 
         if check {
@@ -112,8 +114,8 @@ impl Validate for UpdateTag {
     }
 }
 
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
-#[table_name="tagruts"]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Identifiable, Queryable, Insertable)]
+#[table_name = "tagruts"]
 pub struct TagRut {
     pub id: String,
     pub tname: String,
@@ -122,7 +124,7 @@ pub struct TagRut {
 }
 
 // as msg in tag or untag rut
-#[derive(Deserialize,Serialize,Debug,Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct RutTag {
     pub tnames: Vec<String>,
     pub rut_id: String,
@@ -139,7 +141,7 @@ impl Validate for RutTag {
         let action = self.action;
         let check = tags.len() > 0 && (action == 0 || action == 1);
 
-        if check { 
+        if check {
             Ok(())
         } else {
             Err(error::ErrorBadRequest("Invalid Input"))
@@ -147,8 +149,8 @@ impl Validate for RutTag {
     }
 }
 
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
-#[table_name="startags"]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Identifiable, Queryable, Insertable)]
+#[table_name = "startags"]
 pub struct StarTag {
     pub id: String,
     pub uname: String,
@@ -158,12 +160,12 @@ pub struct StarTag {
 }
 
 // as msg in star or unstar tag
-#[derive(Deserialize,Serialize,Debug,Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct StarOrTag {
     pub uname: String,
     pub tname: String,
     pub note: String,
-    pub action: u8,  // 0- unstar, 1- star
+    pub action: u8, // 0- unstar, 1- star
 }
 
 impl Message for StarOrTag {
@@ -182,8 +184,8 @@ impl Message for StarTagStatus {
 }
 
 // to do
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
-#[table_name="tagitems"]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Identifiable, Queryable, Insertable)]
+#[table_name = "tagitems"]
 pub struct TagItem {
     pub id: String,
     pub tname: String,
@@ -192,8 +194,8 @@ pub struct TagItem {
 }
 
 // to do
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
-#[table_name="tagetcs"]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Identifiable, Queryable, Insertable)]
+#[table_name = "tagetcs"]
 pub struct TagEtc {
     pub id: String,
     pub tname: String,
@@ -201,10 +203,10 @@ pub struct TagEtc {
 }
 
 // as msg in tag or untag rut|item|etc
-#[derive(Deserialize,Serialize,Debug,Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct TagAny {
     pub tnames: Vec<String>,
-    pub tag_to: String,  // rut|item|etc
+    pub tag_to: String, // rut|item|etc
     pub to_id: String,
     pub action: u8, // tag 1 or untag 0
 }
@@ -218,9 +220,9 @@ impl Validate for TagAny {
         let tags = &self.tnames;
         let action = self.action;
         let tag_to = &self.tag_to;
-        let check =
-            tags.len() > 0 && (action == 0 || action == 1) &&
-            (tag_to == "rut" || tag_to == "item" || tag_to == "etc");
+        let check = tags.len() > 0
+            && (action == 0 || action == 1)
+            && (tag_to == "rut" || tag_to == "item" || tag_to == "etc");
 
         if check {
             Ok(())

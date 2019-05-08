@@ -1,40 +1,35 @@
 // item typed model and msg handler
 
-use actix::{ Message };
-use chrono::{ NaiveDateTime, Utc };
-use actix_web::{ Error, error };
+use actix::Message;
+use actix_web::{error, Error};
+use chrono::{NaiveDateTime, Utc};
 
 use crate::errors::ServiceError;
-use crate::util::share::{ gen_slug };
-use crate::model::{
-    Validate, test_len_limit, re_test_url,
-    TITLE_LEN, UIID_LEN,
-};
-use crate::model::msg::{
-    Msg, ItemMsg, ItemListMsg, StarItemMsg, CollectMsg, CollectsMsg
-};
-use crate::schema::{ items, collects, staritems };
+use crate::model::msg::{CollectMsg, CollectsMsg, ItemListMsg, ItemMsg, Msg, StarItemMsg};
+use crate::model::{re_test_url, test_len_limit, Validate, TITLE_LEN, UIID_LEN};
+use crate::schema::{collects, items, staritems};
+use crate::util::share::gen_slug;
 
 // use to build select query
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
-#[table_name="items"]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Identifiable, Queryable, Insertable)]
+#[table_name = "items"]
 pub struct Item {
     pub id: String,
     pub title: String,
-    pub uiid: String,  // unique item id, like isbn...
+    pub uiid: String, // unique item id, like isbn...
     pub authors: String,
-    pub pub_at: String,  // "MM-DD-YYYY
+    pub pub_at: String, // "MM-DD-YYYY
     pub publisher: String,
     pub category: String, // Book or Cource ...
     pub url: String,
-    pub cover: String,    // img url
-    pub edition: String,  // binding, version ...
+    pub cover: String,   // img url
+    pub edition: String, // binding, version ...
     pub detail: String,
     pub rut_count: i32,
-    pub etc_count: i32,   // review, etc.
-    pub done_count: i32,  // num of who done
-    pub vote: i32,        //  cal per rut, done, etc
-    pub slug: String, // to do
+    pub etc_count: i32,  // review, etc.
+    pub done_count: i32, // num of who done
+    pub vote: i32,       //  cal per rut, done, etc
+    pub slug: String,    // to do
 }
 
 // Item's constructor
@@ -62,17 +57,17 @@ impl Item {
 }
 
 // as msg in submit new item
-#[derive(Deserialize,Serialize,Debug,Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct NewItem {
     pub title: String,
-    pub uiid: String,  // unique item id, like isbn...
+    pub uiid: String, // unique item id, like isbn...
     pub authors: String,
-    pub pub_at: String,  // "MM-DD-YYYY"
+    pub pub_at: String, // "MM-DD-YYYY"
     pub publisher: String,
     pub category: String, // Book or Cource ...
     pub url: String,
-    pub cover: String,    // img url
-    pub edition: String,  // binding, version ...
+    pub cover: String,   // img url
+    pub edition: String, // binding, version ...
     pub detail: String,
 }
 
@@ -102,16 +97,23 @@ impl Validate for NewItem {
     fn validate(&self) -> Result<(), Error> {
         let url = &self.url.trim();
         let cover = &self.cover.trim();
-        let url_test = if url.len() == 0 { true } else { re_test_url(url) };
-        let cover_test = if cover.len() == 0 { true } else { re_test_url(cover) };
-        let check_len =
-            test_len_limit(&self.title, 3, TITLE_LEN) &&
-            test_len_limit(&self.uiid, 0, 32) &&
-            test_len_limit(&self.authors, 1, 128) &&
-            test_len_limit(&self.pub_at, 0, 32) &&
-            test_len_limit(&self.publisher, 0, 64) &&
-            test_len_limit(&self.category, 0, 32) &&
-            test_len_limit(&self.edition, 0, 64);
+        let url_test = if url.len() == 0 {
+            true
+        } else {
+            re_test_url(url)
+        };
+        let cover_test = if cover.len() == 0 {
+            true
+        } else {
+            re_test_url(cover)
+        };
+        let check_len = test_len_limit(&self.title, 3, TITLE_LEN)
+            && test_len_limit(&self.uiid, 0, 32)
+            && test_len_limit(&self.authors, 1, 128)
+            && test_len_limit(&self.pub_at, 0, 32)
+            && test_len_limit(&self.publisher, 0, 64)
+            && test_len_limit(&self.category, 0, 32)
+            && test_len_limit(&self.edition, 0, 64);
         let check = url_test && cover_test && check_len;
 
         if check {
@@ -123,8 +125,8 @@ impl Validate for NewItem {
 }
 
 // as msg in update item
-#[derive(Deserialize,Serialize,Debug,Clone,AsChangeset)]
-#[table_name="items"]
+#[derive(Deserialize, Serialize, Debug, Clone, AsChangeset)]
+#[table_name = "items"]
 pub struct UpdateItem {
     pub id: String,
     pub title: String,
@@ -147,17 +149,24 @@ impl Validate for UpdateItem {
     fn validate(&self) -> Result<(), Error> {
         let url = &self.url.trim();
         let cover = &self.cover.trim();
-        let url_test = if url.len() == 0 { true } else { re_test_url(url) };
-        let cover_test = if cover.len() == 0 { true } else { re_test_url(cover) };
-        let check_len =
-            test_len_limit(&self.id, 8, 512) &&
-            test_len_limit(&self.title, 3, TITLE_LEN) &&
-            test_len_limit(&self.uiid, 0, 32) &&
-            test_len_limit(&self.authors, 1, 128) &&
-            test_len_limit(&self.pub_at, 0, 32) &&
-            test_len_limit(&self.publisher, 0, 64) &&
-            test_len_limit(&self.category, 0, 32) &&
-            test_len_limit(&self.edition, 0, 64);
+        let url_test = if url.len() == 0 {
+            true
+        } else {
+            re_test_url(url)
+        };
+        let cover_test = if cover.len() == 0 {
+            true
+        } else {
+            re_test_url(cover)
+        };
+        let check_len = test_len_limit(&self.id, 8, 512)
+            && test_len_limit(&self.title, 3, TITLE_LEN)
+            && test_len_limit(&self.uiid, 0, 32)
+            && test_len_limit(&self.authors, 1, 128)
+            && test_len_limit(&self.pub_at, 0, 32)
+            && test_len_limit(&self.publisher, 0, 64)
+            && test_len_limit(&self.category, 0, 32)
+            && test_len_limit(&self.edition, 0, 64);
         let check = url_test && cover_test && check_len;
 
         if check {
@@ -169,7 +178,7 @@ impl Validate for UpdateItem {
 }
 
 // as msg in query item by slug
-#[derive(Deserialize,Serialize,Debug,Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct QueryItem {
     pub item_slug: String,
     // pub action: String, // get / delete, to do
@@ -180,7 +189,7 @@ impl Message for QueryItem {
 }
 
 // as msg to query items per tag, rut, user; id,title,url,uiid
-#[derive(Deserialize,Serialize,Debug,Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum QueryItems {
     ItemID(String), // should be slug
     Uiid(String),
@@ -188,20 +197,20 @@ pub enum QueryItems {
     ItemUrl(String),
     RutID(String),
     TagID(String),
-    UserID(String, i16, i32),  // (uname, flag, paging)
-    KeyID(String, String, String, i32) // keyword, per, perid(uname|tname), paging
+    UserID(String, i16, i32),           // (uname, flag, paging)
+    KeyID(String, String, String, i32), // keyword, per, perid(uname|tname), paging
 }
 
 impl Message for QueryItems {
     type Result = Result<ItemListMsg, ServiceError>;
 }
 
-impl Validate for QueryItems  {
+impl Validate for QueryItems {
     fn validate(&self) -> Result<(), Error> {
         let check: bool = match self {
-            QueryItems::ItemUrl(url) => { re_test_url(url) },
+            QueryItems::ItemUrl(url) => re_test_url(url),
             // could do more
-            _ => { true },
+            _ => true,
         };
 
         if check {
@@ -212,8 +221,8 @@ impl Validate for QueryItems  {
     }
 }
 
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
-#[table_name="collects"]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Identifiable, Queryable, Insertable)]
+#[table_name = "collects"]
 pub struct Collect {
     pub id: String,
     pub rut_id: String,
@@ -255,14 +264,14 @@ impl Message for CollectItem {
 }
 
 // as msg in update item
-#[derive(Deserialize,Serialize,Debug,Clone,AsChangeset)]
-#[table_name="collects"]
+#[derive(Deserialize, Serialize, Debug, Clone, AsChangeset)]
+#[table_name = "collects"]
 pub struct UpdateCollect {
     pub id: String,
     // pub item_order: i16,  // re-order, to do
     pub content: String,
-    pub uname: String,  // to check permission
-    // pub spoiler: bool,  // to do but
+    pub uname: String, // to check permission
+                       // pub spoiler: bool,  // to do but
 }
 
 impl Message for UpdateCollect {
@@ -273,7 +282,7 @@ impl Message for UpdateCollect {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct DelCollect {
     pub collect_id: String,
-    pub uname: String,  // to check permission
+    pub uname: String, // to check permission
 }
 
 impl Message for DelCollect {
@@ -284,7 +293,7 @@ impl Message for DelCollect {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct QueryCollect {
     pub collect_id: String,
-    pub action: String,    // get|delete
+    pub action: String, // get|delete
 }
 
 impl Message for QueryCollect {
@@ -295,23 +304,23 @@ impl Message for QueryCollect {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum QueryCollects {
     RutID(String),
-    ItemID(String, i32),  // id, paging
-    UserID(String, i32),  // id, paging
+    ItemID(String, i32), // id, paging
+    UserID(String, i32), // id, paging
 }
 
 impl Message for QueryCollects {
     type Result = Result<CollectsMsg, ServiceError>;
 }
 
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
-#[table_name="staritems"]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Identifiable, Queryable, Insertable)]
+#[table_name = "staritems"]
 pub struct StarItem {
     pub id: String,
     pub uname: String,
     pub item_id: String,
     pub star_at: NaiveDateTime,
     pub note: String,
-    pub flag: i16,    // 1-Todo|3-Done|2-Doing
+    pub flag: i16, // 1-Todo|3-Done|2-Doing
     pub rate: i16,
 }
 

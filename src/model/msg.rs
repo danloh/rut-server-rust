@@ -1,20 +1,20 @@
 // typed-msg  model
 
+use crate::model::etc::Etc;
+use crate::model::item::{Collect, Item};
 use crate::model::rut::Rut;
-use crate::model::item::{ Item, Collect };
-use crate::model::user::{ User, CheckUser };
-use crate::model::tag::{ Tag };
-use crate::model::etc::{ Etc };
+use crate::model::tag::Tag;
+use crate::model::user::{CheckUser, User};
 
 // general response msg struct
-#[derive(Deserialize,Serialize,Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct Msg {
     pub status: i32,
     pub message: String,
 }
 
 // msg for login
-#[derive(Deserialize,Serialize,Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct AuthMsg {
     pub status: i32,
     pub message: String,
@@ -24,15 +24,15 @@ pub struct AuthMsg {
 }
 
 // msg for get user info
-#[derive(Deserialize,Serialize,Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct UserMsg {
     pub status: i32,
     pub message: String,
     pub user: CheckUser,
 }
 
-// result struct in response a rut 
-#[derive(Deserialize,Serialize,Debug)]
+// result struct in response a rut
+#[derive(Deserialize, Serialize, Debug)]
 pub struct RutMsg {
     pub status: i32,
     pub message: String,
@@ -40,7 +40,7 @@ pub struct RutMsg {
 }
 
 // result struct in response rut list
-#[derive(Deserialize,Serialize,Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct RutListMsg {
     pub status: i32,
     pub message: String,
@@ -48,8 +48,8 @@ pub struct RutListMsg {
     pub count: usize,
 }
 
-// result struct in response an item 
-#[derive(Deserialize,Serialize,Debug)]
+// result struct in response an item
+#[derive(Deserialize, Serialize, Debug)]
 pub struct ItemMsg {
     pub status: i32,
     pub message: String,
@@ -57,7 +57,7 @@ pub struct ItemMsg {
 }
 
 // result struct in response item list
-#[derive(Deserialize,Serialize,Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct ItemListMsg {
     pub status: i32,
     pub message: String,
@@ -66,7 +66,7 @@ pub struct ItemListMsg {
 }
 
 // result struct in respon the status of star item
-#[derive(Deserialize,Serialize,Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct StarItemMsg {
     pub status: i32,
     pub message: String,
@@ -74,16 +74,16 @@ pub struct StarItemMsg {
     pub when: String,
 }
 
-// result struct in response collect in a rut 
-#[derive(Deserialize,Serialize,Debug)]
+// result struct in response collect in a rut
+#[derive(Deserialize, Serialize, Debug)]
 pub struct CollectMsg {
     pub status: i32,
     pub message: String,
     pub collect: Collect,
 }
 
-// result struct in response collects  
-#[derive(Deserialize,Serialize,Debug)]
+// result struct in response collects
+#[derive(Deserialize, Serialize, Debug)]
 pub struct CollectsMsg {
     pub status: i32,
     pub message: String,
@@ -91,7 +91,7 @@ pub struct CollectsMsg {
 }
 
 // result struct in response tag
-#[derive(Deserialize,Serialize,Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct TagMsg {
     pub status: i32,
     pub message: String,
@@ -99,7 +99,7 @@ pub struct TagMsg {
 }
 
 // result struct in response tag list
-#[derive(Deserialize,Serialize,Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct TagListMsg {
     pub status: i32,
     pub message: String,
@@ -108,7 +108,7 @@ pub struct TagListMsg {
 }
 
 // result struct in response etc
-#[derive(Deserialize,Serialize,Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct EtcMsg {
     pub status: i32,
     pub message: String,
@@ -116,7 +116,7 @@ pub struct EtcMsg {
 }
 
 // result struct in response etc list
-#[derive(Deserialize,Serialize,Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct EtcListMsg {
     pub status: i32,
     pub message: String,
@@ -126,9 +126,9 @@ pub struct EtcListMsg {
 
 // todo
 // respon the status of star rut, follow tag, etc.
-#[derive(Deserialize,Serialize,Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct StarStatusMsg {
-    pub status: i32,   // response code
-    pub message: String,  // star | Unstar
-    pub count: i32,    // star num
+    pub status: i32,     // response code
+    pub message: String, // star | Unstar
+    pub count: i32,      // star num
 }

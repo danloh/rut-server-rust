@@ -174,18 +174,6 @@ table! {
 }
 
 allow_tables_to_appear_in_same_query!(
-    collects,
-    etcs,
-    follows,
-    items,
-    ruts,
-    staritems,
-    starruts,
-    startags,
-    tagetcs,
-    tagitems,
-    tagruts,
-    tags,
-    timelines,
-    users,
+    collects, etcs, follows, items, ruts, staritems, starruts, startags, tagetcs, tagitems,
+    tagruts, tags, timelines, users,
 );

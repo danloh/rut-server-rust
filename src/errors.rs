@@ -1,29 +1,28 @@
 // error wrapper, todo: wrap more error
 
 use actix_web::{error::ResponseError, HttpResponse};
+use base64::DecodeError;
 use derive_more::Display;
-use diesel::result::{DatabaseErrorKind, Error as DieselError};
 use diesel::r2d2::PoolError;
+use diesel::result::{DatabaseErrorKind, Error as DieselError};
 use std::convert::From;
 use uuid::parser::ParseError;
-use base64::DecodeError;
 //use jsonwebtoken::errors::{Error as JwtError, ErrorKind as JwtErrorKind};
 
 #[derive(Debug, Display)]
 pub enum ServiceError {
-    
     // 400
     #[display(fmt = "BadRequest: {}", _0)]
     BadRequest(String),
-    
+
     // 401
     #[display(fmt = "Unauthorized")]
     Unauthorized,
-    
+
     // 404
     #[display(fmt = "Not Found: {}", _0)]
     NotFound(String),
-    
+
     // 500+
     #[display(fmt = "Internal Server Error")]
     InternalServerError,
@@ -33,18 +32,12 @@ pub enum ServiceError {
 impl ResponseError for ServiceError {
     fn error_response(&self) -> HttpResponse {
         match *self {
-            ServiceError::InternalServerError => { 
+            ServiceError::InternalServerError => {
                 HttpResponse::InternalServerError().json("Internal Server Error")
-            },
-            ServiceError::BadRequest(ref message) => {
-                HttpResponse::BadRequest().json(message)
-            },
-            ServiceError::Unauthorized => {
-                HttpResponse::Unauthorized().json("Unauthorized")
-            },
-            ServiceError::NotFound(ref message) => { 
-                HttpResponse::NotFound().json(message)
-            },
+            }
+            ServiceError::BadRequest(ref message) => HttpResponse::BadRequest().json(message),
+            ServiceError::Unauthorized => HttpResponse::Unauthorized().json("Unauthorized"),
+            ServiceError::NotFound(ref message) => HttpResponse::NotFound().json(message),
         }
     }
 }
@@ -63,16 +56,14 @@ impl From<DieselError> for ServiceError {
         match error {
             DieselError::DatabaseError(kind, info) => {
                 if let DatabaseErrorKind::UniqueViolation = kind {
-                    let msg = info.details().unwrap_or_else(
-                        || info.message()
-                    ).to_string();
+                    let msg = info.details().unwrap_or_else(|| info.message()).to_string();
                     return ServiceError::BadRequest(msg);
                 }
                 ServiceError::InternalServerError
-            },
+            }
             DieselError::NotFound => {
                 ServiceError::NotFound("requested record was not found".into())
-            },
+            }
             _ => ServiceError::InternalServerError,
         }
     }

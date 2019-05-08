@@ -1,17 +1,17 @@
 // rut typed model and msg handler
 
-use actix::{ Message };
-use chrono::{ NaiveDateTime, Utc };
-use actix_web::{ Error, error };
+use actix::Message;
+use actix_web::{error, Error};
+use chrono::{NaiveDateTime, Utc};
 
 use crate::errors::ServiceError;
-use crate::model::{ Validate, test_len_limit, re_test_url, TITLE_LEN };
-use crate::model::msg::{ Msg, RutMsg, RutListMsg, StarStatusMsg };
-use crate::schema::{ ruts, starruts };
+use crate::model::msg::{Msg, RutListMsg, RutMsg, StarStatusMsg};
+use crate::model::{re_test_url, test_len_limit, Validate, TITLE_LEN};
+use crate::schema::{ruts, starruts};
 
 // use to build select query
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
-#[table_name="ruts"]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Identifiable, Queryable, Insertable)]
+#[table_name = "ruts"]
 pub struct Rut {
     pub id: String,
     pub title: String,
@@ -19,14 +19,14 @@ pub struct Rut {
     pub content: String,
     pub create_at: NaiveDateTime,
     pub renew_at: NaiveDateTime,
-    pub author: String,  // todo, change as author
-    pub uname: String,     // as who post
+    pub author: String, // todo, change as author
+    pub uname: String,  // as who post
     pub credential: String,
     pub logo: String,
     pub item_count: i32,
     pub comment_count: i32,
     pub star_count: i32,
-    pub vote: i32,       // cal per star, comment
+    pub vote: i32, // cal per star, comment
     pub slug: String,
 }
 
@@ -54,7 +54,7 @@ impl Rut {
 }
 
 // as msg in create new
-#[derive(Deserialize,Serialize,Debug,Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CreateRut {
     pub title: String,
     pub url: String,
@@ -71,11 +71,14 @@ impl Message for CreateRut {
 impl Validate for CreateRut {
     fn validate(&self) -> Result<(), Error> {
         let url = &self.url.trim();
-        let url_test = if url.len() == 0 { true } else { re_test_url(url) };
-        let check_len =
-            test_len_limit(&self.title, 3, TITLE_LEN) &&
-            test_len_limit(&self.author, 0, 64) &&
-            test_len_limit(&self.credential, 0, 64);
+        let url_test = if url.len() == 0 {
+            true
+        } else {
+            re_test_url(url)
+        };
+        let check_len = test_len_limit(&self.title, 3, TITLE_LEN)
+            && test_len_limit(&self.author, 0, 64)
+            && test_len_limit(&self.credential, 0, 64);
         let check = url_test && check_len;
 
         if check {
@@ -87,7 +90,7 @@ impl Validate for CreateRut {
 }
 
 // as msg in select by id
-#[derive(Deserialize,Serialize,Debug,Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct QueryRut {
     pub rut_slug: String,
     // pub action: String, // get / delete, to do
@@ -98,7 +101,7 @@ impl Message for QueryRut {
 }
 
 // as msg to get  rut list, + paging
-#[derive(Deserialize,Serialize,Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum QueryRuts {
     Index(String),
     UserID(String, String, i32), // uname, create|star, paging
@@ -112,8 +115,8 @@ impl Message for QueryRuts {
 }
 
 // as msg in update rut
-#[derive(Deserialize,Serialize,Debug,Clone,AsChangeset)]
-#[table_name="ruts"]
+#[derive(Deserialize, Serialize, Debug, Clone, AsChangeset)]
+#[table_name = "ruts"]
 pub struct UpdateRut {
     pub id: String,
     pub title: String,
@@ -130,11 +133,14 @@ impl Message for UpdateRut {
 impl Validate for UpdateRut {
     fn validate(&self) -> Result<(), Error> {
         let url = &self.url.trim();
-        let url_test = if url.len() == 0 { true } else { re_test_url(url) };
-        let check_len =
-            test_len_limit(&self.title, 3, TITLE_LEN) &&
-            test_len_limit(&self.author, 0, 64) &&
-            test_len_limit(&self.credential, 0, 64);
+        let url_test = if url.len() == 0 {
+            true
+        } else {
+            re_test_url(url)
+        };
+        let check_len = test_len_limit(&self.title, 3, TITLE_LEN)
+            && test_len_limit(&self.author, 0, 64)
+            && test_len_limit(&self.credential, 0, 64);
         let check = url_test && check_len;
 
         if check {
@@ -145,8 +151,8 @@ impl Validate for UpdateRut {
     }
 }
 
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
-#[table_name="starruts"]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Identifiable, Queryable, Insertable)]
+#[table_name = "starruts"]
 pub struct StarRut {
     pub id: String,
     pub uname: String,
@@ -156,12 +162,12 @@ pub struct StarRut {
 }
 
 // as msg in star or unstar rut
-#[derive(Deserialize,Serialize,Debug,Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct StarOrRut {
     pub rut_id: String,
     pub uname: String,
     pub note: String,
-    pub action: u8,  // 0- unstar, 1- star
+    pub action: u8, // 0- unstar, 1- star
 }
 
 impl Message for StarOrRut {

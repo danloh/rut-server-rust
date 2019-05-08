@@ -1,21 +1,18 @@
 // typed model and handle user message
 
-use actix::{ Message };
-use actix_web::{ dev::Payload, FromRequest, HttpRequest, Error, error };
-use jsonwebtoken::{ decode, encode, Header, Validation };
-use chrono::{ Local, NaiveDateTime, Utc, Duration };
+use actix::Message;
+use actix_web::{dev::Payload, error, Error, FromRequest, HttpRequest};
+use chrono::{Duration, Local, NaiveDateTime, Utc};
+use jsonwebtoken::{decode, encode, Header, Validation};
 use std::convert::From;
 
-use crate::model::{
-    Validate, test_len_limit, re_test_name, re_test_url, re_test_psw, MID_LEN
-};
 use crate::errors::ServiceError;
-use crate::model::msg::{ Msg, AuthMsg };
-use crate::schema::{ users, follows, timelines };
+use crate::model::msg::{AuthMsg, Msg};
+use crate::model::{re_test_name, re_test_psw, re_test_url, test_len_limit, Validate, MID_LEN};
+use crate::schema::{follows, timelines, users};
 
-
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable,Insertable)]
-#[table_name="users"]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Identifiable, Queryable, Insertable)]
+#[table_name = "users"]
 pub struct User {
     pub id: String,
     pub uname: String,
@@ -46,8 +43,8 @@ impl User {
 }
 
 // return as user info w/o password
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
-#[table_name="users"]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Identifiable, Queryable)]
+#[table_name = "users"]
 pub struct CheckUser {
     pub id: String,
     pub uname: String,
@@ -87,8 +84,8 @@ impl FromRequest for CheckUser {
     fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
         if let Some(auth_token) = req.headers().get("authorization") {
             if let Ok(auth) = auth_token.to_str() {
-               let user: CheckUser = decode_token(auth)?;
-               return Ok(user);
+                let user: CheckUser = decode_token(auth)?;
+                return Ok(user);
             }
         }
         Err(ServiceError::Unauthorized.into())
@@ -96,13 +93,13 @@ impl FromRequest for CheckUser {
 }
 
 // jwt Token auth: Claim, token
-#[derive(Debug,Serialize,Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    pub iss: String,   // issuer
-    pub sub: String,   // subject
-    pub iat: i64,      // issued at
-    pub exp: i64,      // expiry
-    pub uid: String,   // user id
+    pub iss: String, // issuer
+    pub sub: String, // subject
+    pub iat: i64,    // issued at
+    pub exp: i64,    // expiry
+    pub uid: String, // user id
     pub uname: String,
 }
 
@@ -113,7 +110,7 @@ impl Claims {
             iss: "ruthub".into(),
             sub: "auth".into(),
             iat: Local::now().timestamp(),
-            exp: (Local::now() + Duration::hours(24*5)).timestamp(),
+            exp: (Local::now() + Duration::hours(24 * 5)).timestamp(),
             uid: uid.to_owned(),
             uname: uname.to_owned(),
         }
@@ -136,7 +133,7 @@ impl From<Claims> for CheckUser {
 }
 
 // message to sign up user
-#[derive(Deserialize,Serialize,Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct RegUser {
     pub uname: String,
     pub password: String,
@@ -162,7 +159,7 @@ impl Validate for RegUser {
 }
 
 // message to login user
-#[derive(Deserialize,Serialize,Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct AuthUser {
     pub uname: String,
     pub password: String,
@@ -187,7 +184,7 @@ impl Validate for AuthUser {
 }
 
 // as msg in get user by uname
-#[derive(Deserialize,Serialize,Debug,Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct QueryUser {
     pub uname: String,
 }
@@ -197,10 +194,10 @@ impl Message for QueryUser {
 }
 
 // message to update user
-#[derive(Deserialize,Serialize,Debug,Clone,AsChangeset)]
-#[table_name="users"]
+#[derive(Deserialize, Serialize, Debug, Clone, AsChangeset)]
+#[table_name = "users"]
 pub struct UpdateUser {
-    pub uname: String,  // cannot change, just as id
+    pub uname: String, // cannot change, just as id
     pub avatar: String,
     pub email: String,
     pub intro: String,
@@ -215,13 +212,18 @@ impl Message for UpdateUser {
 impl Validate for UpdateUser {
     fn validate(&self) -> Result<(), Error> {
         let nickname = &self.nickname.trim();
-        let nickname_test =
-            if nickname.len() == 0 { true } else { re_test_name(nickname) };
+        let nickname_test = if nickname.len() == 0 {
+            true
+        } else {
+            re_test_name(nickname)
+        };
         let avatar = &self.avatar.trim();
-        let avatar_test =
-            if avatar.len() == 0 { true } else { re_test_url(avatar) };
-        let check_len =
-            test_len_limit(&self.location, 0, MID_LEN);
+        let avatar_test = if avatar.len() == 0 {
+            true
+        } else {
+            re_test_url(avatar)
+        };
+        let check_len = test_len_limit(&self.location, 0, MID_LEN);
         let check = nickname_test && avatar_test && check_len;
 
         if check {
@@ -258,28 +260,27 @@ impl Validate for ChangePsw {
 
 // to do:
 // User follow
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
-#[table_name="follows"]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Identifiable, Queryable)]
+#[table_name = "follows"]
 pub struct Follow {
     pub id: String,
     pub uname: String, // who follow
-    pub fname: String,  // who be followed, cannot be uname
+    pub fname: String, // who be followed, cannot be uname
     pub fo_at: NaiveDateTime,
     pub note: String,
 }
 
 // user's activity record
-#[derive(Clone,Debug,Serialize,Deserialize,PartialEq,Identifiable,Queryable)]
-#[table_name="timelines"]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Identifiable, Queryable)]
+#[table_name = "timelines"]
 pub struct Timeline {
     pub id: String,
-    pub uname: String, // who
-    pub action: String, // how: create, star, follow..
-    pub obj: String,   // what: rut, item, user, tag..
-    pub objid: String,   // what id
+    pub uname: String,         // who
+    pub action: String,        // how: create, star, follow..
+    pub obj: String,           // what: rut, item, user, tag..
+    pub objid: String,         // what id
     pub act_at: NaiveDateTime, // when
 }
-
 
 fn get_secret() -> String {
     dotenv::var("SECRET_KEY").unwrap_or_else(|_| "AHaRdGuESsSeCREkY".into())
@@ -287,20 +288,12 @@ fn get_secret() -> String {
 
 pub fn encode_token(data: &CheckUser) -> Result<String, ServiceError> {
     let claims = Claims::new(data.id.as_str(), data.uname.as_str());
-    encode(
-        &Header::default(),
-        &claims,
-        get_secret().as_ref()
-    )
-    .map_err(|_err| ServiceError::InternalServerError)
+    encode(&Header::default(), &claims, get_secret().as_ref())
+        .map_err(|_err| ServiceError::InternalServerError)
 }
 
 pub fn decode_token(token: &str) -> Result<CheckUser, ServiceError> {
-    decode::<Claims>(
-        token,
-        get_secret().as_ref(),
-        &Validation::default()
-    )
-    .map(|data| Ok(data.claims.into()))
-    .map_err(|_err| ServiceError::Unauthorized)?
+    decode::<Claims>(token, get_secret().as_ref(), &Validation::default())
+        .map(|data| Ok(data.claims.into()))
+        .map_err(|_err| ServiceError::Unauthorized)?
 }
