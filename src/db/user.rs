@@ -16,7 +16,8 @@ pub fn hash_password(plain: &str) -> Result<String, ServiceError> {
         Ok(cost) => cost.parse().unwrap_or(DEFAULT_COST),
         _ => DEFAULT_COST,
     };
-    hash(plain, hashing_cost).map_err(|_| ServiceError::InternalServerError)
+    hash(plain, hashing_cost)
+        .map_err(|_| ServiceError::InternalServerError("hash".into()))
 }
 
 // register/signup user

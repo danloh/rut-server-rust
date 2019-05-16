@@ -29,11 +29,11 @@ bcrypt = "0.4.0"
 chrono = { version = "0.4.6", features = ["serde"] }
 log = "0.4.6"
 fern = "0.5.8"
-dotenv = "0.14.0"
+dotenv = "0.14.1"
 base64 = "0.10.1"
 num_cpus = "1.10.0"
 
-reqwest = "0.9.16"
+reqwest = "0.9.17"
 scraper = "0.10.0"
 
 # openssl = "0.10.20"
