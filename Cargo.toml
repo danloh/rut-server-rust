@@ -12,7 +12,7 @@ path = "tests/lib.rs"
 futures = "0.1.27"
 actix = "0.8.2"
 actix-rt = "0.2.2"
-actix-web = "1.0.0-beta.5"
+actix-web = "1.0.0-rc"
 diesel = { version = "1.4.2", features = ["postgres","chrono","serde_json","uuidv07","r2d2"] }
 r2d2 = "0.8.4"
 serde_derive="1.0.91"

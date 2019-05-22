@@ -193,22 +193,18 @@ impl Handler<RutTag> for Dba {
                                     .execute(conn)?;
                                 // then update tags.rut_count
                                 diesel::update(&t)
-                                    .set(rut_count.eq(rut_count + 1))
+                                    .set((
+                                        rut_count.eq(rut_count + 1),
+                                        vote.eq((rut_count + item_count)* 2  + etc_count + star_count), // cal vote, to be task
+                                    ))
                                     .execute(conn)?;
                             }
                             // if no existing tname, new_tag
                             None => {
                                 let newtag = Tag {
-                                    id: rtg.clone(),
-                                    tname: rtg.clone(),
-                                    intro: "".to_owned(),
-                                    logo: "".to_owned(),
-                                    pname: "".to_owned(),
-                                    item_count: 0,
                                     rut_count: 1,
-                                    etc_count: 0,
-                                    star_count: 0,
-                                    vote: 0,
+                                    vote: 2,
+                                    ..Tag::new(rtg)
                                 };
                                 // new_tag
                                 diesel::insert_into(tags).values(&newtag).execute(conn)?;
@@ -394,19 +390,25 @@ impl Handler<TagAny> for Dba {
                                     .values(&new_tag_rut)
                                     .execute(conn)?;
                                 // check tnames if existing
-                                use crate::schema::tags::dsl::{rut_count, tags, tname as t_name};
+                                use crate::schema::tags::dsl::{
+                                    rut_count, tags, tname as t_name, item_count, etc_count, star_count, vote
+                                };
                                 let tag_check =
                                     tags.filter(&t_name.eq(&rtg)).load::<Tag>(conn)?.pop();
                                 match tag_check {
                                     Some(t) => {
                                         // then update tags.rut_count
                                         diesel::update(&t)
-                                            .set(rut_count.eq(rut_count + 1))
+                                            .set((
+                                                rut_count.eq(rut_count + 1),
+                                                vote.eq((rut_count + item_count)* 2  + etc_count + star_count), // cal vote, to be task
+                                            ))
                                             .execute(conn)?;
                                     }
                                     None => {
                                         let newtag = Tag {
                                             rut_count: 1,
+                                            vote: 2,
                                             ..Tag::new(rtg)
                                         };
                                         // new_tag
@@ -438,7 +440,7 @@ impl Handler<TagAny> for Dba {
                                 diesel::update(&tgi)
                                     .set(count.eq(count + 1))
                                     .execute(conn)?;
-                            }
+                            },
                             // else new tag-rut
                             None => {
                                 let new_tag_item = TagItem {
@@ -451,24 +453,30 @@ impl Handler<TagAny> for Dba {
                                     .values(&new_tag_item)
                                     .execute(conn)?;
                                 // check tnames if existing
-                                use crate::schema::tags::dsl::{item_count, tags, tname as t_name};
+                                use crate::schema::tags::dsl::{
+                                    item_count, tags, tname as t_name, rut_count, etc_count, star_count, vote
+                                };
                                 let tag_check =
                                     tags.filter(&t_name.eq(&itg)).load::<Tag>(conn)?.pop();
                                 match tag_check {
                                     Some(t) => {
                                         // then update tags.rut_count
                                         diesel::update(&t)
-                                            .set(item_count.eq(item_count + 1))
+                                            .set((
+                                                item_count.eq(item_count + 1),
+                                                vote.eq((rut_count + item_count)* 2  + etc_count + star_count), // cal vote, to be task
+                                            ))
                                             .execute(conn)?;
-                                    }
+                                    },
                                     None => {
                                         let newtag = Tag {
                                             item_count: 1,
+                                            vote: 2,
                                             ..Tag::new(itg)
                                         };
                                         // new_tag
                                         diesel::insert_into(tags).values(&newtag).execute(conn)?;
-                                    }
+                                    },
                                 }
                             }
                         }
@@ -497,15 +505,29 @@ impl Handler<TagAny> for Dba {
                             .values(&new_tag_etc)
                             .execute(conn)?;
                         // check tnames if existing
-                        use crate::schema::tags::dsl::{tags, tname as t_name};
+                        use crate::schema::tags::dsl::{
+                            tags, tname as t_name, etc_count, rut_count, item_count, star_count, vote
+                        };
                         let tag_check = tags.filter(&t_name.eq(&etg)).load::<Tag>(conn)?.pop();
-                        if let None = tag_check {
-                            let newtag = Tag {
-                                etc_count: 1,
-                                ..Tag::new(etg)
-                            };
-                            // new_tag
-                            diesel::insert_into(tags).values(&newtag).execute(conn)?;
+                        match tag_check {
+                            Some(t) => {
+                                // then update tags.rut_count
+                                diesel::update(&t)
+                                    .set((
+                                        etc_count.eq(etc_count + 1),
+                                        vote.eq((rut_count + item_count)* 2  + etc_count + star_count), // cal vote, to be task
+                                    ))
+                                    .execute(conn)?;
+                            },
+                            None => {
+                                let newtag = Tag {
+                                    etc_count: 1,
+                                    vote: 2,
+                                    ..Tag::new(etg)
+                                };
+                                // new_tag
+                                diesel::insert_into(tags).values(&newtag).execute(conn)?;
+                            },
                         }
                     }
                 }
