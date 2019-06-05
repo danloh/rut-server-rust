@@ -1,6 +1,6 @@
 [package]
 name = "rut-server-rust"
-version = "0.0.3"
+version = "0.1.0"
 edition = "2018"
 authors = ["DLuo"]
 
@@ -10,9 +10,9 @@ path = "tests/lib.rs"
 
 [dependencies]
 futures = "0.1.27"
-actix = "0.8.2"
+actix = "0.8.3"
 actix-rt = "0.2.2"
-actix-web = "1.0.0-rc"
+actix-web = "1.0.0"
 diesel = { version = "1.4.2", features = ["postgres","chrono","serde_json","uuidv07","r2d2"] }
 r2d2 = "0.8.4"
 serde_derive="1.0.91"
