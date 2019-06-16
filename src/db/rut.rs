@@ -243,8 +243,8 @@ impl Handler<UpdateRut> for Dba {
         use crate::schema::ruts::dsl::*;
         let conn = &self.0.get()?;
 
-        let old_rut = ruts.filter(&id.eq(&rut.id)).get_result::<Rut>(conn)?;
         // to update slug if title changed
+        let old_rut = ruts.filter(&id.eq(&rut.id)).get_result::<Rut>(conn)?;
         let r_slug = if rut.title != old_rut.title {
             let r_uuid = Uuid::parse_str(&old_rut.id)?;
             gen_slug("r", &rut.title, &r_uuid)
@@ -252,17 +252,23 @@ impl Handler<UpdateRut> for Dba {
             old_rut.clone().slug
         };
 
-        let rut_update = diesel::update(&old_rut)
-            .set((
-                title.eq(rut.title),
-                url.eq(rut.url),
-                content.eq(rut.content),
-                author.eq(rut.author),
-                credential.eq(rut.credential),
-                renew_at.eq(Utc::now().naive_utc()),
-                slug.eq(r_slug),
-            ))
-            .get_result::<Rut>(conn)?;
+        let check_permission: bool = old_rut.uname == rut.uname;
+
+        let rut_update = if check_permission {
+            diesel::update(&old_rut)
+                .set((
+                    title.eq(rut.title),
+                    url.eq(rut.url),
+                    content.eq(rut.content),
+                    author.eq(rut.author),
+                    credential.eq(rut.credential),
+                    renew_at.eq(Utc::now().naive_utc()),
+                    slug.eq(r_slug),
+                ))
+                .get_result::<Rut>(conn)?
+        } else {
+            old_rut
+        };
 
         Ok(RutMsg {
             status: 201,

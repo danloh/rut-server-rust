@@ -19,7 +19,7 @@ pub struct Rut {
     pub content: String,
     pub create_at: NaiveDateTime,
     pub renew_at: NaiveDateTime,
-    pub author: String, // todo, change as author
+    pub author: String,
     pub uname: String,  // as who post
     pub credential: String,
     pub logo: String,
@@ -119,6 +119,7 @@ impl Message for QueryRuts {
 #[table_name = "ruts"]
 pub struct UpdateRut {
     pub id: String,
+    pub uname: String,  // for check permission
     pub title: String,
     pub url: String,
     pub content: String,

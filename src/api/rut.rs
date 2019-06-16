@@ -79,7 +79,7 @@ pub fn update(
     rut: Json<UpdateRut>,
     auth: CheckUser,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    let up_rut = rut.into_inner();
+    let up_rut = UpdateRut{ uname: auth.uname, ..rut.into_inner() };
 
     result(up_rut.validate())
         .from_err()
