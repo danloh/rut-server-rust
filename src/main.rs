@@ -14,10 +14,11 @@ extern crate log;
 use actix::prelude::*;
 use actix::{Actor, SyncContext};
 use actix_web::{
-    middleware::{cors::Cors, Logger},
+    middleware::{Logger},
     web::{self, delete, get, post, put, resource, route, scope},
     App, HttpResponse, HttpServer,
 };
+use actix_cors::Cors;
 
 use diesel::pg::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool};
