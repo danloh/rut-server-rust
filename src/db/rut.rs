@@ -252,7 +252,15 @@ impl Handler<UpdateRut> for Dba {
             old_rut.clone().slug
         };
 
-        let check_permission: bool = old_rut.uname == rut.uname;
+        // check permission
+        use crate::model::user::{User, EIDT_PERMIT};
+        use crate::schema::users::dsl::{users, uname};
+
+        let auth_uname = rut.uname;
+        let check_permission: bool = old_rut.uname == auth_uname 
+            || users.filter(&uname.eq(&auth_uname))
+                    .get_result::<User>(conn)?
+                    .can(EIDT_PERMIT);
 
         let rut_update = if check_permission {
             diesel::update(&old_rut)

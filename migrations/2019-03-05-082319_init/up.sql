@@ -10,6 +10,7 @@ CREATE TABLE users (
   intro TEXT NOT NULL DEFAULT '',
   location VARCHAR NOT NULL DEFAULT '',
   nickname VARCHAR NOT NULL DEFAULT '',
+  permission SMALLINT NOT NULL DEFAULT 3,
   UNIQUE (uname)
 );
 

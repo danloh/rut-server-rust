@@ -11,6 +11,13 @@ use crate::model::msg::{AuthMsg, Msg};
 use crate::model::{re_test_name, re_test_psw, re_test_url, test_len_limit, Validate, MID_LEN};
 use crate::schema::{follows, timelines, users};
 
+pub const LIMIT_PERMIT: i16 = 0x01;  // follow,star...
+pub const BASIC_PERMIT: i16 = 0x02;  // create, edit self created...
+pub const EIDT_PERMIT: i16 = 0x04;   // edit/del others' creats
+pub const MOD_PERMIT: i16 = 0x10;    // mod role
+pub const ADMIN_PERMIT: i16 = 0x80;  // admin
+
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Identifiable, Queryable, Insertable)]
 #[table_name = "users"]
 pub struct User {
@@ -23,10 +30,12 @@ pub struct User {
     pub intro: String,
     pub location: String,
     pub nickname: String,
+    pub permission: i16,
 }
 
-// User's constructor
+
 impl User {
+    // User's constructor
     pub fn new(id: String, uname: String, password: String) -> Self {
         User {
             id,
@@ -38,7 +47,12 @@ impl User {
             intro: "".to_owned(),
             location: "".to_owned(),
             nickname: "".to_owned(),
+            permission: LIMIT_PERMIT | BASIC_PERMIT,
         }
+    }
+    // check permission
+    pub fn can(&self, permission: i16) -> bool {
+        (self.permission & permission) == permission
     }
 }
 
