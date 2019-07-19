@@ -12,7 +12,7 @@ use crate::model::tag::{
     StarTagStatus, Tag, TagAny, TagRut, UpdateTag,
 };
 use crate::model::user::CheckUser;
-use crate::model::{replace_sep, Validate, TAG_LEN};
+use crate::model::{replace_sep_tag, Validate, TAG_LEN};
 use crate::DbAddr;
 
 pub fn new(
@@ -20,7 +20,7 @@ pub fn new(
     tg: Path<String>,
     auth: CheckUser,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    let tname = replace_sep(tg.into_inner().trim(), "-");
+    let tname = replace_sep_tag(tg.into_inner().trim(), "-");
     let action = String::from("POST");
 
     let tag = CheckTag { tname, action };
@@ -81,7 +81,7 @@ pub fn update(
     let pname = if p_name == "" {
         "".to_owned()
     } else {
-        replace_sep(p_name, "-")
+        replace_sep_tag(p_name, "-")
     };
     let up_tag = UpdateTag { pname, ..tag };
 
@@ -108,7 +108,7 @@ pub fn tag_rut(
         .tnames
         .clone()
         .into_iter()
-        .map(|t| replace_sep(t.trim(), "-"))
+        .map(|t| replace_sep_tag(t.trim(), "-"))
         .filter(|t| t.len() <= TAG_LEN && t.len() >= 1)
         .collect();
 
@@ -136,7 +136,7 @@ pub fn tag_any(
         .tnames
         .clone()
         .into_iter()
-        .map(|t| replace_sep(t.trim(), "-"))
+        .map(|t| replace_sep_tag(t.trim(), "-"))
         .filter(|t| t.len() <= TAG_LEN && t.len() >= 1)
         .collect();
 

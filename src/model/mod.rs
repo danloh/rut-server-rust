@@ -54,7 +54,15 @@ pub fn re_test_img_url(text: &str) -> bool {
 pub fn replace_sep(text: &str, rep: &str) -> String {
     lazy_static! {
         static ref RE: Regex =
-            Regex::new(r"[^a-zA-Z0-9]").unwrap(); // let fail in test: ~`!@#$%^&*()_-+= :;,\[\]/?<>{}|\\
+            Regex::new(r"[^a-zA-Z0-9]").unwrap(); // let fail in test
+    }
+    RE.replace_all(text, rep).into_owned()
+}
+
+pub fn replace_sep_tag(text: &str, rep: &str) -> String {
+    lazy_static! {
+        static ref RE: Regex =
+            Regex::new(r"[`~!@#$%^&*()+=|{}\]\[':;,.\\?/<>《》；：。，“‘’”【】「」——（）……¥！～·]").unwrap(); // let fail in test, "??
     }
     RE.replace_all(text, rep).into_owned()
 }
