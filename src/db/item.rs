@@ -173,9 +173,10 @@ impl Handler<QueryItems> for Dba {
                         item_list = vec![i];
                     }
                     None => {
-                        // spider per url
+                        item_list = Vec::new();
+                        // spider per url  // issue alert !!
                         //println!("via spider");
-                        let page = WebPage::new(&u);
+                        /* let page = WebPage::new(&u);
                         let sp_item = page.into_item();
                         // insert new to db
                         let uuid_v4 = uuid::Uuid::new_v4();
@@ -185,7 +186,7 @@ impl Handler<QueryItems> for Dba {
                         let item_new = diesel::insert_into(items)
                             .values(&new_item)
                             .get_result::<Item>(conn)?;
-                        item_list = vec![item_new];
+                        item_list = vec![item_new]; */
                     }
                 }
             }
