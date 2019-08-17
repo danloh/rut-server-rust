@@ -130,12 +130,15 @@ impl Handler<UpdateTag> for Dba {
             .get_result::<Tag>(conn)?;
 
         // insert pname if not existing
-        let tag_check = tags.filter(&tname.eq(&p_name)).load::<Tag>(conn)?.pop();
-        match tag_check {
-            Some(_t) => (),
-            None => {
-                let newtag = Tag::new(p_name);
-                diesel::insert_into(tags).values(&newtag).execute(conn)?;
+        if p_name.trim().len() > 0 {
+            let tag_check =  
+                tags.filter(&tname.eq(&p_name)).load::<Tag>(conn)?.pop();
+            match tag_check {
+                Some(_t) => (),
+                None => {
+                    let newtag = Tag::new(p_name);
+                    diesel::insert_into(tags).values(&newtag).execute(conn)?;
+                }
             }
         }
 
