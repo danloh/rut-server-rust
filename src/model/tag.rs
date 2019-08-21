@@ -1,5 +1,6 @@
 // tag typed model and msg handler
 
+use chrono::Utc;
 use actix::Message;
 use actix_web::{error, Error};
 use chrono::NaiveDateTime;
@@ -121,6 +122,20 @@ pub struct TagRut {
     pub tname: String,
     pub rut_id: String,
     pub count: i32,
+    pub tag_at: NaiveDateTime,
+}
+
+// TagRut's constructor
+impl TagRut {
+    pub fn new(name: String, toid: String) -> Self {
+        TagRut {
+            id: (name.clone() + "-" + &toid),
+            tname: name,
+            rut_id: toid,
+            count: 1,
+            tag_at: Utc::now().naive_utc(),
+        }
+    }
 }
 
 // as msg in tag or untag rut
@@ -191,6 +206,20 @@ pub struct TagItem {
     pub tname: String,
     pub item_id: String,
     pub count: i32,
+    pub tag_at: NaiveDateTime,
+}
+
+// TagItem's constructor
+impl TagItem {
+    pub fn new(name: String, toid: String) -> Self {
+        TagItem {
+            id: (name.clone() + "-" + &toid),
+            tname: name,
+            item_id: toid,
+            count: 1,
+            tag_at: Utc::now().naive_utc(),
+        }
+    }
 }
 
 // to do
@@ -200,6 +229,19 @@ pub struct TagEtc {
     pub id: String,
     pub tname: String,
     pub etc_id: String,
+    pub tag_at: NaiveDateTime,
+}
+
+// TagEtc's constructor
+impl TagEtc {
+    pub fn new(name: String, toid: String) -> Self {
+        TagEtc {
+            id: (name.clone() + "-" + &toid),
+            tname: name,
+            etc_id: toid,
+            tag_at: Utc::now().naive_utc(),
+        }
+    }
 }
 
 // as msg in tag or untag rut|item|etc

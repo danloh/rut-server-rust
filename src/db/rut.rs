@@ -156,12 +156,14 @@ impl Handler<QueryRuts> for Dba {
                 id_list = if p < 1 {
                     // no limit, hope never use
                     query
-                        .order(count.desc())
+                        .order(tag_at.desc())
+                        //.order(count.desc())
                         .select(rut_id)
                         .load::<String>(conn)?
                 } else {
                     query
-                        .order(count.desc())
+                        .order(tag_at.desc())
+                        //.order(count.desc())
                         .limit(PER_PAGE.into())
                         .offset((PER_PAGE * (p - 1)).into())
                         .select(rut_id)

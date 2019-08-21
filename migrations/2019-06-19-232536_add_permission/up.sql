@@ -1,3 +1,0 @@
--- Your SQL goes here
-
-ALTER TABLE users ADD COLUMN permission SMALLINT NOT NULL DEFAULT 3;

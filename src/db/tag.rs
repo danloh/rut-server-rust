@@ -179,12 +179,7 @@ impl Handler<RutTag> for Dba {
                     }
                     // else new tag-rut
                     None => {
-                        let new_tag_rut = TagRut {
-                            id: (rtg.clone() + "-" + &rutID),
-                            tname: rtg.clone(),
-                            rut_id: rutID.clone(),
-                            count: 1,
-                        };
+                        let new_tag_rut = TagRut::new(rtg.clone(), rutID.clone());
                         //  to check if tname in tags? otherwise, new_tag
                         use crate::schema::tags::dsl::*;
                         let tag_check = tags.filter(&tname.eq(&rtg)).load::<Tag>(conn)?.pop();
@@ -383,12 +378,7 @@ impl Handler<TagAny> for Dba {
                             }
                             // else new tag-rut
                             None => {
-                                let new_tag_rut = TagRut {
-                                    id: (rtg.clone() + "-" + &toID),
-                                    tname: rtg.clone(),
-                                    rut_id: toID.clone(),
-                                    count: 1,
-                                };
+                                let new_tag_rut = TagRut::new(rtg.clone(), toID.clone()); 
                                 diesel::insert_into(tagruts)
                                     .values(&new_tag_rut)
                                     .execute(conn)?;
@@ -446,12 +436,7 @@ impl Handler<TagAny> for Dba {
                             },
                             // else new tag-rut
                             None => {
-                                let new_tag_item = TagItem {
-                                    id: itg.clone() + "-" + &toID,
-                                    tname: itg.clone(),
-                                    item_id: toID.clone(),
-                                    count: 1,
-                                };
+                                let new_tag_item = TagItem::new(itg.clone(), toID.clone());
                                 diesel::insert_into(tagitems)
                                     .values(&new_tag_item)
                                     .execute(conn)?;
@@ -499,11 +484,7 @@ impl Handler<TagAny> for Dba {
                         .load::<TagEtc>(conn)?
                         .pop();
                     if let None = te {
-                        let new_tag_etc = TagEtc {
-                            id: etg.clone() + "-" + &toID,
-                            tname: etg.clone(),
-                            etc_id: toID.clone(),
-                        };
+                        let new_tag_etc = TagEtc::new(etg.clone(), toID.clone());
                         diesel::insert_into(tagetcs)
                             .values(&new_tag_etc)
                             .execute(conn)?;

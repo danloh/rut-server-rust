@@ -112,6 +112,7 @@ table! {
         id -> Varchar,
         tname -> Varchar,
         etc_id -> Varchar,
+        tag_at -> Timestamp,
     }
 }
 
@@ -121,6 +122,7 @@ table! {
         tname -> Varchar,
         item_id -> Varchar,
         count -> Int4,
+        tag_at -> Timestamp,
     }
 }
 
@@ -130,6 +132,7 @@ table! {
         tname -> Varchar,
         rut_id -> Varchar,
         count -> Int4,
+        tag_at -> Timestamp,
     }
 }
 
