@@ -174,6 +174,8 @@ table! {
         location -> Varchar,
         nickname -> Varchar,
         permission -> Int2,
+        link -> Varchar,
+        auth_from -> Varchar,
     }
 }
 

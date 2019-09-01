@@ -31,6 +31,8 @@ pub struct User {
     pub location: String,
     pub nickname: String,
     pub permission: i16,
+    pub link: String, 
+    pub auth_from: String, // for OAuth
 }
 
 
@@ -48,6 +50,8 @@ impl User {
             location: "".to_owned(),
             nickname: "".to_owned(),
             permission: LIMIT_PERMIT | BASIC_PERMIT,
+            link: "".to_owned(),
+            auth_from: "".to_owned(),
         }
     }
     // check permission

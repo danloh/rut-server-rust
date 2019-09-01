@@ -11,6 +11,8 @@ CREATE TABLE users (
   location VARCHAR NOT NULL DEFAULT '',
   nickname VARCHAR NOT NULL DEFAULT '',
   permission SMALLINT NOT NULL DEFAULT 3,
+  link VARCHAR NOT NULL DEFAULT '',
+  auth_from VARCHAR NOT NULL DEFAULT '',
   UNIQUE (uname)
 );
 
