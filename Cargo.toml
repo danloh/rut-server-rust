@@ -11,7 +11,7 @@ path = "tests/lib.rs"
 [dependencies]
 futures = "0.1.28"
 actix = "0.8.3"
-actix-rt = "0.2.4"
+actix-rt = "0.2.5"
 actix-web = "1.0.7"
 actix-cors = "0.1.0"
 diesel = { version = "1.4.2", features = ["postgres","chrono","serde_json","uuidv07","r2d2"] }
@@ -22,12 +22,12 @@ serde="1.0.99"
 jsonwebtoken = "6.0.1" 
 
 derive_more = "0.15.0"
-regex = "1.2.1"
+regex = "1.3.1"
 lazy_static = "1.4.0"
 uuid = { version = "0.7.4", features = ["serde", "v4"] }
 deunicode = "1.0.0"
 bcrypt = "0.5.0"
-chrono = { version = "0.4.8", features = ["serde"] }
+chrono = { version = "0.4.9", features = ["serde"] }
 log = "0.4.8"
 fern = "0.5.8"
 dotenv = "0.14.1"

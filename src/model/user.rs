@@ -33,6 +33,7 @@ pub struct User {
     pub permission: i16,
     pub link: String, 
     pub auth_from: String, // for OAuth
+    pub email_confirmed: bool,
 }
 
 
@@ -52,6 +53,7 @@ impl User {
             permission: LIMIT_PERMIT | BASIC_PERMIT,
             link: "".to_owned(),
             auth_from: "".to_owned(),
+            email_confirmed: false,
         }
     }
     // check permission

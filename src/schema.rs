@@ -176,6 +176,7 @@ table! {
         permission -> Int2,
         link -> Varchar,
         auth_from -> Varchar,
+        email_confirmed -> Bool,
     }
 }
 
