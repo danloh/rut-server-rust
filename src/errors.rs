@@ -7,7 +7,7 @@ use derive_more::Display;
 use diesel::r2d2::PoolError;
 use diesel::result::{DatabaseErrorKind, Error as DieselError};
 use std::convert::From;
-use uuid::parser::ParseError;
+use uuid::Error as ParseError;
 //use jsonwebtoken::errors::{Error as JwtError, ErrorKind as JwtErrorKind};
 
 #[derive(Debug, Display)]
